@@ -1,0 +1,67 @@
+{
+  "name": "effcss",
+  "version": "1.0.0",
+  "description": "Next generation CSS-in-JS library",
+  "scripts": {
+    "build": "rollup -c",
+    "test": "vitest"
+  },
+  "keywords": [
+    "web components",
+    "ui",
+    "typescript",
+    "css",
+    "css-in-js"
+  ],
+  "author": "Marat Sabitov",
+  "license": "Apache 2.0",
+  "main": "dist/index.js",
+  "types": "dist/types/src/types.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/src/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./configs/basic": {
+      "types": "./dist/types/src/configs/basic.d.ts",
+      "import": "./dist/configs/basic.js"
+    },
+    "./configs/ext": {
+      "types": "./dist/types/src/configs/ext.d.ts",
+      "import": "./dist/configs/ext.js"
+    },
+    "./css/dict": {
+      "types": "./dist/types/src/css/dict.d.ts",
+      "import": "./dist/css/dict.js"
+    },
+    "./css/functions": {
+      "types": "./dist/types/src/css/functions.d.ts",
+      "import": "./dist/css/functions.js"
+    },
+    "./utils": {
+      "types": "./dist/types/src/utils.d.ts",
+      "import": "./dist/utils.js"
+    },
+    "./types": {
+      "types": "./dist/types/src/types.d.ts",
+      "import": "./dist/types/src/types.d.ts"
+    }
+  },
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "vitest": "^2.1.8"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "package.json",
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://gitverse.ru/msabitov/effcss"
+  },
+  "homepage": "https://gitverse.ru/msabitov/effcss/content/master/README.md"
+}
