@@ -28,7 +28,17 @@ See simple usage example in `demo` folder
 
 Effcss consists of two parts - **style provider** and **style config**.
 
-**Style provider** is the static part that defines special web component (by default, `<style-provider>`). It should be connected in separate script-tag inside html head or manually defined in page scripts.
+**Style provider** is the static part that defines special web component (by default, `<style-provider>`). It should be connected in separate script-tag inside html head or manually defined in page scripts. The easiest way is to use the provider script with unpkg:
+
+```html
+  <script src="https://unpkg.com/effcss@1.0.0/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
+```
+
+Or you can use provider script with all library style configs included:
+
+```html
+  <script src="https://unpkg.com/effcss@1.0.0/dist/build/define-provider-with-configs.min.js" crossorigin="anonymous"></script>
+```
 
 **Style config** is the dynamic part that configures the behavior of the web component and defines the initial styles of the page. **Styles config** consists of 3 fields:
 - styles - initial style objects;
@@ -44,7 +54,7 @@ The second option is more flexible as it allows you to collect the config both o
 After the first render, styles can be added/changed via the `StyleDispatcher` class or directly via `<style-provider>` methods:
 
 ```jsx
-import { defineStyleProvider } from "effcss/utils";
+import { StyleDispatcher } from "effcss/utils";
 
 const styleDispatcher = new StyleDispatcher(document);
 
@@ -100,7 +110,7 @@ export default {
       	$_ar: 1,
         // special dict keys and with '_'
         // nested selectors except starting with '@' will be prefixed by '&'
-        // result will be `[data-`block`] {&:hover {...}}`
+        // result will be `[data-block] {&:hover {...}}`
         $h_: {
         	border: '2px solid black'
         }

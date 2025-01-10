@@ -135,6 +135,13 @@ export type TStyleConfig = {
         TVariable
     >;
     /**
+     * Keyframes
+     */
+    kf?: Record<
+        string,
+        Record<string, Record<string, string>>
+    >;
+    /**
      * Keys dictionary
      * @description
      */
@@ -379,7 +386,7 @@ export interface IValues {
 
 export type TModeValues = Record<string, Record<string, Record<string, string | number>>>;
 
-export interface IStyleProvider {
+export interface IStyleProviderParams {
     /**
      * Settings script element id 
      */

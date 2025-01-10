@@ -334,7 +334,7 @@ export class Processor implements IStyleProcessor{
      * @param param
      */
     compile = (b: string, styleConfig: TStyleConfig) => {
-        const { _, k = {}, v = {}, c} = styleConfig;
+        const { _, kf, k = {}, v = {}, c} = styleConfig;
         const prepareSelector = this._prepareSelector.bind(this);
         const parseSelector = this._parseSelector.bind(this);
         let config = merge({}, c);
@@ -445,6 +445,7 @@ export class Processor implements IStyleProcessor{
             }
             return obj;
         };
+
         /**
          * Stringify config
          * @param key
@@ -516,6 +517,17 @@ export class Processor implements IStyleProcessor{
                 }
             }
         }
-        return varStr + Object.entries(config).reduce((acc, item) => acc + stringify(...item), '');
+
+        let kfStr = '';
+        if (kf) {
+            for (let kfKey in kf) {
+                const kfConfig = kf[kfKey];
+                kfStr += `@keyframes ${kfKey} ` + curlyBraces(Object.entries(kfConfig).reduce((acc, [frameKey, frameVal]) => {
+                    const postfix = String(+frameKey) === frameKey ? '%' : '';
+                    return acc + frameKey + postfix + curlyBraces(Object.entries(frameVal).reduce((acc, item) => acc + stringify(...item), ''));
+                }, ''))
+            }
+        }
+        return varStr + kfStr + Object.entries(config).reduce((acc, item) => acc + stringify(...item), '');
     };
 }

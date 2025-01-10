@@ -901,6 +901,7 @@ export const keys: Record<string, string> = {
     aic: ANIMATION_ITERATION_COUNT,
     atf: ANIMATION_TIMING_FUNCTION,
     // transition
+    trn: TRANSITION,
     tdur: TRANSITION_DURATION,
     tdel: TRANSITION_DELAY,
     tb: TRANSITION_BEHAVIOR,
