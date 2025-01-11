@@ -22,7 +22,7 @@ npm i effcss
 
 ## Usage example
 
-See simple usage example in `demo` folder
+See simple usage example in `demo` folder or open demo React project on [StackBlitz](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
 
 ## Concepts
 
@@ -31,13 +31,13 @@ Effcss consists of two parts - **style provider** and **style config**.
 **Style provider** is the static part that defines special web component (by default, `<style-provider>`). It should be connected in separate script-tag inside html head or manually defined in page scripts. The easiest way is to use the provider script with unpkg:
 
 ```html
-  <script src="https://unpkg.com/effcss@1.0.0/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/effcss@1.1.0/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
 ```
 
 Or you can use provider script with all library style configs included:
 
 ```html
-  <script src="https://unpkg.com/effcss@1.0.0/dist/build/define-provider-with-configs.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/effcss@1.1.0/dist/build/define-provider-with-configs.min.js" crossorigin="anonymous"></script>
 ```
 
 **Style config** is the dynamic part that configures the behavior of the web component and defines the initial styles of the page. **Styles config** consists of 3 fields:

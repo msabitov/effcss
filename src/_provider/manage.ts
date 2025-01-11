@@ -1,4 +1,4 @@
-import { IStyleManager } from 'types';
+import { IStyleManager, TStyleConsumer } from 'types';
 
 /**
  * Style manager
@@ -19,7 +19,11 @@ export class Manager implements IStyleManager {
     /**
      * Stylesheets array
      */
-    protected readonly _styleSheetsArray: CSSStyleSheet[] = [];
+    protected _styleSheetsArray: CSSStyleSheet[] = [];
+    /**
+     * Dependent nodes
+     */
+    protected _listeners: WeakRef<TStyleConsumer>[] = [];
 
     constructor(config: Record<string, string>) {
         if (config) {
@@ -29,24 +33,25 @@ export class Manager implements IStyleManager {
         }
     }
 
-    get(key: string) {
+    get = (key: string) => {
         return this._stylesheets[key];
     }
 
-    getAll() {
+    getAll = () => {
         return this._stylesheets;
     }
 
-    add(key: string, stylesheet: CSSStyleSheet) {
+    add = (key: string, stylesheet: CSSStyleSheet) => {
         if (!this._stylesheets[key]) {
             this._stylesheets[key] = stylesheet;
             this._styleSheetsArray.push(stylesheet);
             this.cacheRules(key, stylesheet);
+            this.notify();
             return true;
         }
     }
 
-    remove(key: string) {
+    remove = (key: string) => {
         const current = this.get(key);
         if (!current) {
             return;
@@ -58,6 +63,7 @@ export class Manager implements IStyleManager {
             delete this._rules[key];
             delete this._expandedSelectors[key];
         }
+        this.notify();
         return true;
     }
 
@@ -66,10 +72,11 @@ export class Manager implements IStyleManager {
         this._stylesheets = {} as Record<string, CSSStyleSheet>;
         this._rules = {};
         this._expandedSelectors = {};
+        this.notify();
         return true;
     }
 
-    pack(key: string, styles: string) {
+    pack = (key: string, styles: string) => {
         const styleSheet = new CSSStyleSheet();
         styleSheet.replaceSync(styles);
         if (!styleSheet.cssRules.length) {
@@ -80,7 +87,7 @@ export class Manager implements IStyleManager {
         return styleSheet;
     }
 
-    cacheRules(key: string, stylesheet: CSSStyleSheet) {
+    cacheRules = (key: string, stylesheet: CSSStyleSheet) => {
         [...stylesheet.cssRules].forEach((rule) => {
             const selectorText = rule.cssText.split(' {')[0];
             if (selectorText) {
@@ -91,11 +98,11 @@ export class Manager implements IStyleManager {
         this._expandedSelectors[key] = new Set();
     }
 
-    getExpandedSelectors(key: string) {
+    getExpandedSelectors = (key: string) => {
         return this._expandedSelectors[key];
     }
 
-    expandRule(key: string, init: string, exp: string) {
+    expandRule = (key: string, init: string, exp: string) => {
         const rules = this._rules[key];
         if (!rules) {
             console.log(`No stylesheet found with key '${key}'`);
@@ -118,7 +125,28 @@ export class Manager implements IStyleManager {
         }
     }
 
-    apply(root: { adoptedStyleSheets: CSSStyleSheet[] }) {
+    apply = (root: TStyleConsumer) => {
         root.adoptedStyleSheets = this._styleSheetsArray;
+    }
+
+    registerNode = (node: TStyleConsumer) => {
+        this._listeners.push(new WeakRef(node));
+        this.apply(node);
+    }
+
+    unregisterNode = (node: TStyleConsumer) => {
+        const index = this._listeners.findIndex((listener) => listener.deref() === node);
+        if (index >= 0) this._listeners.splice(index, 1);
+    }
+
+    notify = () => {
+        this._listeners = this._listeners.reduce((acc, listener) => {
+            const ref = listener.deref();
+            if (ref) {
+                this.apply(ref);
+                acc.push(listener);
+            }
+            return acc;
+        }, []);
     }
 }

@@ -52,7 +52,7 @@ export function defineStyleProvider(props?: {
                 init: getProviderStyles() + this.processor.baseStyles
             });
             this.processStyles(styles, ext);
-            this.manager.apply(document);
+            if (this.getAttribute('isolated') === null) this.manager.registerNode(document);
         }
     
         /**
@@ -63,7 +63,7 @@ export function defineStyleProvider(props?: {
             return textContent ? JSON.parse(textContent) : (props?.config || {});
         }
     
-        compileStyleSheet(key: string, config: TStyleConfig) {
+        compileStyleSheet = (key: string, config: TStyleConfig) => {
             const styleString = this.processor?.compile(
                 key,
                 config
@@ -73,7 +73,7 @@ export function defineStyleProvider(props?: {
             }
         }
     
-        expandStyleSheet(key: string, selectors: string[]) {
+        expandStyleSheet = (key: string, selectors: string[]) => {
             const expanded = this.manager?.getExpandedSelectors(key);
             if (this.processor && expanded) {
                 const next = new Set(selectors);
@@ -89,7 +89,7 @@ export function defineStyleProvider(props?: {
             }
         }
     
-        processStyles(styles?: Record<string, TStyleConfig>, ext?: Record<string, string[]>) {
+        processStyles = (styles?: Record<string, TStyleConfig>, ext?: Record<string, string[]>) => {
             if (styles) {
                 for (let key in styles) {
                     const styleConfig = styles[key];
@@ -102,6 +102,7 @@ export function defineStyleProvider(props?: {
                     this.expandStyleSheet(key, extConfig);
                 }
             }
+            return true;
         }
     })
 }

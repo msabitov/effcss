@@ -57,6 +57,20 @@ export interface IStyleManager {
      * @param root
      */
     apply(root: { adoptedStyleSheets: CSSStyleSheet[] }): void;
+    /**
+     * Register dependent node
+     * @param node
+     */
+    registerNode(node: { adoptedStyleSheets: CSSStyleSheet[] }): void;
+    /**
+     * Unregister dependent node
+     * @param node
+     */
+    unregisterNode(node: { adoptedStyleSheets: CSSStyleSheet[] }): void;
+    /**
+     * Apply style changes to dependent nodes
+     */
+    notify(): void;
 }
 
 /**
@@ -386,6 +400,9 @@ export interface IValues {
 
 export type TModeValues = Record<string, Record<string, Record<string, string | number>>>;
 
+/**
+ * Attributes of style provider web component
+ */
 export interface IStyleProviderParams {
     /**
      * Settings script element id 
@@ -401,4 +418,10 @@ export interface IStyleProviderParams {
      * `a` - data-attributes, `c` - classes
      */
     mode?: 'a' | 'c' | null;
+    /**
+     * If provider shoudn`t register document as dependent node
+     */
+    isolated?: string | null;
 };
+
+export type TStyleConsumer = { adoptedStyleSheets: CSSStyleSheet[] };
