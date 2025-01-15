@@ -84,12 +84,10 @@ const HEARTBEAT = 'heartBeat';
 
 const PERSP_25REM = perspective(25 + 'rem');
 
-const getAnimations = (names: string[]) => ({
-    $an: names.reduce((acc, name) => {
-        acc[name] = name;
+const getAnimations = (names: string[]) => names.reduce((acc, name) => {
+        acc['_' + name + '_'] = {$an: `{kf_${name}}`};
         return acc;
-    }, {})
-});
+    }, {});
 
 export default {
     kf: {

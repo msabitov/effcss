@@ -33,7 +33,7 @@ export interface IStyleManager {
      * @param key - stylesheet key
      * @param styles - stylesheet content
      */
-    pack(key: string, styles: string): CSSStyleSheet | void;
+    pack(key: string, styles: string): boolean | void;
     /**
      * Cache computed CSS rules
      * @param key
@@ -104,7 +104,7 @@ export interface IStyleProvider extends HTMLElement {
     /**
      * Compile sheet
      */
-    compileStyleSheet(key: string, config: TStyleConfig): CSSStyleSheet | void;
+    compileStyleSheet(key: string, config: TStyleConfig): boolean | void;
 
     /**
      * Expand stylesheet

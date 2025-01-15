@@ -250,9 +250,9 @@ export class Processor implements IStyleProcessor{
         // cpmputed values
         this._compValues = changedVariants;
         // computed keys
-        this._compKeys = Object.entries(this._compValues.bp || {}).reduce((acc, [key, val]) => {
-            acc[key + '_'] = `@media (min-width:${val})`;
-            acc[key.toUpperCase() + '_'] = `@media (max-width:${val})`;
+        this._compKeys = Object.entries(this._params.root.bp || {}).reduce((acc, [key, val]) => {
+            acc[`min_${key}_`] = `@media (min-width:${val})`;
+            acc[`max_${key}_`] = `@media (max-width:${val})`;
             return acc;
         }, {} as Record<string, string>);
         this.baseStyles = this.compile('init', {c: {
@@ -326,6 +326,14 @@ export class Processor implements IStyleProcessor{
      */
     protected _prepareVarName = (...parts: string[]) => {
         return ['-', this._prefix, ...parts].join('-');
+    };
+
+    /**
+     * Prepare name of keyframes object
+     * @param parts
+     */
+    protected _prepareKeyframesName = (...parts: string[]) => {
+        return [this._prefix, ...parts].join('-');
     };
 
     /**
@@ -477,7 +485,7 @@ export class Processor implements IStyleProcessor{
                 return '';
             } else if (typeof value === 'object'){
                 // if nested rule
-                const prefix = !!parent && !resKey.startsWith('&') && !resKey.startsWith('@') ? '&' : '';
+                const prefix = !!parent && !parent.startsWith?.('@') && !resKey.startsWith('&') && !resKey.startsWith('@') ? '&' : '';
                 // BEM-selector
                 if (resKey.startsWith('_')) {
                     const {e, m, mv} = parseSelector(resKey);
@@ -522,7 +530,9 @@ export class Processor implements IStyleProcessor{
         if (kf) {
             for (let kfKey in kf) {
                 const kfConfig = kf[kfKey];
-                kfStr += `@keyframes ${kfKey} ` + curlyBraces(Object.entries(kfConfig).reduce((acc, [frameKey, frameVal]) => {
+                const kfName = this._prepareKeyframesName(b, kfKey);
+                localKeys['kf_' + kfKey] = kfName;
+                kfStr += `@keyframes ${kfName} ` + curlyBraces(Object.entries(kfConfig).reduce((acc, [frameKey, frameVal]) => {
                     const postfix = String(+frameKey) === frameKey ? '%' : '';
                     return acc + frameKey + postfix + curlyBraces(Object.entries(frameVal).reduce((acc, item) => acc + stringify(...item), ''));
                 }, ''))

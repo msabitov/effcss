@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { Processor } from '../src/_provider/process';
 
+const processor = new Processor({params: {}});
+
 describe('BEM selectors:', () => {
   test('block:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {c: {_: {
       color: 'transparent'
     }}});
@@ -11,7 +12,6 @@ describe('BEM selectors:', () => {
   });
 
   test('element:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {c: {__elem: {
       width: '20px'
     }}});
@@ -19,7 +19,6 @@ describe('BEM selectors:', () => {
   });
 
   test('block modifier:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {c: {_w_s: {
       width: '1rem'
     }}});
@@ -27,7 +26,6 @@ describe('BEM selectors:', () => {
   });
 
   test('block boolean modifier:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {c: {_fw_: {
       width: '100%'
     }}});
@@ -35,7 +33,6 @@ describe('BEM selectors:', () => {
   });
 
   test('element modifier:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {c: {__elem_w_s: {
       width: '1rem'
     }}});
@@ -43,7 +40,6 @@ describe('BEM selectors:', () => {
   });
 
   test('element boolean modifier:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {c: {__elem_fw_: {
       width: '100%'
     }}});
@@ -51,7 +47,6 @@ describe('BEM selectors:', () => {
   });
 
   test('multiple block modifiers:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {c: {_w: {
       s: {width: '20px'}, m: {width: '30px'}
     }}});
@@ -59,7 +54,6 @@ describe('BEM selectors:', () => {
   });
 
   test('multiple element modifiers:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {c: {__elem_w: {
       s: {width: '20px'}, m: {width: '30px'}
     }}});
@@ -69,7 +63,6 @@ describe('BEM selectors:', () => {
 
 describe('Interpolation:', () => {
   test('global keys dict:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {c: {
       '.custom': {
         $c: 'transparent'
@@ -79,7 +72,6 @@ describe('Interpolation:', () => {
   });
 
   test('local keys dict:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {
       k: {
         c: 'background-color'
@@ -93,7 +85,6 @@ describe('Interpolation:', () => {
   });
 
   test('local values dict:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {
       v: {sz: {a: 'auto'}},
       c: {_fw_: {
@@ -104,26 +95,52 @@ describe('Interpolation:', () => {
   });
 
   test('local vars dict:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {
       _: {sz: {}},
       c: {_sz: '&uni=>{_sz}:{1}'
     }});
     expect(styleString.includes('[data-cust~="sz-a"]{--eff-cust-sz:auto;}')).toBeTruthy();
   });
+
+  test('Keyframes:', () => {
+    const styleString = processor.compile('block', {
+      kf: {main: {0: {width: '10px'}, 100: {width: '20px'}}},
+      c: {_main_: {$an: '{kf_main}'}}
+    });
+    expect(styleString.includes('@keyframes eff-block-main {0%{width:10px;}100%{width:20px;}}[data-block~="main"]{animation-name:eff-block-main;}')).toBeTruthy();
+  });
 });
 
 describe('Object values:', () => {
   test('Nested selector:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {c: {'.custom': {
       '.nested': {color: 'green'}
     }}});
     expect(styleString).toBe('.custom{&.nested{color:green;}}')
   });
 
+  test('Nested at-rules:', () => {
+    const styleString = processor.compile('block', {c: {
+      '.small': {width: '5rem', $min_md_: {'.large': {width: '15rem'}}}}}
+    );
+    expect(styleString).toBe('.small{width:5rem;@media (min-width:48rem){.large{width:15rem;}}}')
+  });
+
+  test('Selector starting with `&`:', () => {
+    const styleString = processor.compile('block', {c: {
+      '.small': {width: '5rem', '& > .large': {width: '15rem'}}}}
+    );
+    expect(styleString).toBe('.small{width:5rem;& > .large{width:15rem;}}')
+  });
+
+  test('First-level nested selector inside at-rules:', () => {
+    const styleString = processor.compile('block', {c: {
+      $min_md_:{'.small': {width: '5rem'}, '.large': {width: '15rem'}}}}
+    );
+    expect(styleString).toBe('@media (min-width:48rem){.small{width:5rem;}.large{width:15rem;}}')
+  });
+
   test('Values transform:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {
       v: {sz: {
         s: 20,
@@ -136,7 +153,6 @@ describe('Object values:', () => {
   });
 
   test('Values identifier transform:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {
       v: {sz: {
         s: 20,
@@ -149,7 +165,6 @@ describe('Object values:', () => {
   });
 
   test('Values filter:', () => {
-    const processor = new Processor({params: {}});
     const styleString = processor.compile('cust', {
       v: {sz: {
         s: 20,

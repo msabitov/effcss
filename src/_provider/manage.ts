@@ -83,8 +83,7 @@ export class Manager implements IStyleManager {
             console.log(`StyleSheet '${key}' is empty`);
             return;
         }
-        this.add(key, styleSheet);
-        return styleSheet;
+        return this.add(key, styleSheet);
     }
 
     cacheRules = (key: string, stylesheet: CSSStyleSheet) => {

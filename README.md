@@ -81,7 +81,7 @@ export default {
     back: {
       // creates `oklch()` components variables: l, c, h, a,
       // so there will be 5 vars: --eff-block-backl, --eff-block-backc, ...
-    	type: 'c'
+    	typ: 'c'
     }
   },
   // local keys for interpolation

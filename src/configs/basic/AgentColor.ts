@@ -23,10 +23,10 @@ export default {
             $_aca: 1,
         },
         _ac_: {
-            $_acc: '{_.ac}'
+            $acc: '{_.ac}'
         },
         _cc_: {
-            $_ctc: '{_.cr}'
+            $ctc: '{_.cr}'
         }
     }
 } as TStyleConfig;
