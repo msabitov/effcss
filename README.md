@@ -22,7 +22,13 @@ npm i effcss
 
 ## Usage example
 
-See simple usage example in `demo` folder or open demo React project on [StackBlitz](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
+See simple usage example in `demo` folder.
+You can also open demo React project on [StackBlitz](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html).
+There is also demo Svelte project on [StackBlitz](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html).
+
+## Docs
+
+The documentation is currently under active development, you can find the current version on the project's [homepage](https://effcss.surge.sh).
 
 ## Concepts
 
@@ -31,18 +37,18 @@ Effcss consists of two parts - **style provider** and **style config**.
 **Style provider** is the static part that defines special web component (by default, `<style-provider>`). It should be connected in separate script-tag inside html head or manually defined in page scripts. The easiest way is to use the provider script with unpkg:
 
 ```html
-  <script src="https://unpkg.com/effcss@1.1.0/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
 ```
 
 Or you can use provider script with all library style configs included:
 
 ```html
-  <script src="https://unpkg.com/effcss@1.1.0/dist/build/define-provider-with-configs.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/effcss/dist/build/define-provider-with-configs.min.js" crossorigin="anonymous"></script>
 ```
 
-**Style config** is the dynamic part that configures the behavior of the web component and defines the initial styles of the page. **Styles config** consists of 3 fields:
-- styles - initial style objects;
-- ext - initial expanded rules for style objects;
+**Style config** is the dynamic part that configures the behavior of the web component and defines the initial styles of the page. **Style config** consists of 3 fields:
+- styles - initial stylesheets configs;
+- ext - initial expanded rules for stylesheets;
 - params - custom global values for interpolation. Params contains style modes, the mandatory mode is `root`;
 
 This **style config** can be defined in at least two ways:
@@ -64,7 +70,7 @@ root.render(<App styleDispatcher={styleDispatcher}/>);
 
 ## Customization
 
-You can add your own style configs. While you can write arbitrary rules and selectors, the recommended way is to use the **BEM methodology**. Block key for each style config is its key inside `styles` provider settings. A style config is an object like this:
+You can add your own stylesheets configs. While you can write arbitrary rules and selectors, the recommended way is to use the **BEM methodology**. Block key for each style config is its key inside `styles` provider settings. A style config is an object like this:
 
 ```js
 // in style config it is in 'block' field,
@@ -156,7 +162,3 @@ export default {
   }
 }
 ```
-
-## Docs
-
-Coming soon
