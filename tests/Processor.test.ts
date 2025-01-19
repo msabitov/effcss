@@ -158,7 +158,7 @@ describe('Interpolation:', () => {
       _: {sz: {}},
       c: {_sz: '&uni=>{_sz}:{1}'
     }});
-    expect(styleString.includes('[data-cust~="sz-a"]{--eff-cust-sz:auto;}')).toBeTruthy();
+    expect(styleString.includes('[data-cust~="sz-u"]{--eff-cust-sz:unset;}')).toBeTruthy();
   });
 
   test('Keyframes:', () => {

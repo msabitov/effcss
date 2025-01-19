@@ -5,6 +5,8 @@ import {
     toCqi,
     toCqmax,
     toCqmin,
+    toCqw,
+    toCqh,
     toDeg,
     toMs,
     toPercent,
@@ -173,37 +175,33 @@ export class Processor implements IStyleProcessor{
         }
         const {
             // universal
-            time, rem, coef, szu, sz, sp, rad, th, fr, bp, fsz,
+            time, rem, szu, sz, sp, rad, th, perc, bp, fsz,
             // text
             lsp,
             // transform
             tr, sk, rot,
-            // flex
-            fg, fs, fb, fo, ra, ro, co, ca, ins,
+            // layout
+            fb, ra, ca, ins,
             // container
-            cqu, cqb, cqi, cqmin, cqmax,
+            cqw, cqh, cqb, cqi, cqmin, cqmax,
             // viewport
-            vu, vw, vh, vmin, vmax
+            vw, vh, vmin, vmax
         } = this._params.root;
-        const perc = toPercent(fr);
         this._params.root = merge(this._params.root, {
-            cqb: toCqb(cqb || cqu),
-            cqi: toCqi(cqi || cqu),
-            cqmin: toCqmin(cqmin || cqu),
-            cqmax: toCqmax(cqmax || cqu),
-            vw: toVw(vw || vu),
-            vh: toVh(vh || vu),
-            vmin: toVmin(vmin || vu),
-            vmax: toVmax(vmax || vu),
-            fo: fo || coef,
-            fg: fg || coef,
-            fs: fs || coef,
-            fb: fb || perc,
-            ra: ra || toSpan(coef),
-            ro: ro || coef,
-            ca: ca || toSpan(coef),
-            co: co || coef,
-            ins: ins || perc,
+            cqw: toCqw(cqw),
+            cqh: toCqh(cqh),
+            cqb: toCqb(cqb),
+            cqi: toCqi(cqi),
+            cqmin: toCqmin(cqmin),
+            cqmax: toCqmax(cqmax),
+            vw: toVw(vw),
+            vh: toVh(vh),
+            vmin: toVmin(vmin),
+            vmax: toVmax(vmax),
+            fb: toPercent(fb),
+            ra: toSpan(ra),
+            ca: toSpan(ca),
+            ins: toPercent(ins),
             sz: merge(toRem(sz) || {}, szu),
             sp: merge(toRem(sp) || {}, szu),
             rad: toRem(rad),
@@ -214,7 +212,7 @@ export class Processor implements IStyleProcessor{
             tr: toRem(tr),
             sk: toDeg(sk),
             rot: toDeg(rot),
-            perc,
+            perc: toPercent(perc),
             time: toMs(time),
             rem: toPx(rem)
         });

@@ -2,20 +2,18 @@ import { comma, pseudoActive, pseudoFocus, pseudoHover, pseudoLink, pseudoVisite
 import { TStyleConfig } from 'types';
 
 export default {
-    t: '',
-    k: {},
     c: {
         $: {
             $p: 0,
             $m: 0,
-            $bor: '{uni.no}',
+            $bor: 'none',
             $bsz: '{box.b}',
             $ba_: {
                 $bsz: '{box.b}'
             }
         },
         [pseudoWhere(comma('a', pseudoLink('a'), pseudoVisited('a'), pseudoHover('a')))]: {
-            $td: '{uni.no}'
+            $td: 'none'
         },
         [pseudoWhere('aside,nav,footer,header,section,main')]: {
             $dis: '{dis.b}'

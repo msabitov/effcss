@@ -511,17 +511,402 @@ const SOFT_LIGHT = dash('soft', LIGHT);
 const COLOR_MIX = dash(COLOR, 'mix');
 const REVERT = 'revert';
 const REVERT_LAYER = dash(REVERT, 'layer');
+const CONTAINER = 'container';
+const CONTAINER_TYPE = dash(CONTAINER, TYPE);
+const CONTAINER_NAME = dash(CONTAINER, 'name');
+
+/**
+ * Scoped unitless values
+ */
+const scu = {
+    0: 0,
+    '1/4': 25,
+    '1/2': 50,
+    '3/4': 75,
+    1: 100
+};
+
+const perc = {
+    0: 0,
+    '1/12': '0.0833',
+    '1/10': '0.1',
+    '1/6': '0.1667',
+    '1/5': '0.2',
+    '1/4': '0.25',
+    '3/10': '0.3',
+    '1/3': '0.3333',
+    '2/5': '0.4',
+    '5/12': '0.4167',
+    '1/2': '0.5',
+    '7/12': '0.5833',
+    '3/5': '0.6',
+    '2/3': '0.6667',
+    '7/10': '0.7',
+    '3/4': '0.75',
+    '4/5': '0.8',
+    '5/6': '0.8333',
+    '9/10': '0.9',
+    '11/12': '0.9167',
+    1: '1'
+};
+
+/**
+ * Coefficients
+ */
+const coef = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].reduce((acc, val) => {
+    acc[val] = val;
+    return acc;
+}, {} as Record<number, number>);
 
 export const values: Record<string, Record<string, string | number>> = {
+    /**
+     * Lightness
+     */
+    lig: {
+        /**
+         * 
+         */
+        def: 0.75,
+        // contrast
+        c: 0.05,
+        s: 0.65,
+        m: 0.75,
+        l: 0.85,
+        // neutral
+        n: 0.9
+    },
+    /**
+     * Hue
+     */
+    hue: {
+        def: 261.35,
+        // brand
+        b: 261.35,
+        // info
+        i: 194.77,
+        // error
+        e: 29.23,
+        // warning
+        w: 70.66,
+        // success
+        s: 142.49
+    },
+    /**
+     * Chroma
+     */
+    chr: {
+        def: 0.03,
+        xs: 0.03,
+        s: 0.06,
+        m: 0.1,
+        l: 0.15,
+        xl: 0.25
+    },
+    /**
+     * Alpha
+     */
+    alp: {
+        def: 1,
+        min: 0,
+        xs: 0.1,
+        s: 0.25,
+        m: 0.5,
+        l: 0.75,
+        xl: 0.9,
+        max: 1
+    },
+    /**
+     * Root font-size
+     */
+    rem: {
+        def: 16
+    },
+    /**
+     * Font-family
+     */
+    ff: {
+        def: 'Roboto, sans-serif',
+        b: 'Georgia, serif'
+    },
+    /**
+     * Font-weight
+     */
+    fwg: {
+        xs: 100,
+        s: 200,
+        m: 400,
+        l: 600,
+        xl: 700
+    },
+    /**
+     * Time
+     */
+    time: {
+        def: 300,
+        xs: 100,
+        s: 200,
+        m: 300,
+        l: 450,
+        xl: 600,
+        no: 0,
+        min: 50,
+        max: 750
+    },
+    /**
+     * Coefficients
+     */
+    coef,
+    /**
+     * Ratio coefficients
+     */
+    rat: {
+        1: 1,
+        '2/1': 2,
+        '1/2': 0.5,
+        '4/3': 1.3333,
+        '3/4': 0.75,
+        '9/16': 0.5625,
+        '16/9': 1.7778
+    },
+    /**
+     * Spacing
+     */
+    sp: {
+        '3xs': 0.125,
+        '2xs': 0.25,
+        xs: 0.5,
+        s: 0.75,
+        m: 1,
+        l: 1.25,
+        xl: 1.5,
+        '2xl': 2,
+        '3xl': 4
+    },
+    /**
+     * Size
+     */
+    sz: {
+        '3xs': 1,
+        '2xs': 1.5,
+        xs: 2,
+        s: 5,
+        m: 10,
+        l: 15,
+        xl: 20,
+        '2xl': 25,
+        '3xl': 30
+    },
+    /**
+     * Universal size
+     */
+    szu: {
+        a: 'auto',
+        no: 0,
+        min: MIN_CONTENT,
+        max: MAX_CONTENT,
+        fit: FIT_CONTENT
+    },
+    /**
+     * Breakpoints
+     */
+    bp: {
+        xs: 30,
+        sm: 40,
+        md: 48,
+        lg: 64,
+        xl: 80
+    },
+    /**
+     * Opacity
+     */
+    o: {
+        min: 0,
+        xs: 0.1,
+        s: 0.25,
+        m: 0.5,
+        l: 0.75,
+        xl: 0.9,
+        max: 1
+    },
+    /**
+     * Viewport width
+     */
+    vw: scu,
+    /**
+     * Viewport height
+     */
+    vh: scu,
+    /**
+     * Viewport min size
+     */
+    vmin: scu,
+    /**
+     * Viewport max size
+     */
+    vmax: scu,
+    /**
+     * Query container's width
+     */
+    cqw: scu,
+    /**
+     * Query container's height
+     */
+    cqh: scu,
+    /**
+     * Query container's block size
+     */
+    cqb: scu,
+    /**
+     * Query container's inline size
+     */
+    cqi: scu,
+    /**
+     * Query container's min size
+     */
+    cqmin: scu,
+    /**
+     * Query container's max size
+     */
+    cqmax: scu,
+    /**
+     * Percents (between 0 and 1)
+     */
+    perc,
+    /**
+     * Radius
+     */
+    rad: {
+        s: 0.5,
+        m: 1,
+        l: 2
+    },
+    /**
+     * Thickness
+     */
+    th: {
+        s: 0.1,
+        m: 0.25,
+        l: 0.5
+    },
+    /**
+     * Scale coefficients
+     */
+    sc: {
+        xs: 0.5,
+        s: 0.67,
+        m: 1,
+        l: 1.5,
+        xl: 2
+    },
+    /**
+     * Translate coefficients
+     */
+    tr: {
+        xs: 0.25,
+        s: 0.5,
+        m: 1,
+        l: 1.5,
+        xl: 2
+    },
+    /**
+     * Skew coefficients
+     */
+    sk: {
+        xs: -15,
+        s: -10,
+        m: 0,
+        l: 10,
+        xl: 15
+    },
+    /**
+     * Rotate coefficients
+     */
+    rot: {
+        xs: -180,
+        s: -90,
+        m: 0,
+        l: 90,
+        xl: 180
+    },
+    /**
+     * Zoom coefficients
+     */
+    zm: {
+        s: 0.8,
+        m: 1,
+        l: 1.2
+    },
+    /**
+     * Perspective coefficients
+     */
+    pers: {
+        s: '100px',
+        m: '200px'
+    },
+    /**
+     * Font-size coefficients
+     */
+    fsz: {
+        xs: 0.25,
+        s: 0.5,
+        m: 1,
+        l: 1.5,
+        xl: 2
+    },
+    /**
+     * Line-height coefficients
+     */
+    lh: {
+        xs: 1,
+        s: 1.25,
+        m: 1.5,
+        l: 1.75,
+        xl: 2
+    },
+    /**
+     * Letter-spacing coefficients
+     */
+    lsp: {
+        no: 0,
+        s: 0.05,
+        m: 0.1,
+        l: 0.2
+    },
+    /**
+     * Z-index coefficients
+     */
+    zi: {
+        1: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5
+    },
+    /**
+     * Animation-iteration-count coefficients
+     */
+    ic: {
+        inf: 'infinite',
+        1: 1,
+        2: 2
+    },
+    /**
+     * Inset
+     */
+    ins: perc,
+    /**
+     * Universal
+     */
     uni: {
         ini: 'initial',
         inh: INHERIT,
         u: 'unset',
         r: REVERT,
-        rl: REVERT_LAYER,
-        a: AUTO,
-        no: NONE
+        rl: REVERT_LAYER
     },
+    /**
+     * Alignment
+     */
     ali: {
         s: START,
         e: END,
@@ -535,23 +920,69 @@ export const values: Record<string, Record<string, string | number>> = {
         fe: FLEX_END,
         no: NONE
     },
+    /**
+     * Display
+     */
     dis: {
         g: GRID,
         ig: INLINE_GRID,
         f: FLEX,
-        if: INLINE_FLEX
+        if: INLINE_FLEX,
+        b: BLOCK,
+        i: INLINE
     },
+    /**
+     * Column amount
+     */
+    ca: coef,
+    /**
+     * Column offset
+     */
+    co: coef,
+    /**
+     * Row amount
+     */
+    ra: coef,
+    /**
+     * Row offset
+     */
+    ro: coef,
+    /**
+     * Flex-direction
+     */
     fd: {
         r: ROW,
         rr: ROW_REVERSE,
         c: COLUMN,
         cr: COLUMN_REVERSE
     },
+    /**
+     * Flex-basis
+     */
+    fb: perc,
+    /**
+     * Flex-order
+     */
+    fo: coef,
+    /**
+     * Flex-grow
+     */
+    fg: coef,
+    /**
+     * Flex-shrink
+     */
+    fs: coef,
+    /**
+     * Flex-wrap
+     */
     fw: {
         w: WRAP,
         nw: NOWRAP,
         wr: WRAP_REVERSE
     },
+    /**
+     * Repeat
+     */
     rep: {
         rx: REPEAT_X,
         ry: REPEAT_Y,
@@ -560,6 +991,9 @@ export const values: Record<string, Record<string, string | number>> = {
         ro: 'round',
         nr: NO_REPEAT
     },
+    /**
+     * Transition-timing-function
+     */
     ttf: {
         l: LINEAR,
         e: EASE,
@@ -580,32 +1014,50 @@ export const values: Record<string, Record<string, string | number>> = {
         pw: PRE_WRAP,
         bs: BREAK_SPACES
     },
+    /**
+     * Word-break
+     */
     wb: {
         n: NORMAL,
         ba: BREAK_ALL,
         ka: KEEP_ALL,
         bw: BREAK_WORD
     },
+    /**
+     * Writting-mode
+     */
     wm: {
         htb: HORIZONTAL_TB,
         vlr: VERTICAL_LR,
         vrl: VERTICAL_RL
     },
+    /**
+     * Hyphens
+     */
     hyp: {
         no: NONE,
         m: MANUAL,
         a: AUTO
     },
+    /**
+     * Text-transform
+     */
     tt: {
         l: LOWERCASE,
         u: UPPERCASE,
         c: CAPITALIZE
     },
+    /**
+     * Text-decoration
+     */
     td: {
         lt: LINE_THROUGH,
         o: OVERLINE,
         u: UNDERLINE
     },
+    /**
+     * Text-orientation
+     */
     tor: {
         m: 'mixed',
         u: 'upright',
@@ -613,6 +1065,9 @@ export const values: Record<string, Record<string, string | number>> = {
         s: 'sideways',
         ugo: 'use-glyph-orientation'
     },
+    /**
+     * Text-align
+     */
     ta: {
         l: LEFT,
         c: CENTER,
@@ -621,11 +1076,14 @@ export const values: Record<string, Record<string, string | number>> = {
         s: START,
         e: END
     },
+    /**
+     * Transition-property
+     */
     tp: {
         all: ALL,
         col: comma(COLOR, BACKGROUND_COLOR, BORDER_COLOR, TEXT_DECORATION_COLOR),
         icon: comma(FILL, STROKE),
-        filter: comma(FILTER, BACKDROP_FILTER),
+        flt: comma(FILTER, BACKDROP_FILTER),
         ind: comma(PADDING, MARGIN),
         sz: comma(WIDTH, MAX_WIDTH, MIN_WIDTH, HEIGHT, MAX_HEIGHT, MIN_HEIGHT),
         esz: comma(MIN_BLOCK_SIZE, BLOCK_SIZE, MAX_BLOCK_SIZE, MIN_INLINE_SIZE, INLINE_SIZE, MAX_INLINE_SIZE),
@@ -636,6 +1094,9 @@ export const values: Record<string, Record<string, string | number>> = {
         pos: comma(POSITION, LEFT, TOP, BOTTOM, RIGHT),
         tf: comma(TRANSFORM, TRANSLATE, SCALE, ROTATE, SKEW, PERSPECTIVE)
     },
+    /**
+     * Line-break
+     */
     lb: {
         a: AUTO,
         any: ANYWHERE,
@@ -643,6 +1104,9 @@ export const values: Record<string, Record<string, string | number>> = {
         l: LOOSE,
         s: STRICT
     },
+    /**
+     * Overflow
+     */
     ov: {
         h: HIDDEN,
         s: SCROLL,
@@ -650,12 +1114,18 @@ export const values: Record<string, Record<string, string | number>> = {
         c: CLIP,
         e: ELLIPSIS
     },
+    /**
+     * Visibility
+     */
     v: {
         h: HIDDEN,
         v: VISIBLE,
         c: COLLAPSE,
         a: AUTO
     },
+    /**
+     * Will-change
+     */
     wc: {
         a: AUTO,
         sp: SCROLL_POSITION,
@@ -665,29 +1135,47 @@ export const values: Record<string, Record<string, string | number>> = {
         i: INSET,
         tfi: TRANSFORM + ',' + INSET
     },
+    /**
+     * Animation-fill-mode
+     */
     afm: {
         no: NONE,
         f: FORWARDS,
         b: BACKWARDS,
         both: BOTH
     },
+    /**
+     * Animation-direction
+     */
     adir: {
         r: REVERSE,
         a: ALTERNATE,
         ar: ALTERNATE_REVERSE
     },
+    /**
+     * Animation-play-state
+     */
     aps: {
         r: RUNNING,
         p: PAUSED
     },
+    /**
+     * Transition-behavior
+     */
     tb: {
         ad: ALLOW_DISCRETE,
         n: NORMAL
     },
+    /**
+     * Appearance
+     */
     app: {
         n: NONE,
         a: AUTO
     },
+    /**
+     * Pointer-events
+     */
     pe: {
         a: AUTO,
         no: NONE,
@@ -695,6 +1183,9 @@ export const values: Record<string, Record<string, string | number>> = {
         f: FILL,
         s: STROKE
     },
+    /**
+     * Cursor
+     */
     cur: {
         h: HELP,
         a: AUTO,
@@ -727,12 +1218,18 @@ export const values: Record<string, Record<string, string | number>> = {
         zi: ZOOM_IN,
         zo: ZOOM_OUT
     },
+    /**
+     * Resize
+     */
     res: {
         n: NONE,
         v: VERTICAL,
         h: HORIZONTAL,
         b: BOTH
     },
+    /**
+     * Touch-action
+     */
     toa: {
         a: AUTO,
         no: NONE,
@@ -745,22 +1242,32 @@ export const values: Record<string, Record<string, string | number>> = {
         pz: PINCH_ZOOM,
         m: MANIPULATION
     },
+    /**
+     * User-select
+     */
     us: {
         n: NONE,
         t: TEXT,
         all: ALL,
         a: AUTO
     },
+    /**
+     * Scroll-behavior
+     */
     sb: {
         a: AUTO,
         s: SMOOTH
     },
-    // scroll-snap-stop
+    /**
+     * Scroll-snap-stop
+     */
     sss: {
         n: NORMAL,
         a: ALWAYS
     },
-    // scroll-snap-type
+    /**
+     * Scroll-snap-type
+     */
     sst: {
         n: NONE,
         x: X,
@@ -779,17 +1286,26 @@ export const values: Record<string, Record<string, string | number>> = {
         ip: INLINE_PROXIMITY,
         bothp: BOTH_PROXIMITY
     },
+    /**
+     * Font-style
+     */
     fst: {
         i: ITALIC,
         n: NORMAL,
         o: OBLIQUE
     },
+    /**
+     * Position
+     */
     pos: {
         r: RELATIVE,
         a: ABSOLUTE,
         f: FIXED,
         s: STATIC
     },
+    /**
+     * Position value
+     */
     posv: {
         b: BOTTOM,
         t: TOP,
@@ -801,7 +1317,9 @@ export const values: Record<string, Record<string, string | number>> = {
         lb: LEFT_BOTTOM,
         rb: RIGHT_BOTTOM
     },
-    // content-size
+    /**
+     * Content-size
+     */
     csz: {
         cv: COVER,
         cn: CONTAIN,
@@ -809,15 +1327,23 @@ export const values: Record<string, Record<string, string | number>> = {
         f: FILL,
         sd: SCALE_DOWN
     },
-    // column-fill
+    /**
+     * Column-fill
+     */
     cf: {
         a: AUTO,
         b: BALANCE
     },
+    /**
+     * Column-span
+     */
     cs: {
         no: NONE,
         all: ALL
     },
+    /**
+     * Box-sizing
+     */
     box: {
         c: CONTENT_BOX,
         p: PADDING_BOX,
@@ -828,23 +1354,33 @@ export const values: Record<string, Record<string, string | number>> = {
         nc: NO_CLIP,
         t: TEXT
     },
+    /**
+     * Mask-composite
+     */
     mcm: {
         a: ADD,
         s: SUBTRACT,
         i: INTERSECT,
         e: EXCLUDE
     },
+    /**
+     * Mask-type
+     */
     mtp: {
         a: ALPHA,
         l: LUMINANCE
     },
-    // mask-mode
+    /**
+     * Mask-mode
+     */
     mm: {
         a: ALPHA,
         l: LUMINANCE,
         m: MATCH_SOURCE
     },
-    // background-blend-mode
+    /**
+     * Background-blend-mode
+     */
     bgbm: {
         n: NORMAL,
         m: 'multiply',
@@ -863,11 +1399,17 @@ export const values: Record<string, Record<string, string | number>> = {
         hl: HARD_LIGHT,
         sl: SOFT_LIGHT
     },
+    /**
+     * Background-att
+     */
     bga: {
         s: SCROLL,
         f: FIXED,
         l: LOCAL
     },
+    /**
+     * Line-style
+     */
     ls: {
         no: NONE,
         dt: DOTTED,
@@ -880,12 +1422,13 @@ export const values: Record<string, Record<string, string | number>> = {
         r: RIDGE,
         g: GROOVE
     },
-    usz: {
-        min: MIN_CONTENT,
-        max: MAX_CONTENT,
-        fit: FIT_CONTENT,
-        no: 0,
-        a: AUTO
+    /**
+     * Container-type
+     */
+    cnt: {
+        n: NORMAL,
+        s: SIZE,
+        is: INLINE_SIZE
     }
 };
 
@@ -1130,7 +1673,7 @@ export const keys: Record<string, string> = {
     obf: OBJECT_FIT,
     obp: OBJECT_POSITION,
     // view
-    cnt: CONTENT,
+    con: CONTENT,
     ov: OVERFLOW,
     ovx: OVERFLOW_X,
     ovy: OVERFLOW_Y,
@@ -1141,6 +1684,8 @@ export const keys: Record<string, string> = {
     zm: ZOOM,
     lg: LINEAR_GRADIENT,
     inf: INFINITE,
+    cnt: CONTAINER_TYPE,
+    cnn: CONTAINER_NAME,
     r_: ':root',
     '': '*',
     /**
@@ -1227,7 +1772,10 @@ export const keys: Record<string, string> = {
     bd_: '::backdrop',
     ba_: '&::before,&::after',
     light_: '@media(prefers-color-scheme: light)',
-    dark_: '@media(prefers-color-scheme: dark)'
+    dark_: '@media(prefers-color-scheme: dark)',
+    red_m_: '@media (prefers-reduced-motion)',
+    ori_l_: '@media (orientation: landscape)',
+    ori_p_: '@media (orientation: portrait)'
 };
 
 export type IGlobalValues = typeof values;

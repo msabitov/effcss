@@ -285,10 +285,6 @@ export interface IValues {
     // viewport values
 
     /**
-     * Viewport units
-     */
-    vu: TVariants;
-    /**
      * Viewport width
      */
     vw: TVariants;
@@ -307,10 +303,6 @@ export interface IValues {
 
     // container values
 
-    /**
-     * Container query units
-     */
-    cqu: TVariants;
     /**
      * Container query block size
      */
