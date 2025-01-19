@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { Processor } from '../src/_provider/process';
 
 const processor = new Processor({params: {}});
+const classProcessor = new Processor({params: {}, mode: 'c'});
 
 describe('BEM selectors:', () => {
   test('block:', () => {
@@ -58,6 +59,64 @@ describe('BEM selectors:', () => {
       s: {width: '20px'}, m: {width: '30px'}
     }}});
     expect(styleString).toBe('[data-cust-elem~="w-s"]{width:20px;}[data-cust-elem~="w-m"]{width:30px;}')
+  });
+});
+
+describe('BEM class selectors:', () => {
+  test('block:', () => {
+    const styleString = classProcessor.compile('cust', {c: {_: {
+      color: 'transparent'
+    }}});
+    expect(styleString).toBe('.cust{color:transparent;}')
+  });
+
+  test('element:', () => {
+    const styleString = classProcessor.compile('cust', {c: {__elem: {
+      width: '20px'
+    }}});
+    expect(styleString).toBe('.cust__elem{width:20px;}')
+  });
+
+  test('block modifier:', () => {
+    const styleString = classProcessor.compile('cust', {c: {_w_s: {
+      width: '1rem'
+    }}});
+    expect(styleString).toBe('.cust_w_s{width:1rem;}')
+  });
+
+  test('block boolean modifier:', () => {
+    const styleString = classProcessor.compile('cust', {c: {_fw_: {
+      width: '100%'
+    }}});
+    expect(styleString).toBe('.cust_fw{width:100%;}')
+  });
+
+  test('element modifier:', () => {
+    const styleString = classProcessor.compile('cust', {c: {__elem_w_s: {
+      width: '1rem'
+    }}});
+    expect(styleString).toBe('.cust__elem_w_s{width:1rem;}')
+  });
+
+  test('element boolean modifier:', () => {
+    const styleString = classProcessor.compile('cust', {c: {__elem_fw_: {
+      width: '100%'
+    }}});
+    expect(styleString).toBe('.cust__elem_fw{width:100%;}')
+  });
+
+  test('multiple block modifiers:', () => {
+    const styleString = classProcessor.compile('cust', {c: {_w: {
+      s: {width: '20px'}, m: {width: '30px'}
+    }}});
+    expect(styleString).toBe('.cust_w_s{width:20px;}.cust_w_m{width:30px;}')
+  });
+
+  test('multiple element modifiers:', () => {
+    const styleString = classProcessor.compile('cust', {c: {__elem_w: {
+      s: {width: '20px'}, m: {width: '30px'}
+    }}});
+    expect(styleString).toBe('.cust__elem_w_s{width:20px;}.cust__elem_w_m{width:30px;}')
   });
 });
 

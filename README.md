@@ -1,16 +1,36 @@
-# Effcss
+<p align="center">
+  <a href="https://effcss.surge.sh">
+    <img alt="effcss" src="https://effcss.surge.sh/logo.svg" height="72px" />
+  </a>
+</p>
+
+<h1 align="center">Effcss</h1>
+
+<div align="center">
+
+[![license](https://badgen.net/static/license/Apache%202.0/blue)](https://gitverse.ru/msabitov/effcss/content/master/LICENSE)
+[![npm latest package](https://badgen.net/npm/v/effcss)](https://www.npmjs.com/package/effcss)
+
+</div>
 
 Effcss is a next generation CSS-in-JS library based only on the browser APIs.
+
+## Links
+
+- [Docs](https://effcss.surge.sh)
+- [Repository](https://gitverse.ru/msabitov/effcss)
+- [Github mirror](https://github.com/msabitov/effcss)
+- [React demo](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
+- [Svelte demo](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html)
 
 ## Some features
 
 - zero-dependency
 - framework agnostic
-- customizable
 - runtime stylesheets generation
 - built-in BEM support
-- concise style description format
-- support switching style modes (dark mode, light mode, etc.)
+- customizable
+- support style switching
 
 ## Installation
 
@@ -19,16 +39,6 @@ Install it from npm:
 ```
 npm i effcss
 ```
-
-## Usage example
-
-See simple usage example in `demo` folder.
-You can also open demo React project on [StackBlitz](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html).
-There is also demo Svelte project on [StackBlitz](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html).
-
-## Docs
-
-The documentation is currently under active development, you can find the current version on the project's [homepage](https://effcss.surge.sh).
 
 ## Concepts
 
