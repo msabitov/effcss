@@ -1,12 +1,8 @@
 import { IStyleProvider, TStyleConfig } from "types";
 
+export const PREFIX = 'eff';
 export const SETTINGS_ID = 'effcss';
 export const COMPONENT_NAME = 'style-provider';
-
-/**
- * Get provider styles
- */
-export const getProviderStyles = () => `${COMPONENT_NAME} {display: contents;}`;
 
 /**
  * Create settings script element
@@ -46,15 +42,22 @@ export const getProvider = (root = document): IStyleProvider => root.getElements
 /**
  * Compile stylesheet
  * @param key - stylesheet key
- * @param config - style config
+ * @param config - stylesheet config
  * @param provider - style provider
  */
 export const compileStyleSheet = (key: string, config: TStyleConfig, provider: IStyleProvider = getProvider()) => provider.compileStyleSheet(key, config);
 
 /**
+ * Use stylesheet
+ * @param config - stylesheet config
+ * @param provider - style provider
+ */
+export const useStyleSheet = (config: TStyleConfig, provider: IStyleProvider = getProvider()) => provider.useStyleSheet(config);
+
+/**
  * Expand stylesheet
  * @param key - stylesheet key
- * @param config - style config
+ * @param config - stylesheet config
  * @param provider - style provider
  */
 export const expandStyleSheet = (key: string, config: string[], provider: IStyleProvider = getProvider()) => provider.expandStyleSheet(key, config);
@@ -123,6 +126,7 @@ export class StyleDispatcher {
         this.provider = getProvider(this.root);
     }
 
+    use = (config: TStyleConfig) => useStyleSheet(config, this.provider);
     compile = (key: string, config: TStyleConfig) => compileStyleSheet(key, config, this.provider);
     expand = (key: string, config: string[]) => expandStyleSheet(key, config, this.provider);
     process = (

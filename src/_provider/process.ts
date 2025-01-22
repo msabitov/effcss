@@ -21,7 +21,7 @@ import {
 // defaults
 import { defaultParams } from './constants';
 // types
-import { IStyleProcessor, IValues, TModeValues, TStyleConfig, TVariable } from 'types';
+import { IStyleProcessor, IBEMResolver, TModeValues, TStyleConfig, TVariable } from 'types';
 
 // local types
 
@@ -33,28 +33,16 @@ import { IStyleProcessor, IValues, TModeValues, TStyleConfig, TVariable } from '
  */
 export type TStyleMode = 'a' | 'c';
 
-type TPrepareSelector = (params: {
-    /**
-     * Block
-     */
-    b: string;
-    /**
-     * Element
-     */
-    e?: string;
-    /**
-     * Modifier
-     */
-    m?: string;
-    /**
-     * Modifier value
-     */
-    mv?: string;
-    /**
-     * HTML element state for modifier value activation
-     */
-    s?: string;
-}) => string;
+/**
+ * Processor constructor params
+ * @private
+ */
+interface IConstructorParams {
+    mode: TStyleMode | null;
+    prefix: string | null;
+    initkey: string | null;
+    params: Record<string, Record<string, object>>;
+}
 
 /**
  * Put value in curly braces
@@ -111,21 +99,54 @@ const oklch = ({
 const colorPostfixes = ['l', 'c', 'h', 'a'] as const;
 
 /**
+ * Class BEM resolver
+ */
+const cls: IBEMResolver = {
+    selector: ({ b, e, m, mv, s }) =>
+        `.${b}${
+            (e ? '__' + e : '') +
+            (m ? '_' + m : '') +
+            (m && mv ? ('_' + mv) : '') +
+            (s ? (':' + s) : '')}`,
+    attr: (b) => (e) => (ms) => {
+        const base = b + (e ? '__' + e : '');
+        return ({class: base + (ms ? ' ' + ms?.split(' ').map((i) => base + '_' + i.split('-').join('_')).join(' ') : '')})
+    }
+};
+
+/**
+ * Data-attribute BEM resolver
+ */
+const attr: IBEMResolver = {
+    selector: ({ b, e, m, mv, s }) =>
+        `[data-${b}${e ? '-' + e : ''}${m ? ('~="' + m + (mv ? '-' + mv : '') + (s ? ':' + s : '') + '"') : ''}]`, 
+    attr: (b) => (e) => (ms) => ({[`data-${b}${e ? ('-' + e) : ''}`]: ms || ''})
+};
+
+/**
  * Style processor
  */
-export class Processor implements IStyleProcessor{
+class Processor implements IStyleProcessor{
     /**
      * Initial styles
      */
     baseStyles: string = '';
     /**
+     * BEM selectors resolver
+     */
+    bem: IBEMResolver;
+    /**
      * Style identifiers prefix
      */
-    protected _prefix: string = 'eff';
+    protected _prefix: string | null = 'eff';
     /**
      * Style mode
      */
     protected _mode: TStyleMode = 'a';
+    /**
+     * Initial stylesheet key
+     */
+    protected _initkey: string | null = 'init';
     /**
      * Manager vars
      */
@@ -139,29 +160,16 @@ export class Processor implements IStyleProcessor{
      */
     protected _compValues: Record<string, Record<string, string | number>> = {};
 
-    /**
-     * Prepare rule selector
-     */
-    protected _prepareSelector: TPrepareSelector;
-
-    constructor(config: {
-        mode?: TStyleMode;
-        prefix?: string;
-        params: Record<string, Record<string, object>>;
-    }) {
-        const {mode, prefix, params} = config;
-        this._mode = mode || 'a';
-        this._prefix = prefix || 'eff';
-        if (this._mode === 'c') {
-            this._prepareSelector = ({ b, e, m, mv, s }) =>
-                `.${b}${
-                    (e ? '__' + e : '') +
-                    (m ? '_' + m : '') +
-                    (m && mv ? ('_' + mv) : '') +
-                    (s ? (':' + s) : '')}`;
+    constructor(config: IConstructorParams) {
+        const {
+            mode = 'a', params, prefix = 'eff', initkey = 'init'
+        } = config;
+        this._prefix = prefix;
+        this._initkey = initkey;
+        if (mode === 'c') {
+            this.bem = cls;
         } else {
-            this._prepareSelector = ({ b, e, m, mv, s }) =>
-                `[data-${b}${e ? '-' + e : ''}${m ? ('~="' + m + (mv ? '-' + mv : '') + (s ? ':' + s : '') + '"') : ''}]`;
+            this.bem = attr;
         }
         this._analyzeParams(params);
     }
@@ -253,35 +261,38 @@ export class Processor implements IStyleProcessor{
             acc[`max_${key}_`] = `@media (max-width:${val})`;
             return acc;
         }, {} as Record<string, string>);
-        this.baseStyles = this.compile('init', {c: {
-            ...modeVariables,
-            $r_: {
-                ...modeVariables._mode.root,
-                $c: '{uni.inh}',
-                $fsz: '{rem.def}',
-                $ff: '{ff.def}',
-                $: {
+        // ignores empty key
+        if (this._initkey) {
+            this.baseStyles = this.compile(this._initkey, {c: {
+                ...modeVariables,
+                $r_: {
+                    ...modeVariables._mode.root,
                     $c: '{uni.inh}',
                     $fsz: '{rem.def}',
-                    $ff: '{ff.def}'
-                }
-            },
-            ...(modeVariables._mode?.dark ? {
-                $dark_: {
-                    $r_: modeVariables._mode.dark
-                }} : {}),
-            ...(modeVariables._mode?.light ? {
-                $light_: {
-                    $r_: modeVariables._mode.light
-                }} : {}),
-        }});
+                    $ff: '{ff.def}',
+                    $: {
+                        $c: '{uni.inh}',
+                        $fsz: '{rem.def}',
+                        $ff: '{ff.def}'
+                    }
+                },
+                ...(modeVariables._mode?.dark ? {
+                    $dark_: {
+                        $r_: modeVariables._mode.dark
+                    }} : {}),
+                ...(modeVariables._mode?.light ? {
+                    $light_: {
+                        $r_: modeVariables._mode.light
+                    }} : {}),
+            }});
+        }
     }
 
     /**
      * Parse string to find selector parts
      * @param key
      */
-    protected _parseSelector(key: string) {
+    protected parseSelector = (key: string) => {
         // element
         let e;
         // modifier
@@ -297,11 +308,11 @@ export class Processor implements IStyleProcessor{
     }
 
     expandSelector(b: string, selector: string): [string, string] {
-        const {e, m, mv, s} = this._parseSelector(selector);
+        const {e, m, mv, s} = this.parseSelector(selector);
         const stateSelector = s && this._getStateSelector(s);
-        return [this._prepareSelector({
+        return [this.bem.selector({
             b, e, m, mv
-        }), this._prepareSelector({
+        }), this.bem.selector({
             b, e, m, mv, s
         }) + '{' + stateSelector];
     }
@@ -341,8 +352,8 @@ export class Processor implements IStyleProcessor{
      */
     compile = (b: string, styleConfig: TStyleConfig) => {
         const { _, kf, k = {}, v = {}, c} = styleConfig;
-        const prepareSelector = this._prepareSelector.bind(this);
-        const parseSelector = this._parseSelector.bind(this);
+        const prepareSelector = this.bem.selector.bind(this);
+        const parseSelector = this.parseSelector;
         let config = merge({}, c);
         let localKeys = merge({}, k);
         let localVariants = merge({_:{} as Record<string, string>}, v);
@@ -538,4 +549,12 @@ export class Processor implements IStyleProcessor{
         }
         return varStr + kfStr + Object.entries(config).reduce((acc, item) => acc + stringify(...item), '');
     };
+}
+
+/**
+ * Create Style Processor instance
+ * @param params
+ */
+export function createProcessor(params: IConstructorParams): IStyleProcessor {
+    return new Processor(params);
 }

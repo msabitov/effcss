@@ -74,6 +74,63 @@ export interface IStyleManager {
 }
 
 /**
+ * BEM selector resolver
+ */
+type TGetBEMSelector = (params: {
+    /**
+     * Block
+     */
+    b: string;
+    /**
+     * Element
+     */
+    e?: string;
+    /**
+     * Modifier
+     */
+    m?: string;
+    /**
+     * Modifier value
+     */
+    mv?: string;
+    /**
+     * HTML element state for modifier activation
+     */
+    s?: string;
+}) => string;
+
+/**
+ * BEM attr resolver
+ */
+type TGetBEMAttr= (
+    /**
+     * Block
+     */
+    b: string
+) => (
+    /**
+     * Element
+     */
+    e?: string
+) => (
+    /**
+     * Modifier
+     */
+    m?: string
+) => Record<string, string | undefined>;
+
+export interface IBEMResolver {
+    /**
+     * Selector resolver
+     */
+    selector: TGetBEMSelector;
+    /**
+     * Attribute resolver
+     */
+    attr: TGetBEMAttr;
+}
+
+/**
  * Style processor
  * @description
  * Class that compiles style object to CSSStylesheet string content
@@ -83,6 +140,10 @@ export interface IStyleProcessor {
      * Basic styles
      */
     baseStyles: string;
+    /**
+     * BEM resolver
+     */
+    bem: IBEMResolver;
     /**
      * Create expanded selector with state
      * @param b
@@ -102,7 +163,12 @@ export interface IStyleProvider extends HTMLElement {
     processor?: IStyleProcessor;
 
     /**
-     * Compile sheet
+     * Use stylesheet
+     */
+    useStyleSheet(config: TStyleConfig): ReturnType<IBEMResolver['value']> | void;
+
+    /**
+     * Compile stylesheet
      */
     compileStyleSheet(key: string, config: TStyleConfig): boolean | void;
 

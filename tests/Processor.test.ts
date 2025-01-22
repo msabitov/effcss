@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { Processor } from '../src/_provider/process';
+import { createProcessor } from '../src/_provider/process';
 
-const processor = new Processor({params: {}});
-const classProcessor = new Processor({params: {}, mode: 'c'});
+const processor = createProcessor({params: {}});
+const classProcessor = createProcessor({params: {}, mode: 'c'});
 
 describe('BEM selectors:', () => {
   test('block:', () => {
@@ -233,5 +233,50 @@ describe('Object values:', () => {
       c: {_w: '&sz[s,m]=>width:{1}px'
     }});
     expect(styleString.includes('[data-cust~="w-s"]{width:20px;}') && !styleString.includes('[data-cust~="w-l"]')).toBeTruthy();
+  });
+});
+
+
+describe('BEM data-attribute resolver:', () => {
+  test('Block:', () => {
+    const styleString = processor.bem.attr('cust')()();
+    expect(styleString['data-cust']).toBe('');
+  });
+
+  test('Block modifiers:', () => {
+    const styleString = processor.bem.attr('cust')()('w-z sm');
+    expect(styleString['data-cust']).toBe('w-z sm');
+  });
+
+  test('Element:', () => {
+    const styleString = processor.bem.attr('cust')('elem')();
+    expect(styleString['data-cust-elem']).toBe('');
+  });
+
+  test('Element modifiers:', () => {
+    const styleString = processor.bem.attr('cust')('elem')('w-z sm');
+    expect(styleString['data-cust-elem']).toBe('w-z sm');
+  });
+});
+
+describe('BEM className resolver:', () => {
+  test('Block:', () => {
+    const styleString = classProcessor.bem.attr('cust')()();
+    expect(styleString.class).toBe('cust');
+  });
+
+  test('Block modifiers:', () => {
+    const styleString = classProcessor.bem.attr('cust')()('w-z sm');
+    expect(styleString.class).toBe('cust cust_w_z cust_sm');
+  });
+
+  test('Element:', () => {
+    const styleString = classProcessor.bem.attr('cust')('elem')();
+    expect(styleString.class).toBe('cust__elem');
+  });
+
+  test('Element modifiers:', () => {
+    const styleString = classProcessor.bem.attr('cust')('elem')('w-z sm');
+    expect(styleString.class).toBe('cust__elem cust__elem_w_z cust__elem_sm');
   });
 });

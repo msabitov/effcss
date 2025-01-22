@@ -3,7 +3,7 @@ import { IStyleManager, TStyleConsumer } from 'types';
 /**
  * Style manager
  */
-export class Manager implements IStyleManager {
+class Manager implements IStyleManager {
     /**
      * Stylesheets dict
      */
@@ -148,4 +148,12 @@ export class Manager implements IStyleManager {
             return acc;
         }, []);
     }
+}
+
+/**
+ * Create Style Manager instance
+ * @param params
+ */
+export function createManager(params: Record<string, string>): IStyleManager {
+    return new Manager(params);
 }
