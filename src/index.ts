@@ -2,12 +2,15 @@
 import {
     IStyleProvider,
     IStyleManager,
-    TStyleConfig,
-    IStyleProcessor
-} from 'types';
-// provider deps
-import { createProcessor, TStyleMode } from './_provider/process';
+    TStyleSheetConfig,
+    IStyleProcessor,
+    IStyleConfig,
+    TStyleMode
+} from './types';
+// provider
+import { createProcessor } from './_provider/process';
 import { createManager } from './_provider/manage';
+// utils
 import { COMPONENT_NAME, PREFIX, SETTINGS_ID } from './utils';
 
 /**
@@ -16,15 +19,30 @@ import { COMPONENT_NAME, PREFIX, SETTINGS_ID } from './utils';
 const getProviderStyles = () => `${COMPONENT_NAME} {display: contents;}`;
 
 /**
- * Define style provider
+ * Create {@link IStyleProcessor | style processor}
+ */
+export const createStyleProcessor = createProcessor;
+
+/**
+ * Create {@link IStyleManager | style manager}
+ */
+export const createStyleManager = createManager;
+
+/**
+ * Define style provider as custom element
  */
 export function defineStyleProvider(props?: {
+    /**
+     * Element name
+     * @defaultValue style-provider
+     */
     name?: string;
-    config?: {
-        params?: object;
-        styles?: object;
-        ext?: object;
-    }
+    /**
+     * Style config
+     * @description
+     * Will be used for initial stylesheets generation
+     */
+    config?: IStyleConfig;
 }) {
     customElements.define(props?.name || COMPONENT_NAME, class extends HTMLElement implements IStyleProvider {
         /**
@@ -39,7 +57,7 @@ export function defineStyleProvider(props?: {
         /**
          * Stylesheet sources
          */
-        protected _sources = new Map<TStyleConfig, string>();
+        protected _sources = new Map<TStyleSheetConfig, string>();
 
         /**
          * Settings element id
@@ -110,7 +128,7 @@ export function defineStyleProvider(props?: {
          * @param key - stylesheet key
          * @param config - stylesheet config
          */
-        compileStyleSheet = (key: string, config: TStyleConfig) => {
+        compileStyleSheet = (key: string, config: TStyleSheetConfig) => {
             const styleString = this.processor?.compile(
                 key,
                 config
@@ -126,7 +144,7 @@ export function defineStyleProvider(props?: {
          * @param config - stylesheet config
          * @returns BEM resolver
          */
-        useStyleSheet = (config: TStyleConfig) => {
+        useStyleSheet = (config: TStyleSheetConfig) => {
             let key = this._sources.get(config);
             if (!key) {
                 key = this.prefix + this._sources.size.toString(36);
@@ -146,13 +164,14 @@ export function defineStyleProvider(props?: {
                 const next = new Set(selectors);
                 const diff = next.difference(expanded);
                 const size = diff.size;
-                if (size && this.processor) {
+                if (size && this.processor?.expandSelector) {
+                    const expand = this.processor.expandSelector;
                     diff.keys().forEach((selector) => {
-                        const [initSelector, expSelector] = this.processor.expandSelector(key, selector);
+                        const [initSelector, expSelector] = expand(key, selector);
                         this.manager?.expandRule(key, initSelector, expSelector);
                     });
+                    return size;
                 }
-                return size;
             }
         }
 
@@ -161,7 +180,7 @@ export function defineStyleProvider(props?: {
          * @param styles - stylesheets dictionary
          * @param ext - stylesheets extra selectors
          */
-        processStyles = (styles?: Record<string, TStyleConfig>, ext?: Record<string, string[]>) => {
+        processStyles = (styles?: Record<string, TStyleSheetConfig>, ext?: Record<string, string[]>) => {
             if (styles) {
                 for (let key in styles) {
                     const styleConfig = styles[key];

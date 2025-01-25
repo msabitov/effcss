@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 const c = ['sz', 'perc'];
 const bc = ['cqb', 'cqmin', 'cqmax'];
@@ -14,4 +14,4 @@ export default {
         _mini: [...c.map((item) => `&${item}=>{mini}:{1}`), ...ic.map((item) => `&${item}=>{0}${item}|{mini}:{1}`), ...vc.map((item) => `&${item}=>{0}${item}|{mini}:{1}`)],
         _ar: '&rat=>{ar}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

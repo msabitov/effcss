@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
@@ -12,4 +12,4 @@ export default {
         _r: '&rep=>{bgr}:{1}',
         _sz: '&csz[cv,cn,a]=>{bgsz}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

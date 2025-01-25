@@ -1,10 +1,10 @@
-import { TModeValues } from 'types';
+import { TDisplayModeValues } from '../types';
 import { values } from '../css/dict';
 
 /**
  * Default style params
  */
-export const defaultParams: TModeValues = {
+export const defaultParams: TDisplayModeValues = {
     /**
      * Light mode
      */

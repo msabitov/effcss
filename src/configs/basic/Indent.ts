@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
@@ -17,4 +17,4 @@ export default {
         _pr: '&sp=>{pr}:{1}',
         _pb: '&sp=>{pb}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

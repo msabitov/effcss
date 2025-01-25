@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     _: {
@@ -58,4 +58,4 @@ export default {
             f: '{tfs}:flat'
         }
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

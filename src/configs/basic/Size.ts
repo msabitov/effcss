@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 const c = ['sz', 'perc'];
 const wc = ['cqw', 'cqmin', 'cqmax'];
@@ -16,4 +16,4 @@ export default {
         _minh: [...c.map((item) => `&${item}=>{minh}:{1}`), ...hc.map((item) => `&${item}=>{0}${item}|{minh}:{1}`), ...hv.map((item) => `&${item}=>{0}${item}|{minh}:{1}`)],
         _ar: '&rat=>{ar}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

@@ -1,4 +1,4 @@
-import { IStyleManager, TStyleConsumer } from 'types';
+import { IStyleManager, TStyleConsumer } from '../types';
 
 /**
  * Style manager
@@ -146,13 +146,14 @@ class Manager implements IStyleManager {
                 acc.push(listener);
             }
             return acc;
-        }, []);
+        }, [] as WeakRef<TStyleConsumer>[]);
     }
 }
 
 /**
- * Create Style Manager instance
- * @param params
+ * Create {@link IStyleManager | style manager}
+ * @param params - manager params
+ * @returns IStyleManager
  */
 export function createManager(params: Record<string, string>): IStyleManager {
     return new Manager(params);

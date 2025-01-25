@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     _: {
@@ -22,4 +22,4 @@ export default {
         _cw: '&sz=>{cw}:{1}',
         _cc: '&sp=>{cc}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

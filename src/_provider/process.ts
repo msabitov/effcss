@@ -21,26 +21,21 @@ import {
 // defaults
 import { defaultParams } from './constants';
 // types
-import { IStyleProcessor, IBEMResolver, TModeValues, TStyleConfig, TVariable } from 'types';
+import {
+    IStyleProcessor, IBEMResolver, TDisplayModeValues,
+    TStyleSheetConfig, TVariable, TStyleMode
+} from '../types';
 
 // local types
-
-/**
- * Style generation mode
- * @description
- * `a` - attributes
- * `c` - classes
- */
-export type TStyleMode = 'a' | 'c';
 
 /**
  * Processor constructor params
  * @private
  */
 interface IConstructorParams {
-    mode: TStyleMode | null;
-    prefix: string | null;
-    initkey: string | null;
+    mode?: TStyleMode | null;
+    prefix?: string | null;
+    initkey?: string | null;
     params: Record<string, Record<string, object>>;
 }
 
@@ -150,7 +145,7 @@ class Processor implements IStyleProcessor{
     /**
      * Manager vars
      */
-    protected _params: TModeValues = defaultParams;
+    protected _params: TDisplayModeValues = defaultParams;
     /**
      * Dictionary keys
      */
@@ -350,11 +345,11 @@ class Processor implements IStyleProcessor{
      * @param styleConfig
      * @param param
      */
-    compile = (b: string, styleConfig: TStyleConfig) => {
+    compile = (b: string, styleConfig: TStyleSheetConfig) => {
         const { _, kf, k = {}, v = {}, c} = styleConfig;
         const prepareSelector = this.bem.selector.bind(this);
         const parseSelector = this.parseSelector;
-        let config = merge({}, c);
+        let config = merge({}, c) as Record<string, string | number | object | unknown>;
         let localKeys = merge({}, k);
         let localVariants = merge({_:{} as Record<string, string>}, v);
         let varStr = '';
@@ -418,9 +413,9 @@ class Processor implements IStyleProcessor{
                 const [key, partKey] = content.split('.');
                 if (partKey) {
                     const variant = getVariant(key);
-                    return variant?.[partKey] || variant?.def;
+                    return '' + (variant?.[partKey] || variant?.def || '');
                 } else {
-                    return getKey(key);
+                    return '' + (getKey(key) || '');
                 }
             });
         }
@@ -435,7 +430,9 @@ class Processor implements IStyleProcessor{
             for (let valIndex in valItems) {
                 const valItem = valItems[valIndex];
                 const [pre, post] = valItem.split('=>');
-                const [_, key, filter] = pre.match(/(\w+)(\[[\w,]+\])?/);
+                const prerMatch = pre.match(/(\w+)(\[[\w,]+\])?/);
+                if (!prerMatch) continue;
+                const [_, key, filter] = prerMatch;
                 const variant = getVariant(key);
                 if (!variant) continue;
                 obj = variant;
@@ -452,7 +449,7 @@ class Processor implements IStyleProcessor{
                         resKey = '';
                     }
                     entries = entries.map(([key, val]) => {
-                        return [resKey.replace('{0}', key) || key, interpolate(resVal.replaceAll('{1}', val))];
+                        return [resKey.replace('{0}', key) || key, interpolate(resVal.replaceAll('{1}', '' + val))];
                     });
                 }
                 if (filterKeys || post) {
@@ -471,7 +468,7 @@ class Processor implements IStyleProcessor{
          */
         function stringify(
             key: string,
-            value: Record<string, string | number | Record<string, string | number>> | string | number | undefined,
+            value: object | string | number | undefined | unknown,
             parent?: string
         ): string {
             let resKey = '' + key;
@@ -525,12 +522,12 @@ class Processor implements IStyleProcessor{
                 }
             } else {
                 let strVal = '' + value;
-                 if(strVal?.startsWith?.('&')) {
+                if(strVal?.startsWith?.('&')) {
                     return stringify(resKey, transform(strVal.slice(1)), parent);
                 } else if(strVal?.includes?.('{')) {
                     return stringify(resKey, interpolate(strVal), parent);
                 } else {
-                    return propVal(resKey,value);
+                    return propVal(resKey, strVal);
                 }
             }
         }
@@ -552,8 +549,9 @@ class Processor implements IStyleProcessor{
 }
 
 /**
- * Create Style Processor instance
- * @param params
+ * Create {@link IStyleProcessor | style processor}
+ * @param params - processor params
+ * @returns IStyleProcessor
  */
 export function createProcessor(params: IConstructorParams): IStyleProcessor {
     return new Processor(params);

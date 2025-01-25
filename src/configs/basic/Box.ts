@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 import { comma, space } from '../../css/functions';
 
 const size = '{_.sz}';
@@ -62,4 +62,4 @@ export default {
         },
         _bsz: '&box[c,b]=>{bsz}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

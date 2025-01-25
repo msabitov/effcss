@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
@@ -19,4 +19,4 @@ export default {
         _ser: '&rad=>{bser}:{1}',
         _eer: '&rad=>{beer}:{1}',
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

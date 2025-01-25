@@ -1,6 +1,6 @@
 import { comma, space, atKeyframes } from '../../css/functions';
 import { argsToDeg, rotateX, rotateY, scale, scale3d, scaleX, translate3d, translateZ, perspective } from '../../css/functions';
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export interface IKeyframesConfig {
     an:
@@ -87,7 +87,7 @@ const PERSP_25REM = perspective(25 + 'rem');
 const getAnimations = (names: string[]) => names.reduce((acc, name) => {
         acc['_' + name + '_'] = {$an: `{kf_${name}}`};
         return acc;
-    }, {});
+    }, {} as Record<string, object>);
 
 export default {
     kf: {
@@ -442,4 +442,4 @@ export default {
         SLIDE_OUT_RIGHT,
         SLIDE_OUT_UP
     ])
-} as TStyleConfig;
+} as TStyleSheetConfig;

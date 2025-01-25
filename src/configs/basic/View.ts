@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
@@ -11,4 +11,4 @@ export default {
         _zi: '&zi=>{zi}:{1}',
         _cv: '&v[v,h,a]=>{v}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

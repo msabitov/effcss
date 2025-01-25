@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
@@ -11,4 +11,4 @@ export default {
         _sz: '&csz[cv,cn,a]=>{msz}:{1}',
         _t: '&mtp=>{mtp}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

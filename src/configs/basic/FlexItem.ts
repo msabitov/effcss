@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
@@ -8,4 +8,4 @@ export default {
         _fb: '&fb=>{fb}:{1}',
         _o: '&fo=>{ord}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

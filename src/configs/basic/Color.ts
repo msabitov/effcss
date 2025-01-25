@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     _: {
@@ -51,4 +51,4 @@ export default {
             $st: '{_.s}'
         }
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

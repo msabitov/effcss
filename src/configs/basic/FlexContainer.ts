@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
@@ -12,4 +12,4 @@ export default {
         _ai: '&ali[c,st,b,fs,fe]=>{ai}:{1}',
         _ac: '&ali[c,st,sb,sa,se,fs,fe]=>{ac}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

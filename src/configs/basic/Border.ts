@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     _: {
@@ -35,4 +35,4 @@ export default {
         // style
         _s: '&lst=>{bs}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

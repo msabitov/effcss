@@ -1,5 +1,5 @@
 import { comma, pseudoActive, pseudoFocus, pseudoHover, pseudoLink, pseudoVisited, pseudoWhere } from '../../css/functions';
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
@@ -36,4 +36,4 @@ export default {
             $o: 'none'
         }
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

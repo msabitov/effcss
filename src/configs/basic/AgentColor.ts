@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     _: {
@@ -29,4 +29,4 @@ export default {
             $ctc: '{_.cr}'
         }
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

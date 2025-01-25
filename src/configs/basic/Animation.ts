@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
@@ -10,4 +10,4 @@ export default {
         _ic: '&ic=>{aic}:{1}',
         _tf: '&ttf=>{atf}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

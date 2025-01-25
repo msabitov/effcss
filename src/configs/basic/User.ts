@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
@@ -8,4 +8,4 @@ export default {
         _res: '&res=>{res}:{1}',
         _cur: '&cur=>{cur}:{1}'
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

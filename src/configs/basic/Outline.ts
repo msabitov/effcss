@@ -1,4 +1,4 @@
-import { TStyleConfig } from 'types';
+import { TStyleSheetConfig } from '../../types';
 
 export default {
     _: {
@@ -17,4 +17,4 @@ export default {
         _os: '&lst=>{os}:{1}',
         _ow: '&th=>{ow}:{1}',
     }
-} as TStyleConfig;
+} as TStyleSheetConfig;

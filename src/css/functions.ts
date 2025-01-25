@@ -28,16 +28,16 @@ export const parentheses = (val: string | number) => `(${val})`;
  * @param target
  * @param transform 
  */
-export const transformer = <K extends string, T, V>(
+export const transformer = <K extends string, T extends (string | number), V extends (string | number)>(
     target: Record<K, T>,
     transform: (val: [string | number, T]) => [string | number, V]
-) => Object.fromEntries(Object.entries(target).map((entry) => transform(entry))) as Record<K, V>;
+) => Object.fromEntries(Object.entries(target).map((entry) => transform(entry as [string, T]))) as Record<K, V>;
 /**
  * Value transformer
  * @param target
  * @param transformVal
  */
-export const valTransformer = <K extends string, T, V>(
+export const valTransformer = <K extends string, T extends (string | number), V extends (string | number)>(
     target: Record<K, T>,
     handler: (val: T) => V
 ) => transformer(target, (entry) => [entry[0], handler(entry[1])]);
