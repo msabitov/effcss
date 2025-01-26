@@ -22,6 +22,7 @@ Effcss is a next generation CSS-in-JS library based only on the browser APIs.
 - [Github mirror](https://github.com/msabitov/effcss)
 - [React demo](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
 - [Svelte demo](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html)
+- [Vue demo](https://stackblitz.com/edit/vitejs-vue-effcss?file=index.html)
 
 ## Some features
 
@@ -50,24 +51,18 @@ Effcss consists of two parts - **style provider** and **style config**.
   <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
 ```
 
-Or you can use provider script with all library style configs included:
-
-```html
-  <script src="https://unpkg.com/effcss/dist/build/define-provider-with-configs.min.js" crossorigin="anonymous"></script>
-```
-
-**Style config** is the dynamic part that configures the behavior of the web component and defines the initial styles of the page. **Style config** consists of 3 fields:
+**Style config** is the dynamic part that configures the behavior of the web component and defines the initial styles of the page. **Style config** consists of 3 optional fields:
 - styles - initial stylesheets configs;
 - ext - initial expanded rules for stylesheets;
-- params - custom global values for interpolation. Params contains style modes, the mandatory mode is `root`;
+- params - custom global values for interpolation, separated by display modes, the mandatory mode is `root`;
 
 This **style config** can be defined in at least two ways:
 - it can be passed to the `<style-provider>` definition function;
-- it can be specified in a separate script tag text content in the JSON format;
-
-The second option is more flexible as it allows you to collect the config both on the server side and on the client side.
+- it can be specified inside a separate script tag  in the JSON forma (more flexible as it allows to collect the config both on the server side and on the client side).
 
 After the first render, styles can be added/changed via the `StyleDispatcher` class or directly via `<style-provider>` methods:
+
+**main.js**
 
 ```jsx
 import { StyleDispatcher } from "effcss/utils";
@@ -78,97 +73,51 @@ const root = createRoot(document.getElementById('root'));
 root.render(<App styleDispatcher={styleDispatcher}/>);
 ```
 
-## Customization
+**App.js**
 
-You can add your own stylesheets configs. While you can write arbitrary rules and selectors, the recommended way is to use the **BEM methodology**. Block key for each style config is its key inside `styles` provider settings. A style config is an object like this:
+```jsx
+import { useRef } from 'react'
 
-```js
-// in style config it is in 'block' field,
-// so in BEM selector block will be 'block'
-export default {
-  // vars
-	_: {
-    // it will create variable, add key in `k._ar`, add value in `v._.ar`
-    // by default variable doesnt inherits and has syntax '"*"'
-    ar: {
-      // initial value
-      ini: 0.5
-    },
-    back: {
-      // creates `oklch()` components variables: l, c, h, a,
-      // so there will be 5 vars: --eff-block-backl, --eff-block-backc, ...
-    	typ: 'c'
-    }
-  },
-  // local keys for interpolation
-  k: {
-  	ct: 'container-type'
-  },
-  // local values for interpolation
-  v: {
-  	h: {
-      s: 25,
-      m: 50,
-      l: 75
-    }
-  },
-  // rules config
+const cardStyle = {
   c: {
-    // block root selector - [data-block] {...}
-  	_: {
-        // keys which starts with '$' will be replaced by interpolation;
-        // there is no 'bgc' in local keys so it will be used from global dictionary;
-        // result will be `background-color: transparent;`
-        // you can find global dictionary in `effcss/css/dict`
-        $bgc: 'transparent',
-      	// variable names starts with '$_'
-      	// result will be `--eff-block-ar: 1;`
-      	$_ar: 1,
-        // special dict keys and with '_'
-        // nested selectors except starting with '@' will be prefixed by '&'
-        // result will be `[data-block] {&:hover {...}}`
-        $h_: {
-        	border: '2px solid black'
-        }
+    _: {
+      $dis: 'flex',
+      $jc: 'center'
     },
-    // block element selector - [data-`block`-e] {...}
-  	__e: {
-      // values which contains "{" will be replaced by interpolation;
-      // there is no 'uni' in local values so it will be used from global dictionary;
-      // result will be `width: inherit;`
-      // you can find global dictionary in `effcss/css/dict`
-    	width: '{uni.inh}',
-      // CSS properties must be written with dashes!
-      // interpolation from '_.ar' will get CSS variable value
-      // result will be `aspect-ratio: var(--eff-block-ar);`
-      'aspect-ratio': '{_.ar}'
+    __logo: {
+      $p: '2em'
     },
-    // block boolean modifier - [data-block~="sm"] {...}
-    _sm_: {
-    	...
-    },
-    // element boolean modifier - [data-block-e~="lg"] {...}
-    __e_lg_: {
-    	...
-    },
-    // multiple block modifiers
-    // result will be `[data-block~="sz-s"] {...};[data-`block`~="sz-m"] {...};`
-    _sz: {
-    	s: {
-      	$w: '20px'
-      },
-      m: {
-      	$w: '40px'
-      }
-    },
-    // multiple block modifiers from transformed value
-    // transformer string always starts with '&'
-    // h[s,m] means to get `h` value, filter it with keys [s,m]
-    // in the right side {0} - is entry key, {1} - is entry value,
-    // other {..} - interpolation keys/values
-    // transformed entry splitted by '|', if there is no '|', only value will be evaluated
-    // result will be `[data-block~="csz-sh"] {height:25px;}...`
-    _csz: '&h[s,m]=>{0}h|{h}:{1}px'
+    __logo_c_: {
+      $c: '#888'
+    }
   }
+};
+
+export const App = (props) => {
+  const { styleDispatcher } = props;
+
+  const stylesRef = useRef();
+  if (!stylesRef.current) {
+    const bem = styleContext.use(cardStyle);
+    stylesRef.current = {
+      // just block selector
+      block: bem()(),
+      // element selector
+      logo: bem('logo')(),
+      // element with modifiers
+      logoC: bem('logo')('c'),
+    };
+  }
+  const styles = stylesRef.current;
+
+  // apply attributes to appropriate nodes
+  return <div {...styles.block}>
+    <div {...styles.logo}>
+      ...
+    </div>
+  </div>
+
 }
 ```
+
+For more information, see the [documentation](https://effcss.surge.sh)

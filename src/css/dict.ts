@@ -1697,6 +1697,10 @@ export const keys: Record<string, string> = {
      */
     f_: ':focus',
     /**
+     * :focus-visible
+     */
+    fv_: ':focus-visible',
+    /**
      * :active
      */
     a_: ':active',
@@ -1720,6 +1724,14 @@ export const keys: Record<string, string> = {
      * :disabled
      */
     d_: ':disabled',
+    /**
+     * :required
+     */
+    rq_: ':required',
+    /**
+     * :optional
+     */
+    o_: ':optional',
 
     // collections
 
@@ -1771,6 +1783,9 @@ export const keys: Record<string, string> = {
      */
     bd_: '::backdrop',
     ba_: '&::before,&::after',
+
+    // media queries
+
     light_: '@media(prefers-color-scheme: light)',
     dark_: '@media(prefers-color-scheme: dark)',
     red_m_: '@media (prefers-reduced-motion)',
