@@ -1,5 +1,13 @@
 import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
+import json from './package.json' with { type: 'json' };
+
+const banner = `/*
+* Effcss v${json.version}
+* {@link ${json.repository.url}}
+* Copyright (c) Marat Sabitov
+* @license ${json.license}
+*/`;
 
 export default [
     {
@@ -29,6 +37,7 @@ export default [
         output: {
             file: 'dist/build/define-provider.min.js',
             format: 'es',
+            banner,
             plugins: [
                 terser(),
             ]
@@ -46,6 +55,7 @@ export default [
         output: {
             file: 'dist/build/define-provider-with-configs.min.js',
             format: 'es',
+            banner,
             plugins: [
                 terser(),
             ]
