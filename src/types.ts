@@ -175,7 +175,7 @@ type TGetBEMAttr = (
     /**
      * {@link https://en.bem.info/methodology/key-concepts/#modifier | Modifiers}
      */
-    m?: string
+    m?: string | object
 ) => Record<string, string>;
 
 /**
@@ -274,6 +274,34 @@ export interface IStyleProvider {
      * @param ext - extra rules dictionary
      */
     processStyles(styles?: Record<string, TStyleSheetConfig>, ext?: Record<string, string[]>): void;
+}
+
+/**
+ * Style dispatcher
+ * @description
+ * Class that allows to directly call the style provider's methods
+ */
+export interface IStyleDispatcher {
+    /**
+     * Use stylesheet
+     * @see {@link IStyleProvider.useStyleSheet}
+     */
+    use: IStyleProvider['useStyleSheet'];
+    /**
+     * Compile stylesheet
+     * @see {@link IStyleProvider.compileStyleSheet}
+     */
+    compile: IStyleProvider['compileStyleSheet'];
+    /**
+     * Expand stylesheet
+     * @see {@link IStyleProvider.expandStyleSheet}
+     */
+    expand: IStyleProvider['expandStyleSheet'];
+    /**
+     * Process configs
+     * @see {@link IStyleProvider.processStyles}
+     */
+    process: IStyleProvider['processStyles'];
 }
 
 /**

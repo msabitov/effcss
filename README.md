@@ -13,16 +13,23 @@
 
 </div>
 
-Effcss is a next generation CSS-in-JS library based only on the browser APIs.
+Effcss is a self-confident CSS-in-JS library based only on the browser APIs.
 
 ## Links
 
 - [Docs](https://effcss.surge.sh)
 - [Repository](https://gitverse.ru/msabitov/effcss)
 - [Github mirror](https://github.com/msabitov/effcss)
-- [React demo](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
-- [Svelte demo](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html)
-- [Vue demo](https://stackblitz.com/edit/vitejs-vue-effcss?file=index.html)
+
+## Use in
+
+- [React](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
+- [Svelte](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html)
+- [Vue](https://stackblitz.com/edit/vitejs-vue-effcss?file=index.html)
+- [Preact](https://stackblitz.com/edit/vitejs-preact-effcss?file=index.html)
+- [Qwik](https://stackblitz.com/edit/vitejs-qwik-effcss?file=index.html)
+- [Solid js](https://stackblitz.com/edit/vitejs-solid-effcss?file=index.html)
+- [static project without framework](https://stackblitz.com/edit/static-effcs?file=index.html)
 
 ## Some features
 
@@ -35,17 +42,24 @@ Effcss is a next generation CSS-in-JS library based only on the browser APIs.
 
 ## Installation
 
-Install it from npm:
+Type in your terminal:
 
-```
+```sh
+# npm
 npm i effcss
+
+# pnpm
+pnpm add effcss
+
+# yarn
+yarn add effcss
 ```
 
 ## Concepts
 
 Effcss consists of two parts - **style provider** and **style config**.
 
-**Style provider** is the static part that defines special web component (by default, `<style-provider>`). It should be connected in separate script-tag inside html head or manually defined in page scripts. The easiest way is to use the provider script with unpkg:
+**Style provider** is the static part that defines special web component (by default, `<style-provider>`). One script is all it takes:
 
 ```html
   <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>

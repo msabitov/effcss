@@ -1,6 +1,39 @@
 import { describe, expect, test } from 'vitest';
 import { createProcessor } from '../src/_provider/process';
 
+type TCustomStyleSheet = {
+  '': {
+    /**
+     * Block modifier
+     */
+    w: 's' | 'l';
+    /**
+     * Block boolean modifier
+     */
+    sm: '';
+  };
+  elem: {
+    /**
+     * Element modifier
+     */
+    w: 's' | 'm' | 'l';
+    /**
+     * Element boolean modifier
+     */
+    lg: '';
+  };
+  elem2: {
+    /**
+     * Element modifier
+     */
+    h: 's' | 'm' | 'l';
+    /**
+     * Element boolean modifier
+     */
+    md: '';
+  };
+};
+
 const processor = createProcessor({params: {}});
 const classProcessor = createProcessor({params: {}, mode: 'c'});
 
@@ -239,44 +272,126 @@ describe('Object values:', () => {
 
 describe('BEM data-attribute resolver:', () => {
   test('Block:', () => {
-    const styleString = processor.bem.attr('cust')()();
-    expect(styleString['data-cust']).toBe('');
+    const styleAttr = processor.bem.attr('cust')()();
+    expect(styleAttr['data-cust']).toBe('');
   });
 
   test('Block modifiers:', () => {
-    const styleString = processor.bem.attr('cust')()('w-z sm');
-    expect(styleString['data-cust']).toBe('w-z sm');
+    const styleAttr = processor.bem.attr('cust')()('w-z sm');
+    expect(styleAttr['data-cust']).toBe('w-z sm');
+  });
+
+  test('Block object modifiers:', () => {
+    const styleAttr = processor.bem.attr('cust')()({
+      w: 's',
+      sm: ''
+    } as TCustomStyleSheet['']);
+    expect(styleAttr['data-cust']).toBe('w-s sm');
   });
 
   test('Element:', () => {
-    const styleString = processor.bem.attr('cust')('elem')();
-    expect(styleString['data-cust-elem']).toBe('');
+    const styleAttr = processor.bem.attr('cust')('elem')();
+    expect(styleAttr['data-cust-elem']).toBe('');
   });
 
   test('Element modifiers:', () => {
-    const styleString = processor.bem.attr('cust')('elem')('w-z sm');
-    expect(styleString['data-cust-elem']).toBe('w-z sm');
+    const styleAttr = processor.bem.attr('cust')('elem')('w-s sm');
+    expect(styleAttr['data-cust-elem']).toBe('w-s sm');
+  });
+
+  test('Element object modifiers:', () => {
+    const styleAttr = processor.bem.attr('cust')('elem')({
+      w: 's',
+      lg: ''
+    } as TCustomStyleSheet['elem']);
+    expect(styleAttr['data-cust-elem']).toBe('w-s lg');
+  });
+
+  test('Resolved `v`:', () => {
+    const styleAttr = processor.bem.attr('cust')('elem')({
+      w: 's',
+      lg: ''
+    } as TCustomStyleSheet['elem']);
+    expect(styleAttr.v).toBe('w-s lg');
+  });
+
+  test('Resolved `k`:', () => {
+    const styleAttr = processor.bem.attr('cust')('elem')({
+      w: 's',
+      lg: ''
+    } as TCustomStyleSheet['elem']);
+    expect(styleAttr.k).toBe('data-cust-elem');
+  });
+
+  test('Resolved destruction:', () => {
+    const styleAttr = processor.bem.attr('cust')('elem')({
+      w: 's',
+      lg: ''
+    } as TCustomStyleSheet['elem']);
+    const dest = {...styleAttr};
+    expect(!('k' in dest) && !('v' in dest)).toBeTruthy();
   });
 });
 
 describe('BEM className resolver:', () => {
   test('Block:', () => {
-    const styleString = classProcessor.bem.attr('cust')()();
-    expect(styleString.class).toBe('cust');
+    const styleAttr = classProcessor.bem.attr('cust')()();
+    expect(styleAttr.class).toBe('cust');
   });
 
   test('Block modifiers:', () => {
-    const styleString = classProcessor.bem.attr('cust')()('w-z sm');
-    expect(styleString.class).toBe('cust cust_w_z cust_sm');
+    const styleAttr = classProcessor.bem.attr('cust')()('w-s sm');
+    expect(styleAttr.class).toBe('cust cust_w_s cust_sm');
+  });
+
+  test('Block object modifiers:', () => {
+    const styleAttr = classProcessor.bem.attr('cust')()({
+      w: 's',
+      sm: ''
+    } as TCustomStyleSheet['']);
+    expect(styleAttr.class).toBe('cust cust_w_s cust_sm');
   });
 
   test('Element:', () => {
-    const styleString = classProcessor.bem.attr('cust')('elem')();
-    expect(styleString.class).toBe('cust__elem');
+    const styleAttr = classProcessor.bem.attr('cust')('elem')();
+    expect(styleAttr.class).toBe('cust__elem');
   });
 
   test('Element modifiers:', () => {
-    const styleString = classProcessor.bem.attr('cust')('elem')('w-z sm');
-    expect(styleString.class).toBe('cust__elem cust__elem_w_z cust__elem_sm');
+    const styleAttr = classProcessor.bem.attr('cust')('elem')('w-s lg');
+    expect(styleAttr.class).toBe('cust__elem cust__elem_w_s cust__elem_lg');
+  });
+
+  test('Element object modifiers:', () => {
+    const styleAttr = classProcessor.bem.attr('cust')('elem')({
+      w: 's',
+      lg: ''
+    } as TCustomStyleSheet['elem']);
+    expect(styleAttr.class).toBe('cust__elem cust__elem_w_s cust__elem_lg');
+  });
+
+  test('Resolved `v`:', () => {
+    const styleAttr = classProcessor.bem.attr('cust')('elem')({
+      w: 's',
+      lg: ''
+    } as TCustomStyleSheet['elem']);
+    expect(styleAttr.v).toBe('cust__elem cust__elem_w_s cust__elem_lg');
+  });
+
+  test('Resolved `k`:', () => {
+    const styleAttr = classProcessor.bem.attr('cust')('elem')({
+      w: 's',
+      lg: ''
+    } as TCustomStyleSheet['elem']);
+    expect(styleAttr.k).toBe('class');
+  });
+
+  test('Resolved destruction:', () => {
+    const styleAttr = classProcessor.bem.attr('cust')('elem')({
+      w: 's',
+      lg: ''
+    } as TCustomStyleSheet['elem']);
+    const dest = {...styleAttr};
+    expect(!('k' in dest) && !('v' in dest)).toBeTruthy();
   });
 });

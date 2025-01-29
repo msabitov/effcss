@@ -93,6 +93,16 @@ const oklch = ({
  */
 const colorPostfixes = ['l', 'c', 'h', 'a'] as const;
 
+const stringifyModifiers = (v: object) => Object.entries(v).reduce((acc, [mod, modv]) => {
+    acc.push(mod + (modv ? ('-' + modv) : ''));
+    return acc;
+}, [] as string[]).join(' ');
+
+const pack = (k: string, v: string) => Object.defineProperties({[k]: v}, {
+    k: {value: k},
+    v: {value: v}
+});
+
 /**
  * Class BEM resolver
  */
@@ -104,8 +114,12 @@ const cls: IBEMResolver = {
             (m && mv ? ('_' + mv) : '') +
             (s ? (':' + s) : '')}`,
     attr: (b) => (e) => (ms) => {
+        const k = 'class';
+        let v = ms || '';
+        if (typeof v === 'object') v = stringifyModifiers(v);
         const base = b + (e ? '__' + e : '');
-        return ({class: base + (ms ? ' ' + ms?.split(' ').map((i) => base + '_' + i.split('-').join('_')).join(' ') : '')})
+        v = base + (v ? ' ' + v?.split(' ').map((i) => base + '_' + i.split('-').join('_')).join(' ') : '');
+        return pack(k, v);
     }
 };
 
@@ -115,7 +129,12 @@ const cls: IBEMResolver = {
 const attr: IBEMResolver = {
     selector: ({ b, e, m, mv, s }) =>
         `[data-${b}${e ? '-' + e : ''}${m ? ('~="' + m + (mv ? '-' + mv : '') + (s ? ':' + s : '') + '"') : ''}]`, 
-    attr: (b) => (e) => (ms) => ({[`data-${b}${e ? ('-' + e) : ''}`]: ms || ''})
+    attr: (b) => (e) => (ms) => {
+        const k = `data-${b}${e ? ('-' + e) : ''}`;
+        let v = ms || '';
+        if (typeof v === 'object') v = stringifyModifiers(v);
+        return pack(k, v);
+    }
 };
 
 /**
