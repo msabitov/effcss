@@ -1,6 +1,6 @@
 import { TStyleSheetConfig } from '../../types';
 
-const c = ['sz', 'perc'];
+const c = ['sz', 'perc', 'szu'];
 const wc = ['cqw', 'cqmin', 'cqmax'];
 const wv = ['vw', 'vmin', 'vmax'];
 const hc = ['cqh', 'cqmin', 'cqmax'];

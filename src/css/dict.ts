@@ -515,6 +515,20 @@ const CONTAINER = 'container';
 const CONTAINER_TYPE = dash(CONTAINER, TYPE);
 const CONTAINER_NAME = dash(CONTAINER, 'name');
 
+// pseudo & media
+const COLON_FIRST = ':first-';
+const COLON_LAST = ':last-';
+const COLON_ONLY = ':only-';
+const CHILD = 'child';
+const OF_TYPE = 'of-type';
+const NTH_CHILD = ':nth-child';
+const PREFERS_COLOR_SCHEME = 'prefers-color-scheme';
+const AT_MEDIA = '@media';
+const ORIENTATION = 'orientation';
+const COLOR_GAMUT = 'color-gamut';
+const PREFERS_CONTRAST = 'prefers-contrast';
+const SCRIPTING = 'scripting';
+
 /**
  * Scoped unitless values
  */
@@ -707,7 +721,7 @@ export const values: Record<string, Record<string, string | number>> = {
         fit: FIT_CONTENT
     },
     /**
-     * Breakpoints
+     * Media breakpoints
      */
     bp: {
         xs: 30,
@@ -715,6 +729,16 @@ export const values: Record<string, Record<string, string | number>> = {
         md: 48,
         lg: 64,
         xl: 80
+    },
+    /**
+     * Container breakpoints
+     */
+    cbp: {
+        xs: 10,
+        sm: 20,
+        md: 30,
+        lg: 40,
+        xl: 48
     },
     /**
      * Opacity
@@ -1732,41 +1756,49 @@ export const keys: Record<string, string> = {
      * :optional
      */
     o_: ':optional',
+    /**
+     * :modal
+     */
+    m_: ':modal',
+    /**
+     * :link
+     */
+    l_: ':link',
 
     // collections
 
     /**
      * :first-child
      */
-    fc_: ':first-child',
+    fc_: COLON_FIRST + CHILD,
     /**
      * :last-child
      */
-    lc_: ':last-child',
+    lc_: COLON_LAST + CHILD,
     /**
      * :only-child
      */
-    oc_: ':only-child',
+    oc_: COLON_ONLY + CHILD,
     /**
      * :nth-child(odd)
      */
-    odd_: ':nth-child(odd)',
+    odd_: NTH_CHILD + '(odd)',
     /**
      * :nth-child(even)
      */
-    even_: ':nth-child(even)',
+    even_:  NTH_CHILD + '(even)',
     /**
      * :first-of-type
      */
-    ft_: ':first-of-type',
+    ft_: COLON_FIRST + OF_TYPE,
     /**
      * :last-of-type
      */
-    lt_: ':last-of-type',
+    lt_: COLON_LAST + OF_TYPE,
     /**
      * :only-of-type
      */
-    ot_: ':only-of-type',
+    ot_: COLON_ONLY + OF_TYPE,
 
     // pseudoelements
 
@@ -1782,15 +1814,32 @@ export const keys: Record<string, string> = {
      * ::backdrop
      */
     bd_: '::backdrop',
+    /**
+     * &::before,&::after
+     */
     ba_: '&::before,&::after',
+    /**
+     * :placeholder
+     */
+    pl_: ':placeholder',
 
     // media queries
 
-    light_: '@media(prefers-color-scheme: light)',
-    dark_: '@media(prefers-color-scheme: dark)',
-    red_m_: '@media (prefers-reduced-motion)',
-    ori_l_: '@media (orientation: landscape)',
-    ori_p_: '@media (orientation: portrait)'
+    light_: AT_MEDIA + `(${PREFERS_COLOR_SCHEME}: light)`,
+    dark_: AT_MEDIA + `(${PREFERS_COLOR_SCHEME}: dark)`,
+    red_m_: AT_MEDIA + '(prefers-reduced-motion: reduce)',
+    ori_l_: AT_MEDIA + `(${ORIENTATION}: landscape)`,
+    ori_p_: AT_MEDIA + `(${ORIENTATION}: portrait)`,
+    gam_srgb_: AT_MEDIA + `(${COLOR_GAMUT}: srgb)`,
+    gam_p3_: AT_MEDIA + `(${COLOR_GAMUT}: p3)`,
+    gam_rec_: AT_MEDIA + `(${COLOR_GAMUT}: rec2020)`,
+    con_no_: AT_MEDIA + `(${PREFERS_CONTRAST}: no-preference)`,
+    con_m_: AT_MEDIA + `(${PREFERS_CONTRAST}: more)`,
+    con_l_: AT_MEDIA + `(${PREFERS_CONTRAST}: less)`,
+    con_c_: AT_MEDIA + `(${PREFERS_CONTRAST}: custom)`,
+    scr_no_: AT_MEDIA + `(${SCRIPTING}: none)`,
+    scr_ini_: AT_MEDIA + `(${SCRIPTING}: initial-only)`,
+    scr_en_: AT_MEDIA + `(${SCRIPTING}: enabled)`,
 };
 
 export type IGlobalValues = typeof values;

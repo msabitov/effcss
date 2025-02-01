@@ -1,29 +1,12 @@
 // css
 import { keys as globalKeys } from '../css/dict';
-import {
-    toCqb,
-    toCqi,
-    toCqmax,
-    toCqmin,
-    toCqw,
-    toCqh,
-    toDeg,
-    toMs,
-    toPercent,
-    toPx,
-    toRem,
-    toSpan,
-    toVh,
-    toVmax,
-    toVmin,
-    toVw
-} from '../css/functions';
 // defaults
-import { defaultParams } from './constants';
+import { defaultParams, defaultUnits } from './constants';
 // types
 import {
     IStyleProcessor, IBEMResolver, TDisplayModeValues,
-    TStyleSheetConfig, TVariable, TStyleMode
+    TStyleSheetConfig, TVariable, TStyleMode,
+    IStyleConfig
 } from '../types';
 
 // local types
@@ -36,7 +19,8 @@ interface IConstructorParams {
     mode?: TStyleMode | null;
     prefix?: string | null;
     initkey?: string | null;
-    params: Record<string, Record<string, object>>;
+    params?: IStyleConfig['params'];
+    units?: IStyleConfig['units'];
 }
 
 /**
@@ -137,6 +121,44 @@ const attr: IBEMResolver = {
     }
 };
 
+const initialize = ({params, units}: {
+    params?: IStyleConfig['params'];
+    units?: IStyleConfig['units'];
+}) => {
+    let values = defaultParams;
+    let settingsUnits = {...defaultUnits, ...(units || {})};
+    if (params) {
+        // apply input params
+        for (const key in params) {
+            values[key] = merge(values[key] || {}, params[key]);
+        }
+    }
+    // apply units
+    for (const key in settingsUnits) {
+        values.root[key] = values.root[key] && Object.fromEntries(
+            Object.entries(values.root[key]).map(([k, v]) => [k, settingsUnits[key].replace('{1}', '' + v)])
+        );
+    }
+    // computed keys
+    const keys: Record<string, string> = {};
+    if (values.root.bp) {
+        Object.entries(values.root.bp || {}).forEach(([key, val]) => {
+            keys[`min_${key}_`] = `@media (min-width:${val})`;
+            keys[`max_${key}_`] = `@media (max-width:${val})`;
+        });
+    }
+    if (values.root.cbp) {
+        Object.entries(values.root.bp || {}).forEach(([key, val]) => {
+            keys[`cmin_${key}_`] = `@container (min-width:${val})`;
+            keys[`cmax_${key}_`] = `@container (max-width:${val})`;
+        });
+    }
+    return {
+        values,
+        keys
+    };
+};
+
 /**
  * Style processor
  */
@@ -176,7 +198,8 @@ class Processor implements IStyleProcessor{
 
     constructor(config: IConstructorParams) {
         const {
-            mode = 'a', params, prefix = 'eff', initkey = 'init'
+            mode = 'a', prefix = 'eff', initkey = 'init',
+            params, units
         } = config;
         this._prefix = prefix;
         this._initkey = initkey;
@@ -185,98 +208,42 @@ class Processor implements IStyleProcessor{
         } else {
             this.bem = attr;
         }
-        this._analyzeParams(params);
-    }
-
-    protected _analyzeParams = (params: Record<string, Record<string, object>>) => {
-        if (params) {
-            // apply input params
-            for (const key in params) {
-                this._params[key] = merge(this._params[key] || {}, params[key]);
-            }
-        }
-        const {
-            // universal
-            time, rem, szu, sz, sp, rad, th, perc, bp, fsz,
-            // text
-            lsp,
-            // transform
-            tr, sk, rot,
-            // layout
-            fb, ra, ca, ins,
-            // container
-            cqw, cqh, cqb, cqi, cqmin, cqmax,
-            // viewport
-            vw, vh, vmin, vmax
-        } = this._params.root;
-        this._params.root = merge(this._params.root, {
-            cqw: toCqw(cqw),
-            cqh: toCqh(cqh),
-            cqb: toCqb(cqb),
-            cqi: toCqi(cqi),
-            cqmin: toCqmin(cqmin),
-            cqmax: toCqmax(cqmax),
-            vw: toVw(vw),
-            vh: toVh(vh),
-            vmin: toVmin(vmin),
-            vmax: toVmax(vmax),
-            fb: toPercent(fb),
-            ra: toSpan(ra),
-            ca: toSpan(ca),
-            ins: toPercent(ins),
-            sz: merge(toRem(sz) || {}, szu),
-            sp: merge(toRem(sp) || {}, szu),
-            rad: toRem(rad),
-            th: toRem(th),
-            bp: toRem(bp),
-            fsz: toRem(fsz),
-            lsp: toRem(lsp),
-            tr: toRem(tr),
-            sk: toDeg(sk),
-            rot: toDeg(rot),
-            perc: toPercent(perc),
-            time: toMs(time),
-            rem: toPx(rem)
-        });
-        const {root, ...other} = this._params;
-        const otherEntries = Object.entries(other);
-        const modeVariables: {
-            _mode: Record<string, Record<string, string | number>>
-        } = {
-            _mode: {
-                root: {}
-            }
-        };
-        const changedVariants: Record<string, Record<string, string | number>> = {};
-        // mode loop
-        otherEntries.forEach(([key, variants]) => {
-            if (!modeVariables._mode[key]) modeVariables._mode[key] = {};
-            // mode vakues loop
-            Object.entries(variants).forEach(([dynamicVariantKey, dynVariant]) => {
-                // dynamic value loop
-                Object.entries(dynVariant).forEach(([dynKey, dynVal]) => {
-                    const varName = this._prepareVarName(dynamicVariantKey, dynKey);
-                    modeVariables._mode[key][varName] = dynVal;
-                    // create root variables
-                    if (!modeVariables._mode.root[varName]) {
-                        modeVariables._mode.root[varName] = dynVal;
-                        if (!changedVariants[dynamicVariantKey]) changedVariants[dynamicVariantKey] = {};
-                        changedVariants[dynamicVariantKey][dynKey] = `var(${varName})`;
-                    }
-                })
-                
-            })
-        });
-        // cpmputed values
-        this._compValues = changedVariants;
-        // computed keys
-        this._compKeys = Object.entries(this._params.root.bp || {}).reduce((acc, [key, val]) => {
-            acc[`min_${key}_`] = `@media (min-width:${val})`;
-            acc[`max_${key}_`] = `@media (max-width:${val})`;
-            return acc;
-        }, {} as Record<string, string>);
+        const {values, keys} = initialize({params, units});
+        this._params = values;
+        this._compKeys = keys;
+        
         // ignores empty key
         if (this._initkey) {
+            const {root, ...other} = this._params;
+            const otherEntries = Object.entries(other);
+            const modeVariables: {
+                _mode: Record<string, Record<string, string | number>>
+            } = {
+                _mode: {
+                    root: {}
+                }
+            };
+            const changedVariants: Record<string, Record<string, string | number>> = {};
+            // mode loop
+            otherEntries.forEach(([key, variants]) => {
+                if (!modeVariables._mode[key]) modeVariables._mode[key] = {};
+                // mode vakues loop
+                Object.entries(variants).forEach(([dynamicVariantKey, dynVariant]) => {
+                    // dynamic value loop
+                    Object.entries(dynVariant).forEach(([dynKey, dynVal]) => {
+                        const varName = this._prepareVarName(dynamicVariantKey, dynKey);
+                        modeVariables._mode[key][varName] = dynVal;
+                        // create root variables
+                        if (!modeVariables._mode.root[varName]) {
+                            modeVariables._mode.root[varName] = dynVal;
+                            if (!changedVariants[dynamicVariantKey]) changedVariants[dynamicVariantKey] = {};
+                            changedVariants[dynamicVariantKey][dynKey] = `var(${varName})`;
+                        }
+                    })
+                    
+                })
+            });
+            this._compValues = changedVariants;
             this.baseStyles = this.compile(this._initkey, {c: {
                 ...modeVariables,
                 $r_: {

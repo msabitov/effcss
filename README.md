@@ -17,11 +17,11 @@ Effcss is a self-confident CSS-in-JS library based only on the browser APIs.
 
 ## Links
 
-- [Docs](https://effcss.surge.sh)
+- [Docs (in development)](https://effcss.surge.sh)
 - [Repository](https://gitverse.ru/msabitov/effcss)
 - [Github mirror](https://github.com/msabitov/effcss)
 
-## Use in
+## Use with
 
 - [React](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
 - [Svelte](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html)
@@ -29,7 +29,9 @@ Effcss is a self-confident CSS-in-JS library based only on the browser APIs.
 - [Preact](https://stackblitz.com/edit/vitejs-preact-effcss?file=index.html)
 - [Qwik](https://stackblitz.com/edit/vitejs-qwik-effcss?file=index.html)
 - [Solid js](https://stackblitz.com/edit/vitejs-solid-effcss?file=index.html)
-- [static project without framework](https://stackblitz.com/edit/static-effcs?file=index.html)
+- [Lit](https://stackblitz.com/edit/vitejs-lit-effcss?file=index.html)
+- [Angular](https://stackblitz.com/edit/angular-effcss?file=src%2Findex.html)
+- [html only](https://stackblitz.com/edit/static-effcs?file=index.html)
 
 ## Some features
 
@@ -55,26 +57,15 @@ pnpm add effcss
 yarn add effcss
 ```
 
-## Concepts
+## Quick start
 
-Effcss consists of two parts - **style provider** and **style config**.
-
-**Style provider** is the static part that defines special web component (by default, `<style-provider>`). One script is all it takes:
+First you need to connect the `<style-provider>`. One script is all it takes:
 
 ```html
   <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
 ```
 
-**Style config** is the dynamic part that configures the behavior of the web component and defines the initial styles of the page. **Style config** consists of 3 optional fields:
-- styles - initial stylesheets configs;
-- ext - initial expanded rules for stylesheets;
-- params - custom global values for interpolation, separated by display modes, the mandatory mode is `root`;
-
-This **style config** can be defined in at least two ways:
-- it can be passed to the `<style-provider>` definition function;
-- it can be specified inside a separate script tag  in the JSON forma (more flexible as it allows to collect the config both on the server side and on the client side).
-
-After the first render, styles can be added/changed via the `StyleDispatcher` class or directly via `<style-provider>` methods:
+Then you only need to create the necessary styles before rendering. The easiest way to do this is via the `StyleDispatcher`:
 
 **main.js**
 
@@ -134,4 +125,4 @@ export const App = (props) => {
 }
 ```
 
-For more information, see the [documentation](https://effcss.surge.sh)
+That's all. No preprocessors or plugins

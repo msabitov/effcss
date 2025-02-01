@@ -48,11 +48,11 @@ export function defineStyleProvider(props?: {
         /**
          * Style processor
          */
-        processor?: IStyleProcessor; 
+        processor: IStyleProcessor;
         /**
          * Style manager
          */
-        manager?: IStyleManager;
+        manager: IStyleManager;
 
         /**
          * Stylesheet sources
@@ -100,13 +100,14 @@ export function defineStyleProvider(props?: {
     
         connectedCallback() {
             const settings = this.getSettings();
-            const { params, styles, ext } = settings;
+            const { params, styles, ext, units } = settings;
             const initkey = this.initkey;
             this.processor = createProcessor({
                 prefix: this.prefix,
                 mode: this.mode,
                 initkey,
-                params
+                params,
+                units
             });
             this.manager = createManager(initkey ? {
                 [initkey]: getProviderStyles() + this.processor.baseStyles
@@ -118,7 +119,7 @@ export function defineStyleProvider(props?: {
         /**
          * Get component settings
          */
-        getSettings = () => {
+        getSettings = (): IStyleConfig => {
             const textContent = document?.getElementById(this.settingsId)?.textContent;
             return textContent ? JSON.parse(textContent) : (props?.config || {});
         }

@@ -186,7 +186,7 @@ export class StyleDispatcher implements IStyleDispatcher {
     /**
      * Style provider
      */
-    provider?: IStyleProvider;
+    provider: IStyleProvider;
 
     construstor(root?: Document) {
         if (root) this.root = root;

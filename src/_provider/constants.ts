@@ -40,3 +40,41 @@ export const defaultParams: TDisplayModeValues = {
      */
     root: values
 };
+
+const toRem = '{1}rem';
+const toDeg = '{1}deg';
+const toPerc = 'calc(100% * {1})';
+const toSpan = 'span {1}';
+const toMs = '{1}ms';
+const toPx = '{1}px';
+
+export const defaultUnits: Record<string, string> = {
+    cqw: '{1}cqw',
+    cqh: '{1}cqh',
+    cqb: '{1}cqb',
+    cqi: '{1}cqi',
+    cqmin: '{1}cqmin',
+    cqmax: '{1}cqmax',
+    vw: '{1}vw',
+    vh: '{1}vh',
+    vmin: '{1}vmin',
+    vmax: '{1}vmax',
+    fb: toPerc,
+    ra: toSpan,
+    ca: toSpan,
+    ins: toPerc,
+    sz: toRem,
+    sp: toRem,
+    rad: toRem,
+    th: toRem,
+    bp: toRem,
+    cbp: toRem,
+    fsz: toRem,
+    lsp: toRem,
+    tr: toRem,
+    sk: toDeg,
+    rot: toDeg,
+    perc: toPerc,
+    time: toMs,
+    rem: toPx
+};

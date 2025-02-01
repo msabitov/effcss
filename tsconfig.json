@@ -13,6 +13,7 @@
         "baseUrl": "src",
         "declaration": true,
         "declarationDir": "./dist/types",
+        "strictPropertyInitialization": false,
         "lib": ["esnext", "DOM", "dom.iterable"]
     },
     "exclude": ["node_modules", "dist", "demo"]

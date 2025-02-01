@@ -9,6 +9,10 @@ export interface IStyleConfig {
      */
     params?: TDisplayModeValues;
     /**
+     * Global params units
+     */
+    units?: Record<string, string>;
+    /**
      * Stylesheets` configs
      */
     styles?: Record<string, TStyleSheetConfig>;
@@ -236,11 +240,11 @@ export interface IStyleProvider {
     /**
      * {@link IStyleManager | Style manager}
      */
-    manager?: IStyleManager;
+    manager: IStyleManager;
     /**
      * {@link IStyleProcessor | Style processor}
      */
-    processor?: IStyleProcessor;
+    processor: IStyleProcessor;
 
     /**
      * Use stylesheet
@@ -250,7 +254,7 @@ export interface IStyleProvider {
      * The method allows to use stylesheet without having its key.
      * It returns {@link IBEMResolver.attr | attribute resolver}, that can create BEM selectors for config passed.
      */
-    useStyleSheet(config: TStyleSheetConfig): ReturnType<IBEMResolver['attr']> | void;
+    useStyleSheet(config: TStyleSheetConfig): ReturnType<IBEMResolver['attr']>;
 
     /**
      * Compile stylesheet
@@ -258,7 +262,7 @@ export interface IStyleProvider {
      * @config - stylesheet config
      * @returns `true` if stylesheet compiled, otherwise `undefined`
      */
-    compileStyleSheet(key: string, config: TStyleSheetConfig): boolean | void;
+    compileStyleSheet(key: string, config: TStyleSheetConfig): boolean | undefined;
 
     /**
      * Expand stylesheet
