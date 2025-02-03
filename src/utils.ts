@@ -109,6 +109,14 @@ export const processStyles = (
     provider: IStyleProvider = getProvider()) => provider.processStyles(styles, ext);
 
 /**
+ * Resolve stylesheet
+ * @param key stylesheet key
+ * @param provider - style provider
+ * @see {@link IStyleProvider}
+ */
+export const resolveStyleSheet = (key: string, provider: IStyleProvider = getProvider()) => provider.resolveStyleSheet(key);
+
+/**
  * Get stylesheet from provider
  * @param key - stylesheet key
  * @param provider - style provider
@@ -226,4 +234,11 @@ export class StyleDispatcher implements IStyleDispatcher {
         styles?: Record<string, TStyleSheetConfig>,
         ext?: Record<string, string[]>
     ) => processStyles(styles, ext, this.provider);
+
+    /**
+     * Resolve stylesheet
+     * @param key - stylesheet key
+     * @see {@link resolveStyleSheet}
+     */
+    resolve = (key: string) => resolveStyleSheet(key, this.provider);
 }

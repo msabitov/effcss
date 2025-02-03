@@ -165,11 +165,11 @@ export function defineStyleProvider(props?: {
                 const next = new Set(selectors);
                 const diff = next.difference(expanded);
                 const size = diff.size;
-                if (size && this.processor?.expandSelector) {
+                if (size && this.processor.expandSelector) {
                     const expand = this.processor.expandSelector;
                     diff.keys().forEach((selector) => {
                         const [initSelector, expSelector] = expand(key, selector);
-                        this.manager?.expandRule(key, initSelector, expSelector);
+                        this.manager.expandRule(key, initSelector, expSelector);
                     });
                     return size;
                 }
@@ -195,6 +195,14 @@ export function defineStyleProvider(props?: {
                 }
             }
             return true;
+        }
+
+        /**
+         * Resolve styles
+         * @param key - stylesheet key
+         */
+        resolveStyleSheet = (key: string) => {
+            return this.processor.bem.attr(key);
         }
     })
 }

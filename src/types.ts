@@ -273,6 +273,13 @@ export interface IStyleProvider {
     expandStyleSheet(key: string, selectors: string[]): number | undefined;
 
     /**
+     * Resolve stylesheet
+     * @param key - stylesheet key
+     * @returns BEM attribute resolver for stylesheet
+     */
+    resolveStyleSheet(key: string): ReturnType<IStyleProcessor['bem']['attr']>;
+
+    /**
      * Process configs
      * @param styles - stylesheet dictionary
      * @param ext - extra rules dictionary
