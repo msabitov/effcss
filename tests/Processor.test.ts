@@ -331,6 +331,14 @@ describe('BEM data-attribute resolver:', () => {
     const dest = {...styleAttr};
     expect(!('k' in dest) && !('v' in dest)).toBeTruthy();
   });
+
+  test('Undefined modifiers:', () => {
+    const styleAttr = processor.bem.attr('cust')('elem')({
+      w: 's',
+      lg: undefined
+    } as Partial<TCustomStyleSheet['elem']>);
+    expect(styleAttr.v).toBe('w-s');
+  });
 });
 
 describe('BEM className resolver:', () => {
@@ -393,5 +401,13 @@ describe('BEM className resolver:', () => {
     } as TCustomStyleSheet['elem']);
     const dest = {...styleAttr};
     expect(!('k' in dest) && !('v' in dest)).toBeTruthy();
+  });
+
+  test('Undefined modifiers:', () => {
+    const styleAttr = classProcessor.bem.attr('cust')('elem')({
+      w: 's',
+      lg: undefined
+    } as Partial<TCustomStyleSheet['elem']>);
+    expect(styleAttr.v).toBe('cust__elem cust__elem_w_s');
   });
 });

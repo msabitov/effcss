@@ -78,7 +78,7 @@ const oklch = ({
 const colorPostfixes = ['l', 'c', 'h', 'a'] as const;
 
 const stringifyModifiers = (v: object) => Object.entries(v).reduce((acc, [mod, modv]) => {
-    acc.push(mod + (modv ? ('-' + modv) : ''));
+    if (modv !== undefined) acc.push(mod + (modv ? ('-' + modv) : ''));
     return acc;
 }, [] as string[]).join(' ');
 

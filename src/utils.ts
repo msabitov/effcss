@@ -172,15 +172,6 @@ export const getTotalRulesCount = (provider: IStyleProvider = getProvider()) =>
     Object.keys(provider?.manager?.getAll() || {}).reduce((acc, key) => acc + getRulesCount(key, provider), 0);
 
 /**
- * Change object [Symbol.toPrimitive] method
- * @param params - object which should be able to convert to a string
- */
-export const convertable = (params: Record<string | typeof Symbol.toPrimitive, string | number | Function>) => {
-    params[Symbol.toPrimitive] = function(){ return Object.entries(this).map((val) => val.join('-')).join(' ')};
-    return params;
-}
-
-/**
  * Basic class for manipulating stylesheets
  */
 export class StyleDispatcher implements IStyleDispatcher {

@@ -1,39 +1,46 @@
-import { comma, dash, space } from './functions';
+import { comma } from './functions';
 
+const _ = '-';
+const __ = ' ';
 const X = 'x';
+const _X = '-x';
 const Y = 'y';
+const _Y = '-y';
 const STATIC = 'static';
 const UP = 'up';
 const DOWN = 'down';
 const HORIZONTAL = 'horizontal';
 const VERTICAL = 'vertical';
 const TEXT = 'text';
-const TEXT_ = TEXT + '-';
+const TEXT_ = TEXT + _;
 const FONT = 'font';
+const FONT_ = FONT + _;
 const COLUMN = 'column';
+const COLUMN_ = COLUMN + _;
 const MAX = 'max';
-const MAX_ = MAX + '-';
+const MAX_ = MAX + _;
 const MIN = 'min';
-const MIN_ = MIN + '-';
+const MIN_ = MIN + _;
 const CONTENT = 'content';
 const CONTENTS = CONTENT + 's';
 const ITEMS = 'items';
+const _ITEMS = _ + ITEMS;
 const SELF = 'self';
 const DISPLAY = 'display';
 const INLINE = 'inline';
 const BLOCK = 'block';
 const SIZE = 'size';
 const RADIUS = 'radius';
-const _RADIUS = '-' + RADIUS;
+const _RADIUS = _ + RADIUS;
 const DIRECTION = 'direction';
 const OUTLINE = 'outline';
 const STYLE = 'style';
-const _STYLE = '-' + STYLE;
+const _STYLE = _ + STYLE;
 const BALANCE = 'balance';
 const END = 'end';
-const _END = '-' + END;
+const _END = _ + END;
 const START = 'start';
-const _START = '-' + START;
+const _START = _ + START;
 const CENTER = 'center';
 const DECORATION = 'decoration';
 const WORD = 'word';
@@ -47,17 +54,17 @@ const COUNT = 'count';
 const OBJECT = 'object';
 const FIT = 'fit';
 const TOP = 'top';
-const _TOP = '-' + TOP;
+const _TOP = _ + TOP;
 const LEFT = 'left';
-const _LEFT = '-' + LEFT;
+const _LEFT = _ + LEFT;
 const BOTTOM = 'bottom';
-const _BOTTOM = '-' + BOTTOM;
+const _BOTTOM = _ + BOTTOM;
 const RIGHT = 'right';
-const _RIGHT = '-' + RIGHT;
+const _RIGHT = _ + RIGHT;
 const WIDTH = 'width';
-const _WIDTH = '-' + WIDTH;
+const _WIDTH = _ + WIDTH;
 const COLOR = 'color';
-const _COLOR = '-' + COLOR;
+const _COLOR = _ + COLOR;
 const OVERFLOW = 'overflow';
 const ALIGN = 'align';
 const STOP = 'stop';
@@ -78,6 +85,7 @@ const GROOVE = 'groove';
 const VISIBILITY = 'visibility';
 const SCALE = 'scale';
 const BOX = 'box';
+const _BOX = _ + BOX;
 const BORDER = 'border';
 const POSITION = 'position';
 const SPAN = 'span';
@@ -96,7 +104,6 @@ const RELATIVE = 'relative';
 const LIST_STYLE = 'list-style';
 const Z_INDEX = 'z-index';
 const ORIGIN = 'origin';
-const BRAND = 'brand';
 const HUE = 'hue';
 const LIGHTNESS = 'lightness';
 const ALPHA = 'alpha';
@@ -122,7 +129,6 @@ const LIGHT = 'light';
 const IN = 'in';
 const OUT = 'out';
 const LINEAR = 'linear';
-const EMPTY_STRING = '""';
 const CURRENT_COLOR = 'currentColor';
 const OFFSET = 'offset';
 const HIDDEN = 'hidden';
@@ -134,15 +140,16 @@ const SHADOW = 'shadow';
 const COLLAPSE = 'collapse';
 const BEHAVIOR = 'behavior';
 const ORIENTATION = 'orientation';
+const NAME = 'name';
 
 // values
-const COLOR_SCHEME = dash(COLOR, 'scheme');
+const COLOR_SCHEME = COLOR + '-scheme';
 const BORDER_BOTTOM = BORDER + _BOTTOM;
 const BORDER_LEFT = BORDER + _LEFT;
 const BORDER_RIGHT = BORDER + _RIGHT;
 const BORDER_TOP = BORDER + _TOP;
-const BORDER_BLOCK = dash(BORDER, BLOCK);
-const BORDER_INLINE = dash(BORDER, INLINE);
+const BORDER_BLOCK = BORDER + _ + BLOCK;
+const BORDER_INLINE = BORDER + _ + INLINE;
 const BORDER_BLOCK_START = BORDER_BLOCK + _START;
 const BORDER_BLOCK_END = BORDER_BLOCK + _END;
 const BORDER_INLINE_START = BORDER_INLINE + _START;
@@ -197,26 +204,26 @@ const BORDER_INLINE_END_STYLE = BORDER_INLINE_END + _STYLE;
 const OUTLINE_COLOR = OUTLINE + _COLOR;
 const OUTLINE_WIDTH = OUTLINE + _WIDTH;
 const OUTLINE_STYLE = OUTLINE + _STYLE;
-const OUTLINE_OFFSET = dash(OUTLINE, OFFSET);
+const OUTLINE_OFFSET = OUTLINE + _ + OFFSET;
 
-const OVERFLOW_X = dash(OVERFLOW, X);
-const OVERFLOW_Y = dash(OVERFLOW, Y);
-const OBJECT_FIT = dash(OBJECT, FIT);
-const OBJECT_POSITION = dash(OBJECT, POSITION);
-const SCALE_DOWN = dash(SCALE, 'down');
+const OVERFLOW_X = OVERFLOW + _X;
+const OVERFLOW_Y = OVERFLOW + _Y;
+const OBJECT_FIT = OBJECT + _ + FIT;
+const OBJECT_POSITION = OBJECT + _ + POSITION;
+const SCALE_DOWN = SCALE + _ + DOWN;
 
-const BOX_SHADOW = dash(BOX, SHADOW);
+const BOX_SHADOW = BOX + _ + SHADOW;
 
-const PADDING_BOX = dash(PADDING, BOX);
-const BORDER_BOX = dash(BORDER, BOX);
-const CONTENT_BOX = dash(CONTENT, BOX);
-const FILL_BOX = dash(FILL, BOX);
-const STROKE_BOX = dash(STROKE, BOX);
-const VIEW_BOX = dash(VIEW, BOX);
-const NO_CLIP = dash(NO, CLIP);
-const REPEAT_X = dash(REPEAT, X);
-const REPEAT_Y = dash(REPEAT, Y);
-const NO_REPEAT = dash(NO, REPEAT);
+const PADDING_BOX = PADDING + _BOX;
+const BORDER_BOX = BORDER + _BOX;
+const CONTENT_BOX = CONTENT + _BOX;
+const FILL_BOX = FILL + _BOX;
+const STROKE_BOX = STROKE + _BOX;
+const VIEW_BOX = VIEW + _BOX;
+const NO_CLIP = NO + _ + CLIP;
+const REPEAT_X = REPEAT + _X;
+const REPEAT_Y = REPEAT + _Y;
+const NO_REPEAT = NO + _ + REPEAT;
 const PADDING_LEFT = PADDING + _LEFT;
 const PADDING_TOP = PADDING + _TOP;
 const PADDING_RIGHT = PADDING + _RIGHT;
@@ -233,62 +240,65 @@ const ROW = 'row';
 const GAP = 'gap';
 const JUSTIFY = 'justify';
 const FLEX = 'flex';
+const FLEX_ = FLEX + _;
 const ORDER = 'order';
 const BASIS = 'basis';
 const GROW = 'grow';
 const SHRINK = 'shrink';
-const PLACE_ITEMS = dash('place', ITEMS);
-const INLINE_FLEX = dash(INLINE, FLEX);
-const FLEX_BASIS = dash(FLEX, BASIS);
-const FLEX_GROW = dash(FLEX, GROW);
-const FLEX_SHRINK = dash(FLEX, SHRINK);
-const FLEX_DIRECTION = dash(FLEX, DIRECTION);
-const FLEX_WRAP = dash(FLEX, WRAP);
-const JUSTIFY_CONTENT = dash(JUSTIFY, CONTENT);
-const JUSTFY_ITEMS = dash(JUSTIFY, ITEMS);
-const ALIGN_ITEMS = dash(ALIGN, ITEMS);
-const ALIGN_CONTENT = dash(ALIGN, CONTENT);
-const ALIGN_SELF = dash(ALIGN, SELF);
-const GRID_TEMPLATE_ROWS = dash(GRID, TEMPLATE, ROW + 's');
-const GRID_TEMPLATE_COLUMNS = dash(GRID, TEMPLATE, COLUMN + 's');
-const ROW_GAP = dash(ROW, GAP);
-const COLUMN_GAP = dash(COLUMN, GAP);
-const JUSTFY_SELF = dash(JUSTIFY, SELF);
-const GRID_ROW = dash(GRID, ROW);
+const PLACE_ITEMS = 'place' + _ITEMS;
+const INLINE_FLEX = INLINE + _ + FLEX;
+const FLEX_BASIS = FLEX_ + BASIS;
+const FLEX_GROW = FLEX_ + GROW;
+const FLEX_SHRINK = FLEX_ + SHRINK;
+const FLEX_DIRECTION = FLEX_ + DIRECTION;
+const FLEX_WRAP = FLEX_ + WRAP;
+const JUSTIFY_CONTENT = JUSTIFY + _ + CONTENT;
+const JUSTFY_ITEMS = JUSTIFY + _ITEMS;
+const ALIGN_ITEMS = ALIGN + _ITEMS;
+const ALIGN_CONTENT = ALIGN + _ + CONTENT;
+const ALIGN_SELF = ALIGN + _ + SELF;
+const GRID_TEMPLATE = GRID + _ + TEMPLATE;
+const GRID_TEMPLATE_ROWS = GRID_TEMPLATE + _ + ROW + 's';
+const GRID_TEMPLATE_COLUMNS = GRID_TEMPLATE + _ + COLUMN + 's';
+const ROW_GAP = ROW + _ + GAP;
+const COLUMN_GAP = COLUMN_ + GAP;
+const JUSTFY_SELF = JUSTIFY + _ + SELF;
+const GRID_ROW = GRID + _ + ROW;
 const GRID_ROW_END = GRID_ROW + _END;
 const GRID_ROW_START = GRID_ROW + _START;
-const GRID_COLUMN = dash(GRID, COLUMN);
+const GRID_COLUMN = GRID + _ + COLUMN;
 const GRID_COLUMN_END = GRID_COLUMN + _END;
 const GRID_COLUMN_START = GRID_COLUMN + _START;
-const COLUMN_COUNT = dash(COLUMN, COUNT);
-const COLUMN_FILL = dash(COLUMN, FILL);
-const COLUMN_RULE = dash(COLUMN, RULE);
+const COLUMN_COUNT = COLUMN_ + COUNT;
+const COLUMN_FILL = COLUMN_ + FILL;
+const COLUMN_RULE = COLUMN_ + RULE;
 const COLUMN_RULE_COLOR = COLUMN_RULE + _COLOR;
 const COLUMN_RULE_STYLE = COLUMN_RULE + _STYLE;
 const COLUMN_RULE_WIDTH = COLUMN_RULE + _WIDTH;
-const COLUMN_SPAN = dash(COLUMN, SPAN);
+const COLUMN_SPAN = COLUMN_ + SPAN;
 const COLUMN_WIDTH = COLUMN + _WIDTH;
-const ROW_REVERSE = dash(ROW, REVERSE);
-const COLUMN_REVERSE = dash(COLUMN, REVERSE);
-const WRAP_REVERSE = dash(WRAP, REVERSE);
+const ROW_REVERSE = ROW + _ + REVERSE;
+const COLUMN_REVERSE = COLUMN_ + REVERSE;
+const WRAP_REVERSE = WRAP + _ + REVERSE;
 const FLEX_END = FLEX + _END;
-const FLEX_START = dash(FLEX, START);
-const SPACE_BETWEEN = dash(SPACE, 'between');
-const SPACE_AROUND = dash(SPACE, 'around');
-const SPACE_EVENLY = dash(SPACE, 'evenly');
+const FLEX_START = FLEX + _START;
+const SPACE_BETWEEN = SPACE + '-between';
+const SPACE_AROUND = SPACE + '-around';
+const SPACE_EVENLY = SPACE + '-evenly';
 const STRETCH = 'stretch';
 const BASELINE = 'baseline';
-const INLINE_GRID = dash(INLINE, GRID);
+const INLINE_GRID = INLINE + _ + GRID;
 const MASK = 'mask';
+const MASK_ = MASK + _;
 const COMPOSITE = 'composite';
-const MASK_CLIP = dash(MASK, CLIP);
-const MASK_COMPOSITE = dash(MASK, COMPOSITE);
-const MASK_MODE = dash(MASK, MODE);
-const MASK_ORIGIN = dash(MASK, ORIGIN);
-const MASK_POSITION = dash(MASK, POSITION);
-const MASK_REPEAT = dash(MASK, REPEAT);
-const MASK_SIZE = dash(MASK, SIZE);
-const MASK_TYPE = dash(MASK, TYPE);
+const MASK_CLIP = MASK_ + CLIP;
+const MASK_COMPOSITE = MASK_ + COMPOSITE;
+const MASK_MODE = MASK_ + MODE;
+const MASK_ORIGIN = MASK_ + ORIGIN;
+const MASK_POSITION = MASK_ + POSITION;
+const MASK_REPEAT = MASK_ + REPEAT;
+const MASK_SIZE = MASK_ + SIZE;
+const MASK_TYPE = MASK_ + TYPE;
 
 // values
 const TIMING_FUNCTION = 'timing-function';
@@ -296,17 +306,17 @@ const ITERATION_COUNT = 'iteration-count';
 const DELAY = 'delay';
 const DURATION = 'duration';
 const ANIMATION = 'animation';
-const ANIMATION_ = 'animation' + '-';
-const ANIMATION_NAME = ANIMATION_ + 'name';
+const ANIMATION_ = ANIMATION + _;
+const ANIMATION_NAME = ANIMATION_ + NAME;
 const ANIMATION_TIMING_FUNCTION = ANIMATION_ + TIMING_FUNCTION;
 const ANIMATION_DIRECTION = ANIMATION_ + DIRECTION;
 const ANIMATION_ITERATION_COUNT = ANIMATION_ + ITERATION_COUNT;
 const ANIMATION_DURATION = ANIMATION_ + DURATION;
 const ANIMATION_DELAY = ANIMATION_ + DELAY;
 const ANIMATION_PLAY_STATE = ANIMATION_ + 'play-state';
-const ANIMATION_FILL_MODE = ANIMATION_ + dash(FILL, MODE);
+const ANIMATION_FILL_MODE = ANIMATION_ + FILL + _ + MODE;
 const TRANSITION = 'transition';
-const TRANSITION_ = TRANSITION + '-';
+const TRANSITION_ = TRANSITION + _;
 const TRANSITION_BEHAVIOR = TRANSITION_ + BEHAVIOR;
 const TRANSITION_PROPERTY = TRANSITION_ + 'property';
 const TRANSITION_TIMING_FUNCTION = TRANSITION_ + TIMING_FUNCTION;
@@ -318,14 +328,14 @@ const PAUSED = 'paused';
 const FORWARDS = 'forwards';
 const BACKWARDS = 'backwards';
 const ALTERNATE = 'alternate';
-const ALTERNATE_REVERSE = dash(ALTERNATE, REVERSE);
+const ALTERNATE_REVERSE = ALTERNATE + _ + REVERSE;
 const ALLOW_DISCRETE = 'allow-discrete';
 
-const DASH_OUT = '-out';
+const _OUT = '-out';
 const EASE = 'ease';
 const EASE_IN = EASE + '-in';
-const EASE_IN_OUT = EASE_IN + DASH_OUT;
-const EASE_OUT = EASE + DASH_OUT;
+const EASE_IN_OUT = EASE_IN + _OUT;
+const EASE_OUT = EASE + _OUT;
 const STEP = 'step';
 const STEP_START = STEP + _START;
 const STEP_END = STEP + _END;
@@ -334,15 +344,15 @@ const TRANSLATE = 'translate';
 const ROTATE = 'rotate';
 const SKEW = 'skew';
 const PERSPECTIVE = 'perspective';
-const PERSPECTIVE_ORIGIN = dash(PERSPECTIVE, ORIGIN);
-const LEFT_TOP = space(LEFT, TOP);
-const RIGHT_TOP = space(RIGHT, TOP);
-const LEFT_BOTTOM = space(LEFT, BOTTOM);
-const RIGHT_BOTTOM = space(RIGHT, BOTTOM);
+const PERSPECTIVE_ORIGIN = PERSPECTIVE + _ + ORIGIN;
+const LEFT_TOP = LEFT + __ + TOP;
+const RIGHT_TOP = RIGHT + __ + TOP;
+const LEFT_BOTTOM = LEFT + __ + BOTTOM;
+const RIGHT_BOTTOM = RIGHT + __ + BOTTOM;
 const INSET = 'inset';
-const INSET_ = INSET + '-';
-const TRANSFORM_BOX = dash(TRANSFORM, BOX);
-const TRANSFORM_ORIGIN = dash(TRANSFORM, ORIGIN);
+const INSET_ = INSET + _;
+const TRANSFORM_BOX = TRANSFORM + _BOX;
+const TRANSFORM_ORIGIN = TRANSFORM + _ + ORIGIN;
 const TRANSFORM_STYLE = TRANSFORM + _STYLE;
 const INSET_BLOCK = INSET_ + BLOCK;
 const INSET_BLOCK_END = INSET_BLOCK + _END;
@@ -350,11 +360,11 @@ const INSET_BLOCK_START = INSET_BLOCK + _START;
 const INSET_INLINE = INSET_ + INLINE;
 const INSET_INLINE_END = INSET_INLINE + _END;
 const INSET_INLINE_START = INSET_INLINE + _START;
-const FIT_CONTENT = dash(FIT, CONTENT);
+const FIT_CONTENT = FIT + _ + CONTENT;
 const MIN_CONTENT = MIN_ + CONTENT;
 const MAX_CONTENT = MAX_ + CONTENT;
 const ASPECT_RATIO = 'aspect-ratio';
-const BOX_SIZING = dash(BOX, 'sizing');
+const BOX_SIZING = BOX + '-sizing';
 
 const MAX_WIDTH = MAX_ + WIDTH;
 const MIN_WIDTH = MIN_ + WIDTH;
@@ -362,80 +372,84 @@ const MIN_WIDTH = MIN_ + WIDTH;
 const MAX_HEIGHT = MAX_ + HEIGHT;
 const MIN_HEIGHT = MIN_ + HEIGHT;
 
-const BLOCK_SIZE = dash(BLOCK, SIZE);
+const BLOCK_SIZE = BLOCK + _ + SIZE;
 const MAX_BLOCK_SIZE = MAX_ + BLOCK_SIZE;
 const MIN_BLOCK_SIZE = MIN_ + BLOCK_SIZE;
 
-const INLINE_SIZE = dash(INLINE, SIZE);
+const INLINE_SIZE = INLINE + _ + SIZE;
 const MAX_INLINE_SIZE = MAX_ + INLINE_SIZE;
 const MIN_INLINE_SIZE = MIN_ + INLINE_SIZE;
 
 const SNAP = 'snap';
 
-const SCROLL_BEHAVIOR = dash(SCROLL, BEHAVIOR);
-const SCROLL_MARGIN = dash(SCROLL, MARGIN);
+const SCROLL_BEHAVIOR = SCROLL + _ + BEHAVIOR;
+const SCROLL_MARGIN = SCROLL + _ + MARGIN;
 const SCROLL_MARGIN_TOP = SCROLL_MARGIN + _TOP;
 const SCROLL_MARGIN_BOTTOM = SCROLL_MARGIN + _BOTTOM;
 const SCROLL_MARGIN_LEFT = SCROLL_MARGIN + _LEFT;
 const SCROLL_MARGIN_RIGHT = SCROLL_MARGIN + _RIGHT;
 
-const SCROLL_MARGIN_BLOCK = dash(SCROLL_MARGIN, BLOCK);
+const SCROLL_MARGIN_BLOCK = SCROLL_MARGIN + _ + BLOCK;
 const SCROLL_MARGIN_BLOCK_END = SCROLL_MARGIN_BLOCK + _END;
 const SCROLL_MARGIN_BLOCK_START = SCROLL_MARGIN_BLOCK + _START;
-const SCROLL_MARGIN_INLINE = dash(SCROLL_MARGIN, INLINE);
+const SCROLL_MARGIN_INLINE = SCROLL_MARGIN + _ + INLINE;
 const SCROLL_MARGIN_INLINE_END = SCROLL_MARGIN_INLINE + _END;
 const SCROLL_MARGIN_INLINE_START = SCROLL_MARGIN_INLINE + _START;
 
-const SCROLL_PADDING = dash(SCROLL, PADDING);
+const SCROLL_PADDING = SCROLL + _ + PADDING;
 const SCROLL_PADDING_TOP = SCROLL_PADDING + _TOP;
 const SCROLL_PADDING_BOTTOM = SCROLL_PADDING + _BOTTOM;
 const SCROLL_PADDING_LEFT = SCROLL_PADDING + _LEFT;
 const SCROLL_PADDING_RIGHT = SCROLL_PADDING + _RIGHT;
 
-const SCROLL_PADDING_BLOCK = dash(SCROLL_PADDING, BLOCK);
+const SCROLL_PADDING_BLOCK = SCROLL_PADDING + _ + BLOCK;
 const SCROLL_PADDING_BLOCK_END = SCROLL_PADDING_BLOCK + _END;
 const SCROLL_PADDING_BLOCK_START = SCROLL_PADDING_BLOCK + _START;
-const SCROLL_PADDING_INLINE = dash(SCROLL_PADDING, INLINE);
+const SCROLL_PADDING_INLINE = SCROLL_PADDING + _ + INLINE;
 const SCROLL_PADDING_INLINE_END = SCROLL_PADDING_INLINE + _END;
 const SCROLL_PADDING_INLINE_START = SCROLL_PADDING_INLINE + _START;
 
-const SCROLL_SNAP_ALIGN = dash(SCROLL, SNAP, ALIGN);
-const SCROLL_SNAP_STOP = dash(SCROLL, SNAP, STOP);
-const SCROLL_SNAP_TYPE = dash(SCROLL, SNAP, TYPE);
+const SCROLL_SNAP = SCROLL + _ + SNAP;
+const SCROLL_SNAP_ALIGN = SCROLL_SNAP + _ + ALIGN;
+const SCROLL_SNAP_STOP = SCROLL_SNAP + _ + STOP;
+const SCROLL_SNAP_TYPE = SCROLL_SNAP + _ + TYPE;
 const MANDATORY = 'mandatory';
-const X_MANDATORY = space(X, MANDATORY);
-const Y_MANDATORY = space(Y, MANDATORY);
-const BLOCK_MANDATORY = space(BLOCK, MANDATORY);
-const INLINE_MANDATORY = space(INLINE, MANDATORY);
-const BOTH_MANDATORY = space(BOTH, MANDATORY);
+const __MANDATORY = __ + MANDATORY;
+const X_MANDATORY = X + __MANDATORY;
+const Y_MANDATORY = Y + __MANDATORY;
+const BLOCK_MANDATORY = BLOCK + __MANDATORY;
+const INLINE_MANDATORY = INLINE + __MANDATORY;
+const BOTH_MANDATORY = BOTH + __MANDATORY;
 const PROXIMITY = 'proximity';
-const X_PROXIMITY = space(X, PROXIMITY);
-const Y_PROXIMITY = space(Y, PROXIMITY);
-const BLOCK_PROXIMITY = space(BLOCK, PROXIMITY);
-const INLINE_PROXIMITY = space(INLINE, PROXIMITY);
-const BOTH_PROXIMITY = space(BOTH, PROXIMITY);
+const __PROXIMITY = __ + PROXIMITY;
+const X_PROXIMITY = X + __PROXIMITY;
+const Y_PROXIMITY = Y + __PROXIMITY;
+const BLOCK_PROXIMITY = BLOCK + __PROXIMITY;
+const INLINE_PROXIMITY = INLINE + __PROXIMITY;
+const BOTH_PROXIMITY = BOTH + __PROXIMITY;
 const TEXT_DECORATION = TEXT_ + DECORATION;
-const TEXT_DECORATION_COLOR = dash(TEXT_DECORATION, COLOR);
-const WHITE_SPACE = 'white-space';
+const TEXT_DECORATION_COLOR = TEXT_DECORATION + _ + COLOR;
+const WHITE_SPACE = 'white-' + SPACE;
 const TEXT_TRANSFORM = TEXT_ + TRANSFORM;
 const TEXT_ALIGN = TEXT_ + ALIGN;
+const VERTICAL_ALIGN = VERTICAL + _ + ALIGN
 const TEXT_OVERFLOW = TEXT_ + OVERFLOW;
 const TEXT_ORIENTATION = TEXT_ + ORIENTATION;
 const TEXT_RENDERING = TEXT_ + 'rendering';
 const TEXT_SHADOW = TEXT_ + SHADOW;
 const TEXT_EMPHASIS = TEXT_ + 'emphasis';
 const TEXT_WRAP = TEXT_ + WRAP;
-const WORD_BREAK = dash(WORD, BREAK);
+const WORD_BREAK = WORD + _ + BREAK;
 
-const FONT_SIZE = dash(FONT, SIZE);
-const FONT_WEIGHT = FONT + '-weight';
-const FONT_FAMILY = FONT + '-family';
-const FONT_STYLE = FONT + _STYLE;
-const FONT_SYNTHESIS = dash(FONT, 'synthesis');
-const WRITING_MODE = dash('writing', MODE);
+const FONT_SIZE = FONT_ + SIZE;
+const FONT_WEIGHT = FONT_ + 'weight';
+const FONT_FAMILY = FONT_ + 'family';
+const FONT_STYLE = FONT_ + STYLE;
+const FONT_SYNTHESIS = FONT_ + 'synthesis';
+const WRITING_MODE = 'writing-' + MODE;
 const HYPHENS = 'hyphens';
-const LINE_HEIGHT = dash(LINE, HEIGHT);
-const LINE_BREAK = dash(LINE, BREAK);
+const LINE_HEIGHT = LINE + _ + HEIGHT;
+const LINE_BREAK = LINE + _ + BREAK;
 const LETTER_SPACING = 'letter-spacing';
 
 const ANYWHERE = 'anywhere';
@@ -454,24 +468,24 @@ const OVERLINE = 'over' + LINE;
 const UNDERLINE = 'under' + LINE;
 const ELLIPSIS = 'ellipsis';
 const PRE = 'pre';
-const PRE_LINE = dash(PRE, LINE);
-const PRE_WRAP = dash(PRE, WRAP);
-const BREAK_SPACES = BREAK + '-spaces';
-const BREAK_ALL = dash(BREAK, ALL);
-const BREAK_WORD = dash(BREAK, WORD);
+const PRE_LINE = PRE + _ + LINE;
+const PRE_WRAP = PRE + _ + WRAP;
+const BREAK_SPACES = BREAK + _ + SPACE + 's';
+const BREAK_ALL = BREAK + _ + ALL;
+const BREAK_WORD = BREAK + _ + WORD;
 const HORIZONTAL_TB = HORIZONTAL + '-tb';
 const VERTICAL_LR = VERTICAL + '-lr';
 const VERTICAL_RL = VERTICAL + '-rl';
 const KEEP_ALL = 'keep-' + ALL;
 const POINTER = 'pointer';
 const PAN = 'pan';
-const PAN_X = dash(PAN, X);
-const PAN_LEFT = dash(PAN, LEFT);
-const PAN_RIGHT = dash(PAN, RIGHT);
-const PAN_Y = dash(PAN, Y);
-const PAN_UP = dash(PAN, UP);
-const PAN_DOWN = dash(PAN, DOWN);
-const PINCH_ZOOM = dash('pinch', ZOOM);
+const PAN_X = PAN + _X;
+const PAN_LEFT = PAN + _LEFT;
+const PAN_RIGHT = PAN + _RIGHT;
+const PAN_Y = PAN + _Y;
+const PAN_UP = PAN + _ + UP;
+const PAN_DOWN = PAN + _ + DOWN;
+const PINCH_ZOOM = 'pinch-' + ZOOM;
 const MANIPULATION = 'manipulation';
 const CROSSHAIR = 'crosshair';
 const HELP = 'help';
@@ -485,7 +499,7 @@ const PROGRESS = 'progress';
 const WAIT = 'wait';
 const CELL = 'cell';
 const COPY = 'copy';
-const VERTICAL_TEXT = dash(VERTICAL, TEXT);
+const VERTICAL_TEXT = VERTICAL + _ + TEXT;
 const GRAB = 'grab';
 const GRABBING = GRAB + 'bing';
 const RESIZE = 'resize';
@@ -504,43 +518,47 @@ const SW_RESIZE = 'sw-' + RESIZE;
 const NS_RESIZE = 'ns-' + RESIZE;
 const NESW_RESIZE = 'nesw-' + RESIZE;
 const NWSE_RESIZE = 'nwse-' + RESIZE;
-const ZOOM_IN = dash(ZOOM, IN);
-const ZOOM_OUT = dash(ZOOM, OUT);
-const POINTER_EVENTS = dash(POINTER, 'events');
-const SCROLL_POSITION = dash(SCROLL, POSITION);
+const ZOOM_IN = ZOOM + _ + IN;
+const ZOOM_OUT = ZOOM + _ + OUT;
+const POINTER_EVENTS = POINTER + '-events';
+const SCROLL_POSITION = SCROLL + _ + POSITION;
 const CARET_COLOR = 'caret' + _COLOR;
 const ACCENT_COLOR = 'accent' + _COLOR;
 const FILTER = 'filter';
 const BACKDROP_FILTER = 'backdrop-' + FILTER;
 const TRANSPARENT = 'transparent';
 const BACKGROUND = 'background';
-const BACKGROUND_COLOR = BACKGROUND + _COLOR;
-const BACKGROUND_CLIP = dash(BACKGROUND, CLIP);
-const BACKGROUND_ORIGIN = dash(BACKGROUND, ORIGIN);
-const BACKGROUND_POSITION = dash(BACKGROUND, POSITION);
-const BACKGROUND_POSITION_X = dash(BACKGROUND_POSITION, X);
-const BACKGROUND_POSITION_Y = dash(BACKGROUND_POSITION, Y);
-const BACKGROUND_REPEAT = dash(BACKGROUND, REPEAT);
-const BACKGROUND_SIZE = dash(BACKGROUND, SIZE);
-const BACKGROUND_BLEND_MODE = dash(BACKGROUND, 'blend', MODE);
-const BACKGROUND_ATTACHMENT = dash(BACKGROUND, 'attachment');
+const BACKGROUND_ = BACKGROUND + _;
+const BACKGROUND_IMAGE = BACKGROUND_ + 'image';
+const BACKGROUND_COLOR = BACKGROUND_ + COLOR;
+const BACKGROUND_CLIP = BACKGROUND_ + CLIP;
+const BACKGROUND_ORIGIN = BACKGROUND_ + ORIGIN;
+const BACKGROUND_POSITION = BACKGROUND_ + POSITION;
+const BACKGROUND_POSITION_X = BACKGROUND_POSITION + _X;
+const BACKGROUND_POSITION_Y = BACKGROUND_POSITION + _Y;
+const BACKGROUND_REPEAT = BACKGROUND_ + REPEAT;
+const BACKGROUND_SIZE = BACKGROUND_ + SIZE;
+const BACKGROUND_BLEND_MODE = BACKGROUND_ + 'blend-' + MODE;
+const BACKGROUND_ATTACHMENT = BACKGROUND_ + 'attachment';
 const GRADIENT = 'gradient';
-const LINEAR_GRADIENT = dash(LINEAR, GRADIENT);
-const RADIAL_GRADIENT = dash('radial', GRADIENT);
-const CONIC_GRADIENT = dash('conic', GRADIENT);
-const CONTENT_VISIBILITY = dash(CONTENT, VISIBILITY);
+const LINEAR_GRADIENT = LINEAR + _ + GRADIENT;
+const RADIAL_GRADIENT = 'radial-' + GRADIENT;
+const CONIC_GRADIENT = 'conic-' + GRADIENT;
+const CONTENT_VISIBILITY = CONTENT + _ + VISIBILITY;
 const STROKE_WIDTH = STROKE + _WIDTH;
-const FILL_RULE = dash(FILL, RULE);
-const COLOR_DODGE = dash(COLOR, 'dodge');
-const COLOR_BURN = dash(COLOR, 'burn');
-const HARD_LIGHT = dash('hard', LIGHT);
-const SOFT_LIGHT = dash('soft', LIGHT);
-const COLOR_MIX = dash(COLOR, 'mix');
+const STROKE_OPACITY = STROKE + _ + OPACITY;
+const FILL_RULE = FILL + _ + RULE;
+const FILL_OPACITY = FILL + _ + OPACITY;
+const COLOR_DODGE = COLOR + '-dodge';
+const COLOR_BURN = COLOR + '-burn';
+const HARD_LIGHT = 'hard-' + LIGHT;
+const SOFT_LIGHT = 'soft-' + LIGHT;
+const COLOR_MIX = COLOR + '-mix';
 const REVERT = 'revert';
-const REVERT_LAYER = dash(REVERT, 'layer');
+const REVERT_LAYER = REVERT + '-layer';
 const CONTAINER = 'container';
-const CONTAINER_TYPE = dash(CONTAINER, TYPE);
-const CONTAINER_NAME = dash(CONTAINER, 'name');
+const CONTAINER_TYPE = CONTAINER + _ + TYPE;
+const CONTAINER_NAME = CONTAINER + _ + NAME;
 
 // pseudo & media
 const COLON_FIRST = ':first-';
@@ -552,7 +570,7 @@ const NTH_CHILD = ':nth-child';
 const PREFERS_ = 'prefers-';
 const PREFERS_COLOR_SCHEME = PREFERS_ + COLOR_SCHEME;
 const AT_MEDIA = '@media';
-const COLOR_GAMUT = 'color-gamut';
+const COLOR_GAMUT = COLOR + '-gamut';
 const PREFERS_CONTRAST = PREFERS_ + 'contrast';
 const SCRIPTING = 'scripting';
 
@@ -655,6 +673,13 @@ export const values: Record<string, Record<string, string | number>> = {
         l: 0.75,
         xl: 0.9,
         max: 1
+    },
+    /**
+     * Color universal
+     */
+    cu: {
+        c: CURRENT_COLOR,
+        t: TRANSPARENT
     },
     /**
      * Root font-size
@@ -1548,13 +1573,20 @@ export const keys: Record<string, string> = {
     bisc: BORDER_INLINE_START_COLOR,
     biec: BORDER_INLINE_END_COLOR,
     // palette
+    bg: BACKGROUND,
+    bgi: BACKGROUND_IMAGE,
     bgc: BACKGROUND_COLOR,
     c: COLOR,
+    cmix: COLOR_MIX,
     csh: COLOR_SCHEME,
     acc: ACCENT_COLOR,
     ctc: CARET_COLOR,
     st: STROKE,
+    stw: STROKE_WIDTH,
+    sto: STROKE_OPACITY,
     fi: FILL,
+    fir: FILL_RULE,
+    fio: FILL_OPACITY,
     flt: FILTER,
     bf: BACKDROP_FILTER,
 
@@ -1567,8 +1599,10 @@ export const keys: Record<string, string> = {
     ai: ALIGN_ITEMS,
     pi: PLACE_ITEMS,
     ac: ALIGN_CONTENT,
+    gt: GRID_TEMPLATE,
     gtr: GRID_TEMPLATE_ROWS,
     gtc: GRID_TEMPLATE_COLUMNS,
+    gp: GAP,
     rg: ROW_GAP,
     cg: COLUMN_GAP,
 
@@ -1694,6 +1728,7 @@ export const keys: Record<string, string> = {
     ts: TEXT_SHADOW,
     te: TEXT_EMPHASIS,
     tw: TEXT_WRAP,
+    va: VERTICAL_ALIGN,
     ws: WHITE_SPACE,
     tor: TEXT_ORIENTATION,
     wb: WORD_BREAK,
@@ -1742,12 +1777,17 @@ export const keys: Record<string, string> = {
     o: OPACITY,
     zi: Z_INDEX,
     zm: ZOOM,
-    lg: LINEAR_GRADIENT,
+    lgr: LINEAR_GRADIENT,
+    rgr: RADIAL_GRADIENT,
+    cgr: CONIC_GRADIENT,
     inf: INFINITE,
     cnt: CONTAINER_TYPE,
     cnn: CONTAINER_NAME,
     r_: ':root',
-    '': '*',
+    /**
+     * Universal selector
+     */
+    u_: '*',
     /**
      * :hover
      */
