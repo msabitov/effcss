@@ -224,6 +224,16 @@ export interface IStyleProcessor {
      */
     expandSelector(b: string, selector: string): [string, string];
     /**
+     * Parse BEM selector
+     * @param selector
+     */
+    parseSelector(selector: string): {
+        e?: string;
+        m?: string;
+        mv?: string;
+        s?: string;
+    };
+    /**
      * Compile style config to CSS stylesheet text content
      * @param b - block key
      * @param config - stylesheet config

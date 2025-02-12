@@ -14,7 +14,8 @@
         "declaration": true,
         "declarationDir": "./dist/types",
         "strictPropertyInitialization": false,
-        "lib": ["esnext", "DOM", "dom.iterable"]
+        "lib": ["esnext", "DOM", "dom.iterable"],
+        "types": ["@vitest/browser/matchers"]
     },
     "exclude": ["node_modules", "dist", "tests"]
 }

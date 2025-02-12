@@ -201,6 +201,14 @@ describe('Interpolation:', () => {
     });
     expect(styleString.includes('@keyframes eff-block-main {0%{width:10px;}100%{width:20px;}}[data-block~="main"]{animation-name:eff-block-main;}')).toBeTruthy();
   });
+
+  test('lowerCamelCase to kebabCase:', () => {
+    const styleString = processor.compile('cust', {
+      _: {sz: {}},
+      c: {_: {'padding-top': '2rem', borderStartEndRadius: '4px'}
+    }});
+    expect(styleString.includes('[data-cust]{padding-top:2rem;border-start-end-radius:4px;}')).toBeTruthy();
+  });
 });
 
 describe('Object values:', () => {
@@ -409,5 +417,27 @@ describe('BEM className resolver:', () => {
       lg: undefined
     } as Partial<TCustomStyleSheet['elem']>);
     expect(styleAttr.v).toBe('cust__elem cust__elem_w_s');
+  });
+});
+
+describe('Expand:', () => {
+  test('Parse selector:', () => {
+    const result = processor.parseSelector('__elem_mod_mv:h');
+    expect(result).toEqual({
+      e: 'elem',
+      m: 'mod',
+      mv: 'mv',
+      s: 'h'
+    });
+  });
+
+  test('Expand attr selector:', () => {
+    const result = processor.expandSelector('eff1', '__elem_mod_mv:h');
+    expect(result).toEqual(['[data-eff1-elem~="mod-mv"]','[data-eff1-elem~="mod-mv:h"]{&:hover']);
+  });
+
+  test('Expand className selector:', () => {
+    const result = classProcessor.expandSelector('eff1', '__elem_mod_mv:h');
+    expect(result).toEqual(['.eff1__elem_mod_mv','.eff1__elem_mod_mv:h{&:hover']);
   });
 });

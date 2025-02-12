@@ -161,7 +161,13 @@ export const stringifyAllStyles = (provider: IStyleProvider = getProvider()) => 
  * @param provider - style provider
  * @see {@link IStyleProvider}
  */
-export const getRulesCount = (key: string, provider: IStyleProvider = getProvider()): number => getStyleSheet(key, provider)?.cssRules?.length || 0;
+export const getRulesCount = (key: string, provider: IStyleProvider = getProvider()): number => {
+    function getCount(cssRules?: CSSRuleList): number {
+        if (!cssRules) return 0;
+        return cssRules.length + [...cssRules].reduce((acc, rule) => acc + getCount(rule?.cssRules), 0)
+    }
+    return getCount(getStyleSheet(key, provider)?.cssRules);
+}
 
 /**
  * Get total rules count

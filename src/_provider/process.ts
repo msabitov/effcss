@@ -39,6 +39,10 @@ const merge = Object.assign.bind(Object);
  */
 const propVal = (prop: string, val: string | number | boolean) => `${prop}:${val};`;
 /**
+ * Converts lowerCamelCase to kebabCase
+ */
+const kebabCase = (str: string) => str.replace(/[A-Z]/g, v => "-" + v.toLowerCase());
+/**
  * Prepare `@property <...>` string
  * @param name
  * @param config
@@ -273,7 +277,7 @@ class Processor implements IStyleProcessor{
      * Parse string to find selector parts
      * @param key
      */
-    protected parseSelector = (key: string) => {
+    parseSelector = (key: string) => {
         // element
         let e;
         // modifier
@@ -288,7 +292,7 @@ class Processor implements IStyleProcessor{
         return {e, m, mv, s};
     }
 
-    expandSelector(b: string, selector: string): [string, string] {
+    expandSelector = (b: string, selector: string): [string, string] => {
         const {e, m, mv, s} = this.parseSelector(selector);
         const stateSelector = s && this._getStateSelector(s);
         return [this.bem.selector({
@@ -513,7 +517,7 @@ class Processor implements IStyleProcessor{
                 } else if(strVal?.includes?.('{')) {
                     return stringify(resKey, interpolate(strVal), parent);
                 } else {
-                    return propVal(resKey, strVal);
+                    return propVal(kebabCase(resKey), strVal);
                 }
             }
         }
