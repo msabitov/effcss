@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://effcss.surge.sh">
-    <img alt="effcss" src="https://effcss.surge.sh/logo.svg" height="72px" />
+    <img alt="effcss" src="https://effcss.surge.sh/logo.svg" height="256px" />
   </a>
 </p>
 
@@ -10,6 +10,8 @@
 
 [![license](https://badgen.net/static/license/Apache%202.0/blue)](https://gitverse.ru/msabitov/effcss/content/master/LICENSE)
 [![npm latest package](https://badgen.net/npm/v/effcss)](https://www.npmjs.com/package/effcss)
+![minified size](https://flat-badgen.vercel.app/bundlephobia/min/effcss)
+![minzipped size](https://flat-badgen.vercel.app/bundlephobia/minzip/effcss)
 
 </div>
 
@@ -31,7 +33,7 @@ Effcss is a self-confident CSS-in-JS library based only on the browser APIs.
 - [Solid js](https://stackblitz.com/edit/vitejs-solid-effcss?file=index.html)
 - [Lit](https://stackblitz.com/edit/vitejs-lit-effcss?file=index.html)
 - [Angular](https://stackblitz.com/edit/angular-effcss?file=src%2Findex.html)
-- [html only](https://stackblitz.com/edit/static-effcs?file=index.html)
+- [HTML only](https://stackblitz.com/edit/static-effcs?file=index.html)
 
 ## Some features
 
@@ -39,8 +41,7 @@ Effcss is a self-confident CSS-in-JS library based only on the browser APIs.
 - framework agnostic
 - runtime stylesheets generation
 - built-in BEM support
-- customizable
-- support style switching
+- supports style switching and customization
 
 ## Installation
 
@@ -125,4 +126,4 @@ export const App = (props) => {
 }
 ```
 
-That's all. No preprocessors or plugins
+That's all. No preprocessors or plugins.

@@ -104,22 +104,24 @@ class Manager implements IStyleManager {
     expandRule = (key: string, init: string, exp: string) => {
         const rules = this._rules[key];
         if (!rules) {
-            console.log(`No stylesheet found with key '${key}'`);
+            console.log(`No stylesheet with key '${key}'`);
             return;
         }
         const rule = rules[init];
         if (!rule) {
-            console.log(`No rule with selector '${init}' found in stylesheet with key '${key}'`);
+            console.log(`No rule with selector '${init}' in the '${key}' stylesheet`);
             return;
         }
         const [start, end] = rule.cssText.split('{');
-        if (rule.parentStyleSheet) {
-            const nextCss = exp + '{' + end + '}';
-            const nextRuleIndex = rule.parentStyleSheet.insertRule(nextCss, rule.parentStyleSheet.cssRules.length);
-            const newRule = rule.parentStyleSheet.cssRules[nextRuleIndex];
-            const expStart = exp.split('{')[0];
-            rules[expStart] = newRule;
-            this._expandedSelectors[key].add(expStart);
+        const parentStyleSheet = rule.parentStyleSheet;
+        if (parentStyleSheet) {
+            const parentRules = parentStyleSheet.cssRules;
+            const nextRuleIndex = parentStyleSheet.insertRule(
+                exp + '{' + end + '}'.repeat([...exp.matchAll(/{/g)].length),
+                parentRules.length
+            );
+            rules[exp] = parentRules[nextRuleIndex];
+            this._expandedSelectors[key].add(exp);
             return true;
         }
     }

@@ -92,13 +92,30 @@ describe('Style manager:', () => {
     
     test('cacheRules & expandRule & getExpandedSelectors', () => {
         manager.cacheRules(firstId, firstStylesheet);
-        manager.expandRule(firstId, '.cls', '.cls{&:hover')
+        const exp = '.cls:hover';
+        manager.expandRule(firstId, '.cls', exp);
         const expanded = manager.getExpandedSelectors(firstId);
-        expect(expanded.size).toBe(1);
+        expect(expanded.has(exp)).toBeTruthy();
+    });
+
+    test('cacheRules & expandRule & getExpandedSelectors with nested state', () => {
+        manager.cacheRules(firstId, firstStylesheet);
+        const exp = '.cls{&:hover';
+        manager.expandRule(firstId, '.cls', exp);
+        const expanded = manager.getExpandedSelectors(firstId);
+        expect(expanded.has(exp)).toBeTruthy();
+    });
+
+    test('cacheRules & expandRule & getExpandedSelectors with nested rule', () => {
+        manager.cacheRules(firstId, firstStylesheet);
+        const exp = '@container (min-width: 400px) {.cls';
+        manager.expandRule(firstId, '.cls', exp);
+        const expanded = manager.getExpandedSelectors(firstId);
+        expect(expanded.has(exp)).toBeTruthy();
     });
 
     test('expandRule of non-existent stylesheet', () => {
-        manager.expandRule(firstId, '.cls', '.cls:hover')
+        manager.expandRule(firstId, '.cls', '.cls:hover');
         const expanded = manager.getExpandedSelectors(firstId);
         expect(expanded).toBe(undefined);
     });
