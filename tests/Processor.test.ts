@@ -431,13 +431,43 @@ describe('Expand:', () => {
     });
   });
 
-  test('Expand attr selector:', () => {
+  test('Expand attr modifier selector:', () => {
     const result = processor.expandSelector('eff1', '__elem_mod_mv:h');
     expect(result).toEqual(['[data-eff1-elem~="mod-mv"]','[data-eff1-elem~="mod-mv:h"]{&:hover']);
   });
 
-  test('Expand className selector:', () => {
+  test('Expand attr boolean modifier selector:', () => {
+    const result = processor.expandSelector('eff1', '__elem_mod_:h');
+    expect(result).toEqual(['[data-eff1-elem~="mod"]','[data-eff1-elem~="mod:h"]{&:hover']);
+  });
+
+  test('Expand attr element selector:', () => {
+    const result = processor.expandSelector('eff1', '__elem:h');
+    expect(result).toEqual(['[data-eff1-elem]','[data-eff1-elem~=":h"]{&:hover']);
+  });
+
+  test('Expand attr block selector:', () => {
+    const result = processor.expandSelector('eff1', '_:h');
+    expect(result).toEqual(['[data-eff1]','[data-eff1~=":h"]{&:hover']);
+  });
+
+  test('Expand className modifier selector:', () => {
     const result = classProcessor.expandSelector('eff1', '__elem_mod_mv:h');
     expect(result).toEqual(['.eff1__elem_mod_mv','.eff1__elem_mod_mv:h{&:hover']);
+  });
+
+  test('Expand className boolean modifier selector:', () => {
+    const result = classProcessor.expandSelector('eff1', '__elem_mod_:h');
+    expect(result).toEqual(['.eff1__elem_mod','.eff1__elem_mod:h{&:hover']);
+  });
+
+  test('Expand className element selector:', () => {
+    const result = classProcessor.expandSelector('eff1', '__elem:h');
+    expect(result).toEqual(['.eff1__elem','.eff1__elem:h{&:hover']);
+  });
+
+  test('Expand className block selector:', () => {
+    const result = classProcessor.expandSelector('eff1', '_:h');
+    expect(result).toEqual(['.eff1','.eff1:h{&:hover']);
   });
 });

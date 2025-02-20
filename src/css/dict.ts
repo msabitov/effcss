@@ -46,8 +46,9 @@ const DECORATION = 'decoration';
 const WORD = 'word';
 const LINE = 'line';
 const BREAK = 'break';
+const BREAK_ = BREAK + _;
 const WRAP = 'wrap';
-const NOWRAP = 'nowrap';
+const NOWRAP = 'no' + WRAP;
 const TEMPLATE = 'template';
 const RULE = 'rule';
 const COUNT = 'count';
@@ -101,7 +102,7 @@ const INFINITE = 'infinite';
 const ABSOLUTE = 'absolute';
 const FIXED = 'fixed';
 const RELATIVE = 'relative';
-const LIST_STYLE = 'list-style';
+const LIST = 'list';
 const Z_INDEX = 'z-index';
 const ORIGIN = 'origin';
 const HUE = 'hue';
@@ -141,8 +142,15 @@ const COLLAPSE = 'collapse';
 const BEHAVIOR = 'behavior';
 const ORIENTATION = 'orientation';
 const NAME = 'name';
+const AFTER = 'after';
+const BEFORE = 'before';
+const IMAGE = 'image';
 
 // values
+const LIST_STYLE = LIST + _STYLE;
+const LIST_STYLE_TYPE = LIST_STYLE + _ + TYPE;
+const LIST_STYLE_POSITION = LIST_STYLE + _ + POSITION;
+const LIST_STYLE_IMAGE = LIST_STYLE + _ + IMAGE;
 const COLOR_SCHEME = COLOR + '-scheme';
 const BORDER_BOTTOM = BORDER + _BOTTOM;
 const BORDER_LEFT = BORDER + _LEFT;
@@ -413,6 +421,7 @@ const SCROLL_SNAP = SCROLL + _ + SNAP;
 const SCROLL_SNAP_ALIGN = SCROLL_SNAP + _ + ALIGN;
 const SCROLL_SNAP_STOP = SCROLL_SNAP + _ + STOP;
 const SCROLL_SNAP_TYPE = SCROLL_SNAP + _ + TYPE;
+const OVERSCROLL_BEHAVIOR = 'over' + SCROLL_BEHAVIOR;
 const MANDATORY = 'mandatory';
 const __MANDATORY = __ + MANDATORY;
 const X_MANDATORY = X + __MANDATORY;
@@ -454,6 +463,14 @@ const FONT_WEIGHT = FONT_ + 'weight';
 const FONT_FAMILY = FONT_ + 'family';
 const FONT_STYLE = FONT_ + STYLE;
 const FONT_SYNTHESIS = FONT_ + 'synthesis';
+const FONT_VARIANT = FONT_ + 'variant';
+const FONT_VARIANT_ALTERNATES = FONT_VARIANT + _ + ALTERNATE + 's';
+const FONT_VARIANT_CAPS = FONT_VARIANT + '-caps';
+const FONT_VARIANT_NUMERIC = FONT_VARIANT + '-numeric';
+const FONT_VARIANT_POSITION = FONT_VARIANT + _ + POSITION;
+const FONT_VARIANT_EAST_ASIAN = FONT_VARIANT + '-east-asian';
+const FONT_VARIANT_LIGATURES = FONT_VARIANT + '-ligatures';
+const FONT_VARIANT_SETTINGS = FONT_VARIANT + '-settings';
 const WRITING_MODE = 'writing-' + MODE;
 const HYPHENS = 'hyphens';
 const LINE_HEIGHT = LINE + _ + HEIGHT;
@@ -478,9 +495,11 @@ const ELLIPSIS = 'ellipsis';
 const PRE = 'pre';
 const PRE_LINE = PRE + _ + LINE;
 const PRE_WRAP = PRE + _ + WRAP;
-const BREAK_SPACES = BREAK + _ + SPACE + 's';
-const BREAK_ALL = BREAK + _ + ALL;
-const BREAK_WORD = BREAK + _ + WORD;
+const BREAK_SPACES = BREAK_ + SPACE + 's';
+const BREAK_ALL = BREAK_ + ALL;
+const BREAK_WORD = BREAK_ + WORD;
+const BREAK_AFTER = BREAK_ + AFTER;
+const BREAK_BEFORE = BREAK_ + BEFORE;
 const HORIZONTAL_TB = HORIZONTAL + '-tb';
 const VERTICAL_LR = VERTICAL + '-lr';
 const VERTICAL_RL = VERTICAL + '-rl';
@@ -537,7 +556,7 @@ const BACKDROP_FILTER = 'backdrop-' + FILTER;
 const TRANSPARENT = 'transparent';
 const BACKGROUND = 'background';
 const BACKGROUND_ = BACKGROUND + _;
-const BACKGROUND_IMAGE = BACKGROUND_ + 'image';
+const BACKGROUND_IMAGE = BACKGROUND_ + IMAGE;
 const BACKGROUND_COLOR = BACKGROUND_ + COLOR;
 const BACKGROUND_CLIP = BACKGROUND_ + CLIP;
 const BACKGROUND_ORIGIN = BACKGROUND_ + ORIGIN;
@@ -581,6 +600,8 @@ const AT_MEDIA = '@media';
 const COLOR_GAMUT = COLOR + '-gamut';
 const PREFERS_CONTRAST = PREFERS_ + 'contrast';
 const SCRIPTING = 'scripting';
+const COLON_AFTER = '::' + AFTER;
+const COLON_BEFORE = '::' + BEFORE;
 
 /**
  * Scoped unitless values
@@ -1534,6 +1555,9 @@ export const keys: Record<string, string> = {
     tb: TRANSITION_BEHAVIOR,
     tp: TRANSITION_PROPERTY,
     ttf: TRANSITION_TIMING_FUNCTION,
+    // break
+    ba: BREAK_AFTER,
+    bb: BREAK_BEFORE,
     // border
     bor: BORDER,
     bw: BORDER_WIDTH,
@@ -1629,6 +1653,7 @@ export const keys: Record<string, string> = {
     fg: FLEX_GROW,
     fb: FLEX_BASIS,
     ord: ORDER,
+    dir: DIRECTION,
 
     // indents
     m: MARGIN,
@@ -1667,6 +1692,11 @@ export const keys: Record<string, string> = {
     toa: TOUCH_ACTION,
     us: USER_SELECT,
     res: RESIZE,
+    // list
+    lis: LIST_STYLE,
+    lisp: LIST_STYLE_POSITION,
+    lisi: LIST_STYLE_IMAGE,
+    list: LIST_STYLE_TYPE,
     // scroll
     sb: SCROLL_BEHAVIOR,
     ssa: SCROLL_SNAP_ALIGN,
@@ -1694,6 +1724,7 @@ export const keys: Record<string, string> = {
     spi: SCROLL_PADDING_INLINE,
     spie: SCROLL_PADDING_INLINE_END,
     spis: SCROLL_PADDING_INLINE_START,
+    osb: OVERSCROLL_BEHAVIOR,
     // size
     ar: ASPECT_RATIO,
     w: WIDTH,
@@ -1728,6 +1759,14 @@ export const keys: Record<string, string> = {
     fwg: FONT_WEIGHT,
     fsz: FONT_SIZE,
     fsn: FONT_SYNTHESIS,
+    fv: FONT_VARIANT,
+    fva: FONT_VARIANT_ALTERNATES,
+    fvc: FONT_VARIANT_CAPS,
+    fvea: FONT_VARIANT_EAST_ASIAN,
+    fvl: FONT_VARIANT_LIGATURES,
+    fvn: FONT_VARIANT_NUMERIC,
+    fvs: FONT_VARIANT_SETTINGS,
+    fvp: FONT_VARIANT_POSITION,
     tt: TEXT_TRANSFORM,
     td: TEXT_DECORATION,
     tdt: TEXT_DECORATION_THICKNESS,
@@ -1897,11 +1936,11 @@ export const keys: Record<string, string> = {
     /**
      * ::before
      */
-    bef_: '::before',
+    bef_: COLON_BEFORE,
     /**
      * ::after
      */
-    aft_: '::after',
+    aft_: COLON_AFTER,
     /**
      * ::backdrop
      */
@@ -1909,7 +1948,7 @@ export const keys: Record<string, string> = {
     /**
      * &::before,&::after
      */
-    ba_: '&::before,&::after',
+    ba_: `&${COLON_BEFORE},&${COLON_AFTER}`,
     /**
      * :placeholder
      */

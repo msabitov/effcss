@@ -116,7 +116,7 @@ const cls: IBEMResolver = {
  */
 const attr: IBEMResolver = {
     selector: ({ b, e, m, mv, s }) =>
-        `[data-${b}${e ? '-' + e : ''}${m ? ('~="' + m + (mv ? '-' + mv : '') + (s ? ':' + s : '') + '"') : ''}]`, 
+        `[data-${b}${e ? '-' + e : ''}${(m || s) ? ('~="' + (m || '') + (mv ? '-' + mv : '') + (s ? ':' + s : '') + '"') : ''}]`, 
     attr: (b) => (e) => (ms) => {
         const k = `data-${b}${e ? ('-' + e) : ''}`;
         let v = ms || '';
@@ -255,7 +255,7 @@ class Processor implements IStyleProcessor{
                     $c: '{uni.inh}',
                     $fsz: '{rem.def}',
                     $ff: '{ff.def}',
-                    $: {
+                    $u_: {
                         $c: '{uni.inh}',
                         $fsz: '{rem.def}',
                         $ff: '{ff.def}'
@@ -278,6 +278,8 @@ class Processor implements IStyleProcessor{
      * @param key
      */
     parseSelector = (key: string) => {
+        // clear selector
+        let clear;
         // element
         let e;
         // modifier
@@ -286,20 +288,24 @@ class Processor implements IStyleProcessor{
         let mv;
         // modifier val state
         let s;
-        if (key.startsWith('__')) ([e, m, mv] = key.slice(2).split('_'));
-        else ([e, m, mv] = key.split('_'));
-        if (mv) ([mv, s] = mv.split(':'));
+        ([clear, s] = key.split(':'));
+        if (clear.startsWith('__')) ([e, m, mv] = clear.slice(2).split('_'));
+        else ([e, m, mv] = clear.split('_'));
         return {e, m, mv, s};
     }
 
     expandSelector = (b: string, selector: string): [string, string] => {
         const {e, m, mv, s} = this.parseSelector(selector);
         const stateSelector = s && this._getStateSelector(s);
+        const withState = this.bem.selector({
+            b, e, m, mv, s
+        });
+        let expanded = '';
+        if (stateSelector?.startsWith('@')) expanded = stateSelector + '{' + withState;
+        else if (stateSelector?.startsWith(':')) expanded = withState + '{&' + stateSelector;
         return [this.bem.selector({
             b, e, m, mv
-        }), this.bem.selector({
-            b, e, m, mv, s
-        }) + '{' + stateSelector];
+        }), expanded];
     }
 
     /**
@@ -308,10 +314,7 @@ class Processor implements IStyleProcessor{
      */
     protected _getStateSelector(state: string) {
         const stateKey = state + '_';
-        const stateSelector = this._compKeys[stateKey] || globalKeys[stateKey];
-        if (stateSelector) {
-            return ((stateSelector.startsWith('&') || stateSelector.startsWith('@')) ? '' : '&') + stateSelector;
-        }
+        return this._compKeys[stateKey] || globalKeys[stateKey] || state;
     }
 
     /**

@@ -3,7 +3,7 @@ import { TStyleSheetConfig } from '../../types';
 
 export default {
     c: {
-        $: {
+        $u_: {
             $p: 0,
             $m: 0,
             $bor: 'none',

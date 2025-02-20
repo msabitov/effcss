@@ -164,12 +164,13 @@ export function defineStyleProvider(props?: {
             if (this.processor && expanded) {
                 const next = new Set(selectors);
                 const diff = next.difference(expanded);
-                const size = diff.size;
+                let size = diff.size;
                 if (size && this.processor.expandSelector) {
                     const expand = this.processor.expandSelector;
                     diff.keys().forEach((selector) => {
                         const [initSelector, expSelector] = expand(key, selector);
-                        this.manager.expandRule(key, initSelector, expSelector);
+                        if (expSelector) this.manager.expandRule(key, initSelector, expSelector);
+                        else size--;
                     });
                     return size;
                 }
