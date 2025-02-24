@@ -1,7 +1,9 @@
 // css
 import { keys as globalKeys } from '../css/dict';
 // defaults
-import { defaultParams, defaultUnits } from './constants';
+import { defaultParams, defaultUnits, defaultRootStyle } from './constants';
+// utils
+import { getBEMResolver } from '../utils';
 // types
 import {
     IStyleProcessor, IBEMResolver, TDisplayModeValues,
@@ -20,9 +22,18 @@ interface IConstructorParams {
     prefix?: string | null;
     initkey?: string | null;
     params?: IStyleConfig['params'];
+    themes?: IStyleConfig['themes'];
     units?: IStyleConfig['units'];
+    rootStyle?: IStyleConfig['rootStyle'];
 }
 
+const objectEntries = Object.entries;
+const objectReduce = <T extends object, F extends (previousValue: any, currentValue: [string, any], currentIndex: number, array: [string, any][]) => any>(
+    obj: T,
+    callback: F,
+    acc: any
+) => objectEntries(obj).reduce(callback, acc);
+const isObject = (arg?: string | number | object) => typeof arg === 'object';
 /**
  * Put value in curly braces
  * @param val
@@ -81,78 +92,36 @@ const oklch = ({
  */
 const colorPostfixes = ['l', 'c', 'h', 'a'] as const;
 
-const stringifyModifiers = (v: object) => Object.entries(v).reduce((acc, [mod, modv]) => {
-    if (modv !== undefined) acc.push(mod + (modv ? ('-' + modv) : ''));
-    return acc;
-}, [] as string[]).join(' ');
 
-const pack = (k: string, v: string) => Object.defineProperties({[k]: v}, {
-    k: {value: k},
-    v: {value: v}
-});
 
-/**
- * Class BEM resolver
- */
-const cls: IBEMResolver = {
-    selector: ({ b, e, m, mv, s }) =>
-        `.${b}${
-            (e ? '__' + e : '') +
-            (m ? '_' + m : '') +
-            (m && mv ? ('_' + mv) : '') +
-            (s ? (':' + s) : '')}`,
-    attr: (b) => (e) => (ms) => {
-        const k = 'class';
-        let v = ms || '';
-        if (typeof v === 'object') v = stringifyModifiers(v);
-        const base = b + (e ? '__' + e : '');
-        v = base + (v ? ' ' + v?.split(' ').map((i) => base + '_' + i.split('-').join('_')).join(' ') : '');
-        return pack(k, v);
-    }
-};
-
-/**
- * Data-attribute BEM resolver
- */
-const attr: IBEMResolver = {
-    selector: ({ b, e, m, mv, s }) =>
-        `[data-${b}${e ? '-' + e : ''}${(m || s) ? ('~="' + (m || '') + (mv ? '-' + mv : '') + (s ? ':' + s : '') + '"') : ''}]`, 
-    attr: (b) => (e) => (ms) => {
-        const k = `data-${b}${e ? ('-' + e) : ''}`;
-        let v = ms || '';
-        if (typeof v === 'object') v = stringifyModifiers(v);
-        return pack(k, v);
-    }
-};
-
-const initialize = ({params, units}: {
-    params?: IStyleConfig['params'];
+const initialize = ({themes, units}: {
+    themes?: IStyleConfig['themes'];
     units?: IStyleConfig['units'];
 }) => {
     let values = defaultParams;
     let settingsUnits = {...defaultUnits, ...(units || {})};
-    if (params) {
+    if (themes) {
         // apply input params
-        for (const key in params) {
-            values[key] = merge(values[key] || {}, params[key]);
+        for (const key in themes) {
+            values[key] = merge(values[key] || {}, themes[key]);
         }
     }
     // apply units
     for (const key in settingsUnits) {
         values.root[key] = values.root[key] && Object.fromEntries(
-            Object.entries(values.root[key]).map(([k, v]) => [k, settingsUnits[key].replace('{1}', '' + v)])
+            objectEntries(values.root[key]).map(([k, v]) => [k, settingsUnits[key].replace('{1}', '' + v)])
         );
     }
     // computed keys
     const keys: Record<string, string> = {};
     if (values.root.bp) {
-        Object.entries(values.root.bp || {}).forEach(([key, val]) => {
+        objectEntries(values.root.bp || {}).forEach(([key, val]) => {
             keys[`min_${key}_`] = `@media (min-width:${val})`;
             keys[`max_${key}_`] = `@media (max-width:${val})`;
         });
     }
     if (values.root.cbp) {
-        Object.entries(values.root.bp || {}).forEach(([key, val]) => {
+        objectEntries(values.root.bp || {}).forEach(([key, val]) => {
             keys[`cmin_${key}_`] = `@container (min-width:${val})`;
             keys[`cmax_${key}_`] = `@container (max-width:${val})`;
         });
@@ -166,7 +135,7 @@ const initialize = ({params, units}: {
 /**
  * Style processor
  */
-class Processor implements IStyleProcessor{
+class Processor implements IStyleProcessor {
     /**
      * Initial styles
      */
@@ -182,7 +151,7 @@ class Processor implements IStyleProcessor{
     /**
      * Style mode
      */
-    protected _mode: TStyleMode = 'a';
+    protected _mode: TStyleMode | null = 'a';
     /**
      * Initial stylesheet key
      */
@@ -203,27 +172,28 @@ class Processor implements IStyleProcessor{
     constructor(config: IConstructorParams) {
         const {
             mode = 'a', prefix = 'eff', initkey = 'init',
-            params, units
+            params, themes, units, rootStyle = defaultRootStyle
         } = config;
+        this._mode = mode;
         this._prefix = prefix;
         this._initkey = initkey;
-        if (mode === 'c') {
-            this.bem = cls;
-        } else {
-            this.bem = attr;
-        }
-        const {values, keys} = initialize({params, units});
+        this.bem = getBEMResolver({mode: this._mode})
+        const {values, keys} = initialize({themes: themes || params, units});
         this._params = values;
         this._compKeys = keys;
         
         // ignores empty key
         if (this._initkey) {
             const {root, ...other} = this._params;
-            const otherEntries = Object.entries(other);
+            const otherEntries = objectEntries(other);
             const modeVariables: {
-                _mode: Record<string, Record<string, string | number>>
+                _mode: Record<string, Record<string, string | number>>,
+                _theme: Record<string, Record<string, string | number>>,
             } = {
                 _mode: {
+                    root: {}
+                },
+                _theme: {
                     root: {}
                 }
             };
@@ -232,14 +202,14 @@ class Processor implements IStyleProcessor{
             otherEntries.forEach(([key, variants]) => {
                 if (!modeVariables._mode[key]) modeVariables._mode[key] = {};
                 // mode vakues loop
-                Object.entries(variants).forEach(([dynamicVariantKey, dynVariant]) => {
+                objectEntries(variants).forEach(([dynamicVariantKey, dynVariant]) => {
                     // dynamic value loop
-                    Object.entries(dynVariant).forEach(([dynKey, dynVal]) => {
+                    objectEntries(dynVariant).forEach(([dynKey, dynVal]) => {
                         const varName = this._prepareVarName(dynamicVariantKey, dynKey);
                         modeVariables._mode[key][varName] = dynVal;
                         // create root variables
                         if (!modeVariables._mode.root[varName]) {
-                            modeVariables._mode.root[varName] = dynVal;
+                            modeVariables._mode.root[varName] = root[dynamicVariantKey][dynKey];// dynVal;
                             if (!changedVariants[dynamicVariantKey]) changedVariants[dynamicVariantKey] = {};
                             changedVariants[dynamicVariantKey][dynKey] = `var(${varName})`;
                         }
@@ -247,20 +217,12 @@ class Processor implements IStyleProcessor{
                     
                 })
             });
+            // mode will be replaced with theme in 2.x.x
+            modeVariables._theme = modeVariables._mode;
             this._compValues = changedVariants;
             this.baseStyles = this.compile(this._initkey, {c: {
                 ...modeVariables,
-                $r_: {
-                    ...modeVariables._mode.root,
-                    $c: '{uni.inh}',
-                    $fsz: '{rem.def}',
-                    $ff: '{ff.def}',
-                    $u_: {
-                        $c: '{uni.inh}',
-                        $fsz: '{rem.def}',
-                        $ff: '{ff.def}'
-                    }
-                },
+                $r_: merge(modeVariables._mode.root, rootStyle),
                 ...(modeVariables._mode?.dark ? {
                     $dark_: {
                         $r_: modeVariables._mode.dark
@@ -429,7 +391,7 @@ class Processor implements IStyleProcessor{
                 const variant = getVariant(key);
                 if (!variant) continue;
                 obj = variant;
-                let entries = Object.entries(obj);
+                let entries = objectEntries(obj);
                 const filterKeys = filter?.slice(1, -1).split(',');
                 if (filterKeys) {
                     const filterKeysSet = new Set(filterKeys);
@@ -482,7 +444,7 @@ class Processor implements IStyleProcessor{
                 );
             } else if (value === null || value === undefined) {
                 return '';
-            } else if (typeof value === 'object'){
+            } else if (isObject(value)){
                 // if nested rule
                 const prefix = !!parent && !parent.startsWith?.('@') && !resKey.startsWith('&') && !resKey.startsWith('@') ? '&' : '';
                 // BEM-selector
@@ -491,26 +453,26 @@ class Processor implements IStyleProcessor{
                     // if no modifier value
                     if (m && typeof mv !== 'string') {
                         // modifiers
-                        return Object.entries(value).reduce((acc, [mvkey, mvval]) => {
+                        return objectReduce(value, (acc, [mvkey, mvval]) => {
                             let mbody;
-                            if (typeof mvval === 'object') {
-                                mbody = Object.entries(mvval).reduce((acc, item) => acc + stringify(...item, resKey), '')
+                            if (isObject(mvval)) {
+                                mbody = objectReduce(mvval, (acc, item) => acc + stringify(...item, resKey), '')
                             } else {
                                 mbody = mvval + ';';
                             }
                             return acc + prefix + prepareSelector({ b, e, m, mv: mvkey }) + curlyBraces(mbody);
-                        }, '')
+                        }, '');
                     }
                     return (
                         prefix +
                         prepareSelector({ b, e, m, mv }) +
                         curlyBraces(
-                            Object.entries(value).reduce((acc, item) => acc + stringify(...item, resKey), '')
+                            objectReduce(value, (acc, item) => acc + stringify(...item, resKey), '')
                         )
                     );
                 } else {
                     return prefix + resKey + curlyBraces(
-                        Object.entries(value).reduce((acc, item) => acc + stringify(...item, resKey), '')
+                        objectReduce(value, (acc, item) => acc + stringify(...item, resKey), '')
                     );
                 }
             } else {
@@ -531,13 +493,13 @@ class Processor implements IStyleProcessor{
                 const kfConfig = kf[kfKey];
                 const kfName = this._prepareKeyframesName(b, kfKey);
                 localKeys['kf_' + kfKey] = kfName;
-                kfStr += `@keyframes ${kfName} ` + curlyBraces(Object.entries(kfConfig).reduce((acc, [frameKey, frameVal]) => {
+                kfStr += `@keyframes ${kfName} ` + curlyBraces(objectReduce(kfConfig, (acc, [frameKey, frameVal]) => {
                     const postfix = String(+frameKey) === frameKey ? '%' : '';
-                    return acc + frameKey + postfix + curlyBraces(Object.entries(frameVal).reduce((acc, item) => acc + stringify(...item), ''));
+                    return acc + frameKey + postfix + curlyBraces(objectReduce(frameVal, (acc, item) => acc + stringify(...item), ''));
                 }, ''))
             }
         }
-        return varStr + kfStr + Object.entries(config).reduce((acc, item) => acc + stringify(...item), '');
+        return varStr + kfStr + objectReduce(config, (acc, item) => acc + stringify(...item), '');
     };
 }
 

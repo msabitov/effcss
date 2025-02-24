@@ -5,13 +5,17 @@ import {
     TStyleSheetConfig,
     IStyleProcessor,
     IStyleConfig,
-    TStyleMode
+    TStyleMode,
+    TKeyGenerator
 } from './types';
 // provider
 import { createProcessor } from './_provider/process';
 import { createManager } from './_provider/manage';
 // utils
-import { COMPONENT_NAME, PREFIX, SETTINGS_ID } from './utils';
+import {
+    generateStyleSheetKey,
+    COMPONENT_NAME, PREFIX, SETTINGS_ID
+} from './utils';
 
 /**
  * Get provider styles
@@ -43,7 +47,12 @@ export function defineStyleProvider(props?: {
      * Will be used for initial stylesheets generation
      */
     config?: IStyleConfig;
+    /**
+     * Stylesheet key generator
+     */
+    keygen?: TKeyGenerator;
 }) {
+    const getKey = props?.keygen || generateStyleSheetKey;
     customElements.define(props?.name || COMPONENT_NAME, class extends HTMLElement implements IStyleProvider {
         /**
          * Style processor
@@ -100,13 +109,15 @@ export function defineStyleProvider(props?: {
     
         connectedCallback() {
             const settings = this.getSettings();
-            const { params, styles, ext, units } = settings;
+            const { params, themes, styles, ext, units, rootStyle } = settings;
             const initkey = this.initkey;
             this.processor = createProcessor({
                 prefix: this.prefix,
                 mode: this.mode,
                 initkey,
                 params,
+                rootStyle,
+                themes,
                 units
             });
             this.manager = createManager(initkey ? {
@@ -148,10 +159,10 @@ export function defineStyleProvider(props?: {
         useStyleSheet = (config: TStyleSheetConfig) => {
             let key = this._sources.get(config);
             if (!key) {
-                key = this.prefix + this._sources.size.toString(36);
+                key = this.prefix + getKey(this._sources);
                 this.compileStyleSheet(key, config) && key;
             };
-            return this.processor?.bem.attr(key);
+            return this.resolveStyleSheet(key);
         }
 
         /**

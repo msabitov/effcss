@@ -30,8 +30,9 @@ const SECOND_CONFIG = {
     }
 };
 const SECOND_STR = `[data-${SECOND_ID}] { height: 100vh; border-top-left-radius: 14px; flex-grow: 10; }`;
+const CUSTOM_NAME = 'my-provider';
 
-describe('Style provider:', () => {
+describe('Style provider utils:', () => {
     beforeAll(() => {
         defineStyleProvider();
     });
@@ -64,7 +65,6 @@ describe('Style provider:', () => {
     test('expandStyleSheet', () => {
         const provider = getProvider();
         compileStyleSheet(FIRST_ID, FIRST_CONFIG);
-        debugger
         expandStyleSheet(FIRST_ID, ['_:h']);
         expect(provider.manager.get(FIRST_ID)?.cssRules?.[1]?.cssRules?.[0]?.selectorText).toBe('&:hover');
     });
@@ -95,5 +95,98 @@ describe('Style provider:', () => {
         compileStyleSheet(FIRST_ID, FIRST_CONFIG);
         compileStyleSheet(SECOND_ID, SECOND_CONFIG);
         expect(getTotalRulesCount()).toBe(2);
+    });
+});
+
+describe('Style provider params:', () => {
+    let count = 3;
+    beforeAll(() => {
+        count = 3;
+        defineStyleProvider({
+            name: CUSTOM_NAME,
+            config: {
+                rootStyle: {
+                    fontSize: '24px'
+                },
+                themes: {
+                    root: {
+                        mysz: {
+                            s: 10,
+                            m: 20,
+                            l: 30
+                        },
+                        myrem: {
+                            s: 12,
+                            l: 24
+                        }
+                    },
+                    custom: {
+                        mysz: {
+                            s: 1,
+                            m: 2,
+                            l: 3
+                        },
+                        myrem: {
+                            s: 10,
+                            l: 20
+                        }
+                    } 
+                },
+                units: {
+                    myrem: '{1}rem'
+                }
+            },
+            keygen: () => 'cust' + (count+=2)
+        });
+        return () => count = 3;
+    });
+
+    beforeEach(() => {
+        const element = document.createElement(CUSTOM_NAME, {is: CUSTOM_NAME});
+        element.dataset.testid = PROVIDER_ID;
+        document.body.append(element);
+        return () => element.remove();
+    });
+
+    test('name', () => {
+        const provider = getProvider(document, CUSTOM_NAME);
+        expect(!!provider.manager && !!provider.processor).toBeTruthy();
+    });
+
+    test('keygen', () => {
+        const provider = getProvider(document, CUSTOM_NAME);
+        const firstResolver = useStyleSheet(FIRST_CONFIG, provider);
+        const firstAttr = firstResolver()().k;
+        const secondResolver = useStyleSheet(SECOND_CONFIG, provider);
+        const secondAttr = secondResolver()().k;
+        expect(firstAttr === 'data-effcust5' && secondAttr === 'data-effcust7').toBeTruthy();
+    });
+
+    test('config.rootStyle', () => {
+        const provider = getProvider(document, CUSTOM_NAME);
+        expect([
+            ...(provider?.manager?.get?.('init')?.cssRules || [])
+        ].find((rule) => rule?.selectorText === ':root')?.cssText).toContain('font-size: 24px;');
+    });
+
+    test('config.themes.root', () => {
+        const provider = getProvider(document, CUSTOM_NAME);
+        expect([
+            ...(provider?.manager?.get?.('init')?.cssRules || [])
+        ].find((rule) => rule?.selectorText.includes('theme-root'))?.cssText).toContain('--eff-mysz-s: 10; --eff-mysz-m: 20;');
+    });
+
+    test('config.themes.custom', () => {
+        const provider = getProvider(document, CUSTOM_NAME);
+        expect([
+            ...(provider?.manager?.get?.('init')?.cssRules || [])
+        ].find((rule) => rule?.selectorText.includes('theme-custom'))?.cssText).toContain('--eff-mysz-s: 1; --eff-mysz-m: 2;');
+    });
+
+    test('config.units', () => {
+        const provider = getProvider(document, CUSTOM_NAME);
+        expect([
+            ...(provider?.manager?.get?.('init')?.cssRules || [])
+        ].find((rule) => rule?.selectorText.includes(':root'))?.cssText).toContain('--eff-myrem-s: 12rem; --eff-myrem-l: 24rem;');
     });
 });

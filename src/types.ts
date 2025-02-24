@@ -6,8 +6,17 @@
 export interface IStyleConfig {
     /**
      * Global params
+     * @deprecated use `themes` instead
      */
     params?: TDisplayModeValues;
+    /**
+     * Style themes
+     */
+    themes?: TDisplayModeValues;
+    /**
+     * Root styles
+     */
+    rootStyle?: object;
     /**
      * Global params units
      */
@@ -199,6 +208,13 @@ export interface IBEMResolver {
 }
 
 /**
+ * BEM resolver getter
+ */
+export type TGetBEMResolver = (params: {
+    mode: TStyleMode | null
+}) => IBEMResolver;
+
+/**
  * Style processor
  * @description
  * Class that converts style object to CSSStylesheet string content
@@ -323,6 +339,11 @@ export interface IStyleDispatcher {
      * @see {@link IStyleProvider.processStyles}
      */
     process: IStyleProvider['processStyles'];
+    /**
+     * Resolve stylesheet
+     * @see {@link IStyleProvider.resolveStyleSheet}
+     */
+    resolve: IStyleProvider['resolveStyleSheet'];
 }
 
 /**
@@ -426,6 +447,11 @@ export type TDisplayModeValues = Record<string, Record<string, Record<string, st
  * `c` - classes
  */
 export type TStyleMode = 'a' | 'c';
+
+/**
+ * Stylesheet key generator
+ */
+export type TKeyGenerator = (configs: Map<TStyleSheetConfig, string>) => string;
 
 /**
  * Style provider attributes

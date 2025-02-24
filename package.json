@@ -1,6 +1,6 @@
 {
   "name": "effcss",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "Self-confident CSS-in-JS",
   "scripts": {
     "build": "rollup -c",

@@ -2,6 +2,20 @@ import { TDisplayModeValues } from '../types';
 import { values } from '../css/dict';
 
 /**
+ * Default root styles
+ */
+export const defaultRootStyle = {
+    $c: '{uni.inh}',
+    $fsz: '{rem.def}',
+    $ff: '{ff.def}',
+    $u_: {
+        $c: '{uni.inh}',
+        $fsz: '{rem.def}',
+        $ff: '{ff.def}'
+    }
+};
+
+/**
  * Default style params
  */
 export const defaultParams: TDisplayModeValues = {
