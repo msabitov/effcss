@@ -1,5 +1,6 @@
 import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
+import cleaner from 'rollup-plugin-cleaner';
 import json from './package.json' with { type: 'json' };
 
 const banner = `/*
@@ -13,11 +14,9 @@ export default [
     {
         input: {
             index: 'src/index.ts',
-            utils: 'src/utils.ts',
-            'configs/basic': 'src/configs/basic.ts',
-            'configs/ext': 'src/configs/ext.ts',
-            'css/dict': 'src/css/dict.ts',
-            'css/functions': 'src/css/functions.ts'
+            constants: 'src/constants.ts',
+            'utils/common': 'src/utils/common.ts',
+            'utils/browser': 'src/utils/browser.ts'
         },
         output: {
             dir: 'dist',
@@ -27,6 +26,11 @@ export default [
             ]
         },
         plugins: [
+            cleaner({
+                targets: [
+                  './dist/'
+                ]
+            }),
             typescript({
                 tsconfig: 'tsconfig.json'
             }),
@@ -36,24 +40,6 @@ export default [
         input: 'build/defineProvider.ts',
         output: {
             file: 'dist/build/define-provider.min.js',
-            format: 'es',
-            banner,
-            plugins: [
-                terser(),
-            ]
-        },
-        plugins: [
-            typescript({
-                compilerOptions: {
-                    declaration: false
-                }
-            }),
-        ]
-    },
-    {
-        input: 'build/defineProviderWithConfigs.ts',
-        output: {
-            file: 'dist/build/define-provider-with-configs.min.js',
             format: 'es',
             banner,
             plugins: [

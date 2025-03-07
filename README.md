@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://effcss.surge.sh">
-    <img alt="effcss" src="https://effcss.surge.sh/logo.svg" height="256px" />
+    <img alt="effcss" src="/logo.svg" height="256px" />
   </a>
 </p>
 
@@ -41,7 +41,7 @@ Effcss is a self-confident CSS-in-JS library based only on the browser APIs.
 - framework agnostic
 - runtime stylesheets generation
 - built-in BEM support
-- supports style switching and customization
+- customizable
 
 ## Installation
 
@@ -66,17 +66,17 @@ First you need to connect the `<style-provider>`. One script is all it takes:
   <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
 ```
 
-Then you only need to create the necessary styles before rendering. The easiest way to do this is via the `StyleDispatcher`:
+Then you only need to create the necessary styles before rendering. The easiest way to do this is via the `createDispatcher`:
 
 **main.js**
 
 ```jsx
-import { StyleDispatcher } from "effcss/utils";
+import { createDispatcher } from "effcss/utils/browser";
 
-const styleDispatcher = new StyleDispatcher(document);
+const styleDispatcher = createDispatcher();
 
 const root = createRoot(document.getElementById('root'));
-root.render(<App styleDispatcher={styleDispatcher}/>);
+root.render(<App css={styleDispatcher}/>);
 ```
 
 **App.js**
@@ -86,44 +86,51 @@ import { useRef } from 'react'
 
 const cardStyle = {
   c: {
+    // block
     _: {
       $dis: 'flex',
       $jc: 'center'
     },
+    // element
     __logo: {
       $p: '2em'
     },
+    // boolean element modifier
     __logo_c_: {
       $c: '#888'
+    },
+    // element modifier with value
+    __logo_sz_lg: {
+      $w: '5rem'
     }
   }
 };
 
 export const App = (props) => {
-  const { styleDispatcher } = props;
+  const { css } = props;
 
-  const stylesRef = useRef();
+  const attrsRef = useRef();
   if (!stylesRef.current) {
-    const bem = styleContext.use(cardStyle);
-    stylesRef.current = {
+    const resolve = css.use(cardStyle);
+    attrsRef.current = {
       // just block selector
-      block: bem()(),
-      // element selector
-      logo: bem('logo')(),
+      block: resolve()(),
       // element with modifiers
-      logoC: bem('logo')('c'),
+      logoMod: resolve('logo')({
+        c: '',
+        sz: 'lg'
+      }),
     };
   }
-  const styles = stylesRef.current;
+  const styles = attrsRef.current;
 
   // apply attributes to appropriate nodes
   return <div {...styles.block}>
-    <div {...styles.logo}>
+    <div {...styles.logoMod}>
       ...
     </div>
-  </div>
-
+  </div>;
 }
 ```
 
-That's all. No preprocessors or plugins.
+That's all. No plugins are needed.

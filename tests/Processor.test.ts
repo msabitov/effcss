@@ -1,41 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { createProcessor } from '../src/_provider/process';
+import { createResolver } from '../src/utils/common';
+import { keys, sets } from '../src/constants';
 
-type TCustomStyleSheet = {
-  '': {
-    /**
-     * Block modifier
-     */
-    w: 's' | 'l';
-    /**
-     * Block boolean modifier
-     */
-    sm: '';
-  };
-  elem: {
-    /**
-     * Element modifier
-     */
-    w: 's' | 'm' | 'l';
-    /**
-     * Element boolean modifier
-     */
-    lg: '';
-  };
-  elem2: {
-    /**
-     * Element modifier
-     */
-    h: 's' | 'm' | 'l';
-    /**
-     * Element boolean modifier
-     */
-    md: '';
-  };
-};
-
-const processor = createProcessor({params: {}});
-const classProcessor = createProcessor({params: {}, mode: 'c'});
+const processor = createProcessor({keys, sets, resolver: createResolver({mode: 'a'})});
+const classProcessor = createProcessor({keys, sets, resolver: createResolver({mode: 'c'})});
 
 describe('BEM selectors:', () => {
   test('block:', () => {
@@ -154,13 +123,22 @@ describe('BEM class selectors:', () => {
 });
 
 describe('Interpolation:', () => {
-  test('global keys dict:', () => {
+  test('global key:', () => {
     const styleString = processor.compile('cust', {c: {
       '.custom': {
         $c: 'transparent'
       }
     }});
     expect(styleString).toBe('.custom{color:transparent;}')
+  });
+
+  test('special global key:', () => {
+    const styleString = processor.compile('cust', {c: {
+      $$: {
+        color: 'transparent'
+      }
+    }});
+    expect(styleString).toBe(':root{color:transparent;}')
   });
 
   test('local keys dict:', () => {
@@ -189,17 +167,19 @@ describe('Interpolation:', () => {
   test('local vars dict:', () => {
     const styleString = processor.compile('cust', {
       _: {sz: {}},
-      c: {_sz: '&uni=>{_sz}:{1}'
+      c: {_: {
+        $_sz: 'unset'
+      }
     }});
-    expect(styleString.includes('[data-cust~="sz-u"]{--eff-cust-sz:unset;}')).toBeTruthy();
+    expect(styleString.includes('[data-cust]{--cust-sz:unset;}')).toBeTruthy();
   });
 
   test('Keyframes:', () => {
     const styleString = processor.compile('block', {
       kf: {main: {0: {width: '10px'}, 100: {width: '20px'}}},
-      c: {_main_: {$an: '{kf_main}'}}
+      c: {_: {$an: '{kf_main}'}}
     });
-    expect(styleString.includes('@keyframes eff-block-main {0%{width:10px;}100%{width:20px;}}[data-block~="main"]{animation-name:eff-block-main;}')).toBeTruthy();
+    expect(styleString.includes('@keyframes block-main {0%{width:10px;}100%{width:20px;}}[data-block]{animation-name:block-main;}')).toBeTruthy();
   });
 
   test('lowerCamelCase to kebabCase:', () => {
@@ -221,9 +201,9 @@ describe('Object values:', () => {
 
   test('Nested at-rules:', () => {
     const styleString = processor.compile('block', {c: {
-      '.small': {width: '5rem', $min_md_: {'.large': {width: '15rem'}}}}}
+      '.small': {width: '5rem', $$dark: {'.blue': {color: 'blue'}}}}}
     );
-    expect(styleString).toBe('.small{width:5rem;@media (min-width:48rem){.large{width:15rem;}}}')
+    expect(styleString).toBe('.small{width:5rem;@media(prefers-color-scheme: dark){.blue{color:blue;}}}')
   });
 
   test('Selector starting with `&`:', () => {
@@ -235,9 +215,9 @@ describe('Object values:', () => {
 
   test('First-level nested selector inside at-rules:', () => {
     const styleString = processor.compile('block', {c: {
-      $min_md_:{'.small': {width: '5rem'}, '.large': {width: '15rem'}}}}
+      $$dark:{'.small': {width: '5rem', '.blue': {color: 'blue'}}}}}
     );
-    expect(styleString).toBe('@media (min-width:48rem){.small{width:5rem;}.large{width:15rem;}}')
+    expect(styleString).toBe('@media(prefers-color-scheme: dark){.small{width:5rem;&.blue{color:blue;}}}')
   });
 
   test('Values transform:', () => {
@@ -274,200 +254,5 @@ describe('Object values:', () => {
       c: {_w: '&sz[s,m]=>width:{1}px'
     }});
     expect(styleString.includes('[data-cust~="w-s"]{width:20px;}') && !styleString.includes('[data-cust~="w-l"]')).toBeTruthy();
-  });
-});
-
-
-describe('BEM data-attribute resolver:', () => {
-  test('Block:', () => {
-    const styleAttr = processor.bem.attr('cust')()();
-    expect(styleAttr['data-cust']).toBe('');
-  });
-
-  test('Block modifiers:', () => {
-    const styleAttr = processor.bem.attr('cust')()('w-z sm');
-    expect(styleAttr['data-cust']).toBe('w-z sm');
-  });
-
-  test('Block object modifiers:', () => {
-    const styleAttr = processor.bem.attr('cust')()({
-      w: 's',
-      sm: ''
-    } as TCustomStyleSheet['']);
-    expect(styleAttr['data-cust']).toBe('w-s sm');
-  });
-
-  test('Element:', () => {
-    const styleAttr = processor.bem.attr('cust')('elem')();
-    expect(styleAttr['data-cust-elem']).toBe('');
-  });
-
-  test('Element modifiers:', () => {
-    const styleAttr = processor.bem.attr('cust')('elem')('w-s sm');
-    expect(styleAttr['data-cust-elem']).toBe('w-s sm');
-  });
-
-  test('Element object modifiers:', () => {
-    const styleAttr = processor.bem.attr('cust')('elem')({
-      w: 's',
-      lg: ''
-    } as TCustomStyleSheet['elem']);
-    expect(styleAttr['data-cust-elem']).toBe('w-s lg');
-  });
-
-  test('Resolved `v`:', () => {
-    const styleAttr = processor.bem.attr('cust')('elem')({
-      w: 's',
-      lg: ''
-    } as TCustomStyleSheet['elem']);
-    expect(styleAttr.v).toBe('w-s lg');
-  });
-
-  test('Resolved `k`:', () => {
-    const styleAttr = processor.bem.attr('cust')('elem')({
-      w: 's',
-      lg: ''
-    } as TCustomStyleSheet['elem']);
-    expect(styleAttr.k).toBe('data-cust-elem');
-  });
-
-  test('Resolved destruction:', () => {
-    const styleAttr = processor.bem.attr('cust')('elem')({
-      w: 's',
-      lg: ''
-    } as TCustomStyleSheet['elem']);
-    const dest = {...styleAttr};
-    expect(!('k' in dest) && !('v' in dest)).toBeTruthy();
-  });
-
-  test('Undefined modifiers:', () => {
-    const styleAttr = processor.bem.attr('cust')('elem')({
-      w: 's',
-      lg: undefined
-    } as Partial<TCustomStyleSheet['elem']>);
-    expect(styleAttr.v).toBe('w-s');
-  });
-});
-
-describe('BEM className resolver:', () => {
-  test('Block:', () => {
-    const styleAttr = classProcessor.bem.attr('cust')()();
-    expect(styleAttr.class).toBe('cust');
-  });
-
-  test('Block modifiers:', () => {
-    const styleAttr = classProcessor.bem.attr('cust')()('w-s sm');
-    expect(styleAttr.class).toBe('cust cust_w_s cust_sm');
-  });
-
-  test('Block object modifiers:', () => {
-    const styleAttr = classProcessor.bem.attr('cust')()({
-      w: 's',
-      sm: ''
-    } as TCustomStyleSheet['']);
-    expect(styleAttr.class).toBe('cust cust_w_s cust_sm');
-  });
-
-  test('Element:', () => {
-    const styleAttr = classProcessor.bem.attr('cust')('elem')();
-    expect(styleAttr.class).toBe('cust__elem');
-  });
-
-  test('Element modifiers:', () => {
-    const styleAttr = classProcessor.bem.attr('cust')('elem')('w-s lg');
-    expect(styleAttr.class).toBe('cust__elem cust__elem_w_s cust__elem_lg');
-  });
-
-  test('Element object modifiers:', () => {
-    const styleAttr = classProcessor.bem.attr('cust')('elem')({
-      w: 's',
-      lg: ''
-    } as TCustomStyleSheet['elem']);
-    expect(styleAttr.class).toBe('cust__elem cust__elem_w_s cust__elem_lg');
-  });
-
-  test('Resolved `v`:', () => {
-    const styleAttr = classProcessor.bem.attr('cust')('elem')({
-      w: 's',
-      lg: ''
-    } as TCustomStyleSheet['elem']);
-    expect(styleAttr.v).toBe('cust__elem cust__elem_w_s cust__elem_lg');
-  });
-
-  test('Resolved `k`:', () => {
-    const styleAttr = classProcessor.bem.attr('cust')('elem')({
-      w: 's',
-      lg: ''
-    } as TCustomStyleSheet['elem']);
-    expect(styleAttr.k).toBe('class');
-  });
-
-  test('Resolved destruction:', () => {
-    const styleAttr = classProcessor.bem.attr('cust')('elem')({
-      w: 's',
-      lg: ''
-    } as TCustomStyleSheet['elem']);
-    const dest = {...styleAttr};
-    expect(!('k' in dest) && !('v' in dest)).toBeTruthy();
-  });
-
-  test('Undefined modifiers:', () => {
-    const styleAttr = classProcessor.bem.attr('cust')('elem')({
-      w: 's',
-      lg: undefined
-    } as Partial<TCustomStyleSheet['elem']>);
-    expect(styleAttr.v).toBe('cust__elem cust__elem_w_s');
-  });
-});
-
-describe('Expand:', () => {
-  test('Parse selector:', () => {
-    const result = processor.parseSelector('__elem_mod_mv:h');
-    expect(result).toEqual({
-      e: 'elem',
-      m: 'mod',
-      mv: 'mv',
-      s: 'h'
-    });
-  });
-
-  test('Expand attr modifier selector:', () => {
-    const result = processor.expandSelector('eff1', '__elem_mod_mv:h');
-    expect(result).toEqual(['[data-eff1-elem~="mod-mv"]','[data-eff1-elem~="mod-mv:h"]{&:hover']);
-  });
-
-  test('Expand attr boolean modifier selector:', () => {
-    const result = processor.expandSelector('eff1', '__elem_mod_:h');
-    expect(result).toEqual(['[data-eff1-elem~="mod"]','[data-eff1-elem~="mod:h"]{&:hover']);
-  });
-
-  test('Expand attr element selector:', () => {
-    const result = processor.expandSelector('eff1', '__elem:h');
-    expect(result).toEqual(['[data-eff1-elem]','[data-eff1-elem~=":h"]{&:hover']);
-  });
-
-  test('Expand attr block selector:', () => {
-    const result = processor.expandSelector('eff1', '_:h');
-    expect(result).toEqual(['[data-eff1]','[data-eff1~=":h"]{&:hover']);
-  });
-
-  test('Expand className modifier selector:', () => {
-    const result = classProcessor.expandSelector('eff1', '__elem_mod_mv:h');
-    expect(result).toEqual(['.eff1__elem_mod_mv','.eff1__elem_mod_mv:h{&:hover']);
-  });
-
-  test('Expand className boolean modifier selector:', () => {
-    const result = classProcessor.expandSelector('eff1', '__elem_mod_:h');
-    expect(result).toEqual(['.eff1__elem_mod','.eff1__elem_mod:h{&:hover']);
-  });
-
-  test('Expand className element selector:', () => {
-    const result = classProcessor.expandSelector('eff1', '__elem:h');
-    expect(result).toEqual(['.eff1__elem','.eff1__elem:h{&:hover']);
-  });
-
-  test('Expand className block selector:', () => {
-    const result = classProcessor.expandSelector('eff1', '_:h');
-    expect(result).toEqual(['.eff1','.eff1:h{&:hover']);
   });
 });

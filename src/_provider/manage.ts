@@ -13,10 +13,6 @@ class Manager implements IStyleManager {
      */
     protected _rules: Record<string, Record<string, CSSRule>> = {};
     /**
-     * Expanded selectors dict
-     */
-    protected _expandedSelectors: Record<string, Set<string>> = {};
-    /**
      * Stylesheets array
      */
     protected _styleSheetsArray: CSSStyleSheet[] = [];
@@ -25,16 +21,12 @@ class Manager implements IStyleManager {
      */
     protected _listeners: WeakRef<TStyleConsumer>[] = [];
 
-    constructor(config: Record<string, string>) {
-        if (config) {
-            for (let key in config) {
-                this.pack(key, config[key])
-            }
-        }
-    }
-
     get = (key: string) => {
         return this._stylesheets[key];
+    }
+
+    has = (key?: string) => {
+        return !!key && !!this.get(key);
     }
 
     getAll = () => {
@@ -45,7 +37,30 @@ class Manager implements IStyleManager {
         if (!this._stylesheets[key]) {
             this._stylesheets[key] = stylesheet;
             this._styleSheetsArray.push(stylesheet);
-            this.cacheRules(key, stylesheet);
+            this.notify();
+            return true;
+        }
+    }
+
+    on = (key: string) => {
+        if (!key) return;
+        const styleSheet = this._stylesheets[key];
+        if (!styleSheet) return;
+        const index = this._styleSheetsArray.findIndex((item) => item === styleSheet);
+        if (index === -1) {
+            this._styleSheetsArray.push(styleSheet);
+            this.notify();
+            return true;
+        }
+    }
+
+    off = (key: string) => {
+        if (!key) return;
+        const styleSheet = this._stylesheets[key];
+        if (!styleSheet) return;
+        const index = this._styleSheetsArray.findIndex((item) => item === styleSheet);
+        if (index !== -1) {
+            this._styleSheetsArray.splice(index, 1);
             this.notify();
             return true;
         }
@@ -61,7 +76,6 @@ class Manager implements IStyleManager {
             this._styleSheetsArray.splice(index, 1);
             delete this._stylesheets[key];
             delete this._rules[key];
-            delete this._expandedSelectors[key];
         }
         this.notify();
         return true;
@@ -71,12 +85,11 @@ class Manager implements IStyleManager {
         this._styleSheetsArray.splice(0);
         this._stylesheets = {} as Record<string, CSSStyleSheet>;
         this._rules = {};
-        this._expandedSelectors = {};
         this.notify();
         return true;
     }
 
-    pack = (key: string, styles: string) => {
+    pack = (key: string, styles: string, save?: boolean) => {
         const styleSheet = new CSSStyleSheet();
         styleSheet.replaceSync(styles);
         if (!styleSheet.cssRules.length) {
@@ -84,46 +97,6 @@ class Manager implements IStyleManager {
             return;
         }
         return this.add(key, styleSheet);
-    }
-
-    cacheRules = (key: string, stylesheet: CSSStyleSheet) => {
-        [...stylesheet.cssRules].forEach((rule) => {
-            const selectorText = rule.cssText.split(' {')[0];
-            if (selectorText) {
-                if (!this._rules[key]) this._rules[key] = {};
-                this._rules[key][selectorText] = rule;
-            };
-        });
-        this._expandedSelectors[key] = new Set();
-    }
-
-    getExpandedSelectors = (key: string) => {
-        return this._expandedSelectors[key];
-    }
-
-    expandRule = (key: string, init: string, exp: string) => {
-        const rules = this._rules[key];
-        if (!rules) {
-            console.log(`No stylesheet with key '${key}'`);
-            return;
-        }
-        const rule = rules[init];
-        if (!rule) {
-            console.log(`No rule with selector '${init}' in the '${key}' stylesheet`);
-            return;
-        }
-        const [start, end] = rule.cssText.split('{');
-        const parentStyleSheet = rule.parentStyleSheet;
-        if (parentStyleSheet) {
-            const parentRules = parentStyleSheet.cssRules;
-            const nextRuleIndex = parentStyleSheet.insertRule(
-                exp + '{' + end + '}'.repeat([...exp.matchAll(/{/g)].length),
-                parentRules.length
-            );
-            rules[exp] = parentRules[nextRuleIndex];
-            this._expandedSelectors[key].add(exp);
-            return true;
-        }
     }
 
     apply = (root: TStyleConsumer) => {
@@ -157,6 +130,6 @@ class Manager implements IStyleManager {
  * @param params - manager params
  * @returns IStyleManager
  */
-export function createManager(params: Record<string, string>): IStyleManager {
-    return new Manager(params);
+export function createManager(): IStyleManager {
+    return new Manager();
 }

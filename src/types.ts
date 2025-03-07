@@ -1,390 +1,3 @@
-/**
- * Style config
- * @description
- * Config which is used as initial settings for the {@link IStyleProvider | style provider}.
- */
-export interface IStyleConfig {
-    /**
-     * Global params
-     * @deprecated use `themes` instead
-     */
-    params?: TDisplayModeValues;
-    /**
-     * Style themes
-     */
-    themes?: TDisplayModeValues;
-    /**
-     * Root styles
-     */
-    rootStyle?: object;
-    /**
-     * Global params units
-     */
-    units?: Record<string, string>;
-    /**
-     * Stylesheets` configs
-     */
-    styles?: Record<string, TStyleSheetConfig>;
-    /**
-     * Stylesheets` extra rules
-     */
-    ext?: Record<string, string[]>;
-}
-
-/**
- * Style manager
- * @description
- * Class that manages CSS stylesheets. 
- * You usually don't need to use it directly, as it is contained in the {@link IStyleProvider.manager | style provider}.
- */
-export interface IStyleManager {
-    /**
-     * Get stylesheet by key
-     * @param key - stylesheet key
-     * @returns CSS stylesheet if found with this key, otherwise `undefined`
-     */
-    get(key: string): CSSStyleSheet | undefined;
-    /**
-     * Get all stylesheets
-     * @returns CSS stylesheet dicitonary
-     */
-    getAll(): Record<string, CSSStyleSheet>;
-    /**
-     * Add stylesheet
-     * @param key - stylesheet key
-     * @param stylesheet - {@link https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet | CSSStylesheet} instance
-     * @returns `true` if stylesheet is added, otherwise `undefined`
-     */
-    add(key: string, stylesheet: CSSStyleSheet): true | void;
-    /**
-     * Remove stylesheet
-     * @param key - stylesheet key
-     * @returns `true` if stylesheet is removed, otherwise `undefined`
-     */
-    remove(key: string): true | void;
-    /**
-     * Remove all stylesheets
-     */
-    removeAll(): void;
-    /**
-     * Pack styles into CSSStyleSheet and add it into stylesheet dictionary
-     * @param key - stylesheet key
-     * @param styles - stylesheet content string
-     * @returns `true` if stylesheet is packed, otherwise `undefined`
-     * @example
-     * ```ts
-     * getProvider().manager.pack('card', '.card{width: auto;height:100%};.card__header{display:flex;height:5rem;}');
-     * ```
-     */
-    pack(key: string, styles: string): boolean | void;
-    /**
-     * Caches CSS rules in the special dictionary so that they can be expanded.
-     * @param key - stylesheet key
-     * @param styleSheet - {@link https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet | CSSStylesheet} instance
-     */
-    cacheRules: (key: string, stylesheet: CSSStyleSheet) => void;
-    /**
-     * Get expanded selectors by stylesheet key
-     * @param key - stylesheet key
-     * @returns expanded selectors Set
-     */
-    getExpandedSelectors: (key: string) => Set<string>;
-    /**
-     * Expand existing CSS rule
-     * @param key - stylesheet key
-     * @param init - initial selector
-     * @param exp - expanded selector
-     * @returns `true` if rule is expanded, otherwise `undefined`
-     */
-    expandRule: (key: string, init: string, exp: string) => true | void;
-    /**
-     * Apply stylesheets to style consumer
-     * @param consumer - {@link TStyleConsumer | style consumer}
-     * @description
-     * Explicitly applies the current style sheets to the consumer.
-     * You usually don't need to call this method, as the manager automatically updates the styles of registered consumers.
-     * @see {@link IStyleManager.registerNode}
-     */
-    apply(consumer: TStyleConsumer): void;
-    /**
-     * Register style consumer
-     * @param consumer - {@link TStyleConsumer | style consumer}
-     * @description
-     * A registered consumer will automatically receive up-to-date styles when they are added, modified, or deleted.
-     * If the style provider does not contain the `isolated` {@link IStyleProviderParams.isolated | attribute}, the current document will be automatically registered.
-     * @example
-     * ```ts
-     * // register web component shadow root as consumer
-     * const shadow = this.attachShadow({mode: 'open'});
-     * getProvider().manager.registerNode(shadow);
-     * ```
-     */
-    registerNode(consumer: TStyleConsumer): void;
-    /**
-     * Unregister style consumer
-     * @param consumer - {@link TStyleConsumer | style consumer}
-     */
-    unregisterNode(consumer: TStyleConsumer): void;
-    /**
-     * Apply style changes to dependent nodes
-     * @description
-     * You usually don't need to use this method.
-     * If you update the stylesheets through the style provider's methods,
-     * it will automatically apply them to all consumers.
-     * @see {@link IStyleProvider}
-     */
-    notify(): void;
-}
-
-/**
- * BEM selector resolver
- * @description
- * Creates a selector from the passed parts.
- * @returns BEM selector string
- */
-type TGetBEMSelector = (params: {
-    /**
-     * {@link https://en.bem.info/methodology/key-concepts/#block | Block}
-     */
-    b: string;
-    /**
-     * {@link https://en.bem.info/methodology/key-concepts/#element | Element}
-     */
-    e?: string;
-    /**
-     * {@link https://en.bem.info/methodology/key-concepts/#modifier | Modifier}
-     */
-    m?: string;
-    /**
-     * {@link https://en.bem.info/methodology/key-concepts/#modifier | Modifier value}
-     */
-    mv?: string;
-    /**
-     * Modifier value condition
-     * @description
-     * Usually a pseudo state, a pseudo element or some query (`@container`, `@media`).
-     */
-    s?: string;
-}) => string;
-
-/**
- * BEM attribute resolver
- * @description
- * Creates an object containing target attribute with its value.
- * The object content depends on the value of the style provider's `mode` {@link IStyleProviderParams.mode | attribute}.
- * @returns object containing target attribute with its value.
- */
-type TGetBEMAttr = (
-    /**
-     * {@link https://en.bem.info/methodology/key-concepts/#block | Block}
-     */
-    b: string
-) => (
-    /**
-     * {@link https://en.bem.info/methodology/key-concepts/#element | Element}
-     */
-    e?: string
-) => (
-    /**
-     * {@link https://en.bem.info/methodology/key-concepts/#modifier | Modifiers}
-     */
-    m?: string | object
-) => Record<string, string>;
-
-/**
- * {@link BEM | https://en.bem.info/methodology/} resolver
- * @description
- * Resolver object allows to create selectors/attribute by passed parts.
- */
-export interface IBEMResolver {
-    /**
-     * Selector resolver
-     */
-    selector: TGetBEMSelector;
-    /**
-     * Attribute resolver
-     */
-    attr: TGetBEMAttr;
-}
-
-/**
- * BEM resolver getter
- */
-export type TGetBEMResolver = (params: {
-    mode: TStyleMode | null
-}) => IBEMResolver;
-
-/**
- * Style processor
- * @description
- * Class that converts style object to CSSStylesheet string content
- * You usually don't need to use it directly, as it is contained in the {@link IStyleProvider.processor | style provider}.
- */
-export interface IStyleProcessor {
-    /**
-     * Base styles
-     * @description
-     * Contains base styles created in the constructor that define global variables and display modes.
-     */
-    baseStyles: string;
-    /**
-     * BEM resolver
-     * @description
-     * Allows to get BEM selectors/attributes by passed parts
-     */
-    bem: IBEMResolver;
-    /**
-     * Create expanded selector with state
-     * @param b
-     * @param selector
-     */
-    expandSelector(b: string, selector: string): [string, string];
-    /**
-     * Parse BEM selector
-     * @param selector
-     */
-    parseSelector(selector: string): {
-        e?: string;
-        m?: string;
-        mv?: string;
-        s?: string;
-    };
-    /**
-     * Compile style config to CSS stylesheet text content
-     * @param b - block key
-     * @param config - stylesheet config
-     */
-    compile(b: string, config: TStyleSheetConfig): string;
-}
-
-/**
- * Style provider
- * @description
- * Basic interface for style provider component.
- */
-export interface IStyleProvider {
-    /**
-     * {@link IStyleManager | Style manager}
-     */
-    manager: IStyleManager;
-    /**
-     * {@link IStyleProcessor | Style processor}
-     */
-    processor: IStyleProcessor;
-
-    /**
-     * Use stylesheet
-     * @param config - stylesheet config
-     * @returns {@link IBEMResolver.attr | attribute resolver}
-     * @description
-     * The method allows to use stylesheet without having its key.
-     * It returns {@link IBEMResolver.attr | attribute resolver}, that can create BEM selectors for config passed.
-     */
-    useStyleSheet(config: TStyleSheetConfig): ReturnType<IBEMResolver['attr']>;
-
-    /**
-     * Compile stylesheet
-     * @key - stylesheet key
-     * @config - stylesheet config
-     * @returns `true` if stylesheet compiled, otherwise `undefined`
-     */
-    compileStyleSheet(key: string, config: TStyleSheetConfig): boolean | undefined;
-
-    /**
-     * Expand stylesheet
-     * @param key - stylesheet key
-     * @param selectors - stylesheet extra selectors
-     * @returns processed rules count if stylesheet expanded, otherwise `undefined`
-     */
-    expandStyleSheet(key: string, selectors: string[]): number | undefined;
-
-    /**
-     * Resolve stylesheet
-     * @param key - stylesheet key
-     * @returns BEM attribute resolver for stylesheet
-     */
-    resolveStyleSheet(key: string): ReturnType<IStyleProcessor['bem']['attr']>;
-
-    /**
-     * Process configs
-     * @param styles - stylesheet dictionary
-     * @param ext - extra rules dictionary
-     */
-    processStyles(styles?: Record<string, TStyleSheetConfig>, ext?: Record<string, string[]>): void;
-}
-
-/**
- * Style dispatcher
- * @description
- * Class that allows to directly call the style provider's methods
- */
-export interface IStyleDispatcher {
-    /**
-     * Use stylesheet
-     * @see {@link IStyleProvider.useStyleSheet}
-     */
-    use: IStyleProvider['useStyleSheet'];
-    /**
-     * Compile stylesheet
-     * @see {@link IStyleProvider.compileStyleSheet}
-     */
-    compile: IStyleProvider['compileStyleSheet'];
-    /**
-     * Expand stylesheet
-     * @see {@link IStyleProvider.expandStyleSheet}
-     */
-    expand: IStyleProvider['expandStyleSheet'];
-    /**
-     * Process configs
-     * @see {@link IStyleProvider.processStyles}
-     */
-    process: IStyleProvider['processStyles'];
-    /**
-     * Resolve stylesheet
-     * @see {@link IStyleProvider.resolveStyleSheet}
-     */
-    resolve: IStyleProvider['resolveStyleSheet'];
-}
-
-/**
- * Variable type
- * @description
- * `c` - oklch color variable,
- * otherwise simple CSS variable.
- */
-export type TVariableType = 'c' | undefined;
-
-/**
- * CSS variable
- * @description
- * Specifies variable format in {@link TStyleSheetConfig | stylesheet config}.
- * Extends {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@property | `@property` rule}.
- */
-export type TVariable = {
-    /**
-     * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@property/syntax | Syntax}
-     */
-    syn?: string;
-    /**
-     * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@property/initial-value | Initial value}
-     */
-    ini?: number | string;
-    /**
-     * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@property/inherits | Inherits}
-     */
-    inh?: boolean;
-    /**
-     * {@link TVariableType | Type}
-     */
-    typ?: unknown;
-    /**
-     * Create service variables
-     * @description
-     * If this variable type use service variables,
-     * it will declare them.
-     */
-    all?: boolean;
-};
 
 /**
  * Stylesheet config
@@ -432,16 +45,412 @@ export type TStyleSheetConfig = {
 };
 
 /**
- * Display mode values
- * @description
- * The display mode allows you to override global values.
- * The required mode is root.
- * Other display modes can only override values from `root`, but not set their own.
+ * Style target
  */
-export type TDisplayModeValues = Record<string, Record<string, Record<string, string | number>>>;
+export type TStyleTarget = string | TStyleSheetConfig;
 
 /**
- * Style generation mode for {@link IBEMResolver | BEM selectors}
+ * Provider settings
+ */
+export type TProviderSettings = {
+    /**
+     * Style themes
+     */
+    themes?: TThemes;
+    /**
+     * Root styles
+     */
+    rootStyle?: object;
+    /**
+     * Global params units
+     */
+    units?: Record<string, string>;
+    /**
+     * Global keys
+     */
+    keys?: Record<string, string>;
+    /**
+     * Global sets of keys
+     */
+    sets?: Record<string, Record<string, string | number>>;
+    /**
+     * Media queries breakpoints
+     */
+    mediaBP?: Record<string, string>;
+    /**
+     * Container queries breakpoints
+     */
+    containerBP?: Record<string, string>;
+}
+
+/**
+ * Provider initial content
+ */
+export type TProviderInitContent = Record<string, TStyleSheetConfig>;
+
+/**
+ * Style manager
+ * @description
+ * Manages CSS stylesheets.
+ */
+export interface IStyleManager {
+    /**
+     * Get stylesheet by key
+     * @param key - stylesheet key
+     * @returns CSS stylesheet if found with this key, otherwise `undefined`
+     */
+    get(key?: string): CSSStyleSheet | undefined;
+    /**
+     * Get all stylesheets
+     * @returns CSS stylesheet dicitonary
+     */
+    getAll(): Record<string, CSSStyleSheet>;
+    /**
+     * Add stylesheet
+     * @param key - stylesheet key
+     * @param stylesheet - {@link https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet | CSSStylesheet} instance
+     * @returns `true` if stylesheet is added, otherwise `undefined`
+     */
+    add(key: string, stylesheet: CSSStyleSheet): true | void;
+    /**
+     * Remove stylesheet
+     * @param key - stylesheet key
+     * @returns `true` if stylesheet is removed, otherwise `undefined`
+     */
+    remove(key: string): true | void;
+    /**
+     * Remove all stylesheets
+     */
+    removeAll(): void;
+    /**
+     * Pack styles into CSSStyleSheet and add it into stylesheet dictionary
+     * @param key - stylesheet key
+     * @param styles - stylesheet content string
+     * @returns `true` if stylesheet is packed, otherwise `undefined`
+     * @example
+     * ```ts
+     * getProvider().manager.pack('card', '.card{width: auto;height:100%};.card__header{display:flex;height:5rem;}');
+     * ```
+     */
+    pack(key: string, styles: string): boolean | void;
+    /**
+     * Check if stylesheet exist
+     * @param key - stylesheet key
+     * @returns boolean flag
+     */
+    has(key?: string): boolean;
+    /**
+     * Switch stylesheet on
+     * @param key - stylesheet key
+     */
+    on(key?: string): boolean | undefined;
+    /**
+     * Switch stylesheet off
+     * @param key - stylesheet key
+     */
+    off(key?: string): boolean | undefined;
+    /**
+     * Apply stylesheets to style consumer
+     * @param consumer - {@link TStyleConsumer | style consumer}
+     * @description
+     * Explicitly applies the current style sheets to the consumer.
+     * You usually don't need to call this method, as the manager automatically updates the styles of registered consumers.
+     * @see {@link IStyleManager.registerNode}
+     */
+    apply(consumer: TStyleConsumer): void;
+    /**
+     * Register style consumer
+     * @param consumer - {@link TStyleConsumer | style consumer}
+     * @description
+     * A registered consumer will automatically receive up-to-date styles when they are added, modified, or deleted.
+     * If the style provider does not contain the `isolated` {@link IStyleProviderParams.isolated | attribute}, the current document will be automatically registered.
+     */
+    registerNode(consumer: TStyleConsumer): void;
+    /**
+     * Unregister style consumer
+     * @param consumer - {@link TStyleConsumer | style consumer}
+     */
+    unregisterNode(consumer: TStyleConsumer): void;
+    /**
+     * Apply style changes to dependent nodes
+     * @description
+     * You usually don't need to use this method.
+     * If you update the stylesheets through the style provider's methods,
+     * it will automatically apply them to all consumers.
+     * @see {@link IStyleProvider}
+     */
+    notify(): void;
+}
+
+/**
+ * BEM selector resolver
+ * @description
+ * Creates a selector from the passed parts.
+ * @returns BEM selector string
+ */
+export type TResolveSelector = (params: {
+    /**
+     * {@link https://en.bem.info/methodology/key-concepts/#block | Block}
+     */
+    b: string;
+    /**
+     * {@link https://en.bem.info/methodology/key-concepts/#element | Element}
+     */
+    e?: string;
+    /**
+     * {@link https://en.bem.info/methodology/key-concepts/#modifier | Modifier}
+     */
+    m?: string;
+    /**
+     * {@link https://en.bem.info/methodology/key-concepts/#modifier | Modifier value}
+     */
+    mv?: string;
+    /**
+     * Modifier value condition
+     * @description
+     * Usually a pseudo state, a pseudo element or some query (`@container`, `@media`).
+     */
+    s?: string;
+}) => string;
+
+/**
+ * BEM attribute resolver
+ * @description
+ * Creates an object containing target attribute with its value.
+ * The object content depends on the value of the style provider's `mode` {@link IStyleProviderParams.mode | attribute}.
+ * @returns object containing target attribute with its value.
+ */
+export type TResolveAttr = (
+    /**
+     * {@link https://en.bem.info/methodology/key-concepts/#block | Block}
+     */
+    b?: string
+) => (
+    /**
+     * {@link https://en.bem.info/methodology/key-concepts/#element | Element}
+     */
+    e?: string
+) => (
+    /**
+     * {@link https://en.bem.info/methodology/key-concepts/#modifier | Modifiers}
+     */
+    m?: string | object
+) => Record<string, string>;
+
+/**
+ * Style resolver
+ * @description
+ * Resolves stylesheets' selectors/attributes/identifiers
+ */
+export interface IStyleResolver {
+    /**
+     * Selector resolver
+     */
+    selector: TResolveSelector;
+    /**
+     * Attribute resolver
+     */
+    attr: TResolveAttr;
+    /**
+     * Var name resolver
+     */
+    varName: (...parts: (string | number)[]) => string;
+    /**
+     * Keyframes name resolver
+     */
+    kfName: (...parts: (string | number)[]) => string;
+}
+
+/**
+ * Stylesheet resolver getter
+ */
+export type TCreateResolver = (params?: {
+    mode?: TStyleMode | null;
+}) => IStyleResolver;
+
+/**
+ * Style processor
+ * @description
+ * Converts stylesheet config to CSSStylesheet string content.
+ */
+export interface IStyleProcessor {
+    /**
+     * Compile style config to CSS stylesheet text content
+     * @param b - block key
+     * @param config - stylesheet config
+     */
+    compile(b: string, config: TStyleSheetConfig): string;
+}
+
+/**
+ * Style collector
+ * @description
+ * Collects stylesheet configs and maps them with keys
+ */
+export interface IStyleCollector {
+    /**
+     * Collect config
+     * @param config - stylesheet config
+     * @param key - stylesheet key
+     */
+    use(config: TStyleSheetConfig, key?: string): string;
+    /**
+     * Get key of collected config
+     * @param config - stylesheet config
+     */
+    getKey(config: TStyleSheetConfig): string | undefined;
+    /**
+     * Get all collected keys
+     */
+    getKeys(): string[];
+    /**
+     * Get all collected configs
+     */
+    getConfigs(): Record<string, TStyleSheetConfig>;
+}
+
+/**
+ * Style provider
+ * @description
+ * Basic interface for style provider component.
+ */
+export interface IStyleProvider {
+    /**
+     * Provider initial content
+     */
+    initContent: TProviderInitContent;
+    /**
+     * Provider settings
+     */
+    settingsContent: TProviderSettings;
+    /**
+     * Use stylesheet
+     * @param config - stylesheet config
+     * @returns {@link IStyleResolver.attr | attribute resolver}
+     * @description
+     * The method allows to use stylesheet without having its key.
+     * It returns {@link IStyleResolver.attr | attribute resolver}, that can create BEM selectors for config passed.
+     */
+    use(config: TStyleSheetConfig, key?: string): ReturnType<TResolveAttr>;
+    /**
+     * Use public stylesheet configs
+     * @param configs - stylesheet configs
+     */
+    usePublic(configs: Record<string, TStyleSheetConfig>): Record<string, ReturnType<TResolveAttr>>;
+    /**
+     * Use private stylesheet configs
+     * @param configs - stylesheet configs
+     */
+    usePrivate(configs: TStyleSheetConfig[]): ReturnType<TResolveAttr>[];
+    /**
+     * Resolve stylesheet
+     * @param key - stylesheet key
+     * @returns BEM attribute resolver for stylesheet
+     */
+    resolve(key?: string): ReturnType<TResolveAttr>;
+    /**
+     * Prepare CSS from config
+     * @param config - stylesheet config
+     * @param key - stylesheet key
+     */
+    css(config: TStyleSheetConfig, key: string): string;
+    /**
+     * Get CSS stylesheet
+     * @param target - target stylesheet config or key
+     */
+    get(target?: TStyleTarget): CSSStyleSheet | undefined;
+    /**
+     * Switch stylesheet on
+     * @param target - target stylesheet config or key
+     */
+    on(target?: TStyleTarget): boolean | undefined;
+    /**
+     * Switch stylesheet off
+     * @param target - target stylesheet config or key
+     */
+    off(target?: TStyleTarget): boolean | undefined;
+    /**
+     * Get many CSS stylesheets
+     * @param target - target stylesheet configs and/or keys
+     */
+    getMany(targets?: TStyleTarget[]): (CSSStyleSheet | undefined)[];
+}
+
+/**
+ * Style dispatcher
+ * @description
+ * Dispatches style operations to provider
+ */
+export interface IStyleDispatcher {
+    /**
+     * Use stylesheet
+     * @see {@link IStyleProvider.use}
+     */
+    use: IStyleProvider['use'];
+    /**
+     * Use public stylesheet configs
+     * @see {@link IStyleProvider.usePublic}
+     */
+    usePublic: IStyleProvider['usePublic'];
+    /**
+     * Use private stylesheet configs
+     * @see {@link IStyleProvider.usePrivate}
+     */
+    usePrivate: IStyleProvider['usePrivate'];
+    /**
+     * Resolve stylesheet
+     * @see {@link IStyleProvider.resolve}
+     */
+    resolve: IStyleProvider['resolve'];
+}
+
+/**
+ * Variable type
+ * @description
+ * `c` - oklch color variable,
+ * otherwise simple CSS variable.
+ */
+export type TVariableType = 'c' | undefined;
+
+/**
+ * CSS variable
+ * @description
+ * Specifies variable format in {@link TStyleSheetConfig | stylesheet config}.
+ * Extends {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@property | `@property` rule}.
+ */
+export type TVariable = {
+    /**
+     * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@property/syntax | Syntax}
+     */
+    syn?: string;
+    /**
+     * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@property/initial-value | Initial value}
+     */
+    ini?: number | string;
+    /**
+     * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@property/inherits | Inherits}
+     */
+    inh?: boolean;
+    /**
+     * {@link TVariableType | Type}
+     */
+    typ?: unknown;
+    /**
+     * Create service variables
+     * @description
+     * If this variable type use service variables,
+     * it will declare them.
+     */
+    all?: boolean;
+};
+
+/**
+ * Style themes
+ */
+export type TThemes = Record<string, Record<string, Record<string, string | number>>>;
+
+/**
+ * Style generation mode for {@link IStyleResolver | BEM selectors}
  * @description
  * `a` - attributes
  * `c` - classes
@@ -449,23 +458,22 @@ export type TDisplayModeValues = Record<string, Record<string, Record<string, st
 export type TStyleMode = 'a' | 'c';
 
 /**
- * Stylesheet key generator
- */
-export type TKeyGenerator = (configs: Map<TStyleSheetConfig, string>) => string;
-
-/**
  * Style provider attributes
  * @description
- * Attributes that can be set on a component.
+ * Attributes that can be set on a provider component.
  */
 export interface IStyleProviderParams {
     /**
-     * Settings script element id
+     * Settings script selector
      * @description
      * Allows to read the initial settings from a separate element script.
      * If not specified, `effcss` is used.
      */
     settingsid?: string;
+    /**
+     * Initial content script selector
+     */
+    initcls?: string;
     /**
      * Prefix
      * @description
@@ -485,16 +493,11 @@ export interface IStyleProviderParams {
      * @description
      * If specified, provider won`t register document as dependent node
      */
-    isolated?: string | null;
+    isolated?: '' | null;
     /**
-     * Initializer stylesheet key
-     * @description
-     * It value controls initializer stylesheet:
-     * - if it is equals '', the stylesheet will be omitted;
-     * - if it is not specified, the stylesheet will be generated with default `initkey`;
-     * - if it is specified as no-empty string, the stylesheet will be generated with specified key.
+     * Hydrate initial stylesheets
      */
-    initkey?: string | null;
+    hydrate?: '' | null;
 };
 
 /**

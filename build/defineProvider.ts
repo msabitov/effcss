@@ -1,3 +1,3 @@
-import { defineStyleProvider } from '../src/index';
+import { defineProvider } from '../src/index';
 
-defineStyleProvider();
+defineProvider();

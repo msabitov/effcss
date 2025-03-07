@@ -1,11 +1,18 @@
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, onTestFinished, test } from 'vitest';
 import { page } from '@vitest/browser/context';
-import { defineStyleProvider } from '../src/index';
+import { defineProvider } from '../src/index';
 import {
-    compileStyleSheet, expandStyleSheet, getProvider, getRulesCount,
-    getTotalRulesCount, resolveStyleSheet, stringifyAllStyles,
-    stringifyStyleSheet, useStyleSheet
-} from '../src/utils';
+    getProvider,
+    measureOne, measureMany,
+    resolveStyleSheet,
+    stringifyOne, stringifyMany,
+    useStyleSheet,
+    usePublicStyleSheets,
+    usePrivateStyleSheets
+} from '../src/utils/browser';
+import {
+    SETTINGS_SCRIPT_ID, PROVIDER_TAG_NAME, STYLES_SCRIPT_CLS
+} from '../src/constants';
 
 const PROVIDER_ID = 'provider';
 const FIRST_ID = 'first';
@@ -31,112 +38,217 @@ const SECOND_CONFIG = {
 };
 const SECOND_STR = `[data-${SECOND_ID}] { height: 100vh; border-top-left-radius: 14px; flex-grow: 10; }`;
 const CUSTOM_NAME = 'my-provider';
+const SETTINGS = {
+    rootStyle: {
+        fontSize: '24px'
+    },
+    sets: {
+        mysz: {
+            s: 10,
+            m: 20,
+            l: 30
+        },
+        myrem: {
+            s: 12,
+            l: 24
+        }
+    },
+    keys: {
+        custo: 'border-bottom'
+    },
+    themes: {
+        custom: {
+            mysz: {
+                s: 1,
+                m: 2,
+                l: 3
+            },
+            myrem: {
+                s: 10,
+                l: 20
+            }
+        } 
+    },
+    units: {
+        myrem: '{1}rem'
+    }
+};
 
-describe('Style provider utils:', () => {
+const STYLES = {
+    [FIRST_ID]: FIRST_CONFIG,
+    [SECOND_ID]: SECOND_CONFIG
+};
+
+describe('Provider utils:', () => {
     beforeAll(() => {
-        defineStyleProvider();
+        defineProvider();
     });
 
     beforeEach(() => {
-        const element = document.createElement('style-provider', {is: 'style-provider'});
+        const element = document.createElement(PROVIDER_TAG_NAME, {is: PROVIDER_TAG_NAME});
         element.dataset.testid = PROVIDER_ID;
-        element.setAttribute('initkey', '');
         document.body.append(element);
         return () => element.remove();
     });
 
-    test('getProvider', () => {
+    test('get provider', () => {
         const provider = page.getByTestId(PROVIDER_ID).query();
         expect(getProvider()).toBe(provider);
     });
 
-    test('compileStyleSheet', () => {
-        const provider = getProvider();
-        compileStyleSheet(FIRST_ID, FIRST_CONFIG);
-        expect(provider.manager.get(FIRST_ID) instanceof CSSStyleSheet).toBeTruthy();
-    });
-
-    test('useStyleSheet', () => {
+    test('use stylesheet', () => {
         const resolver = useStyleSheet(FIRST_CONFIG);
         const attrs = resolver()();
         expect(attrs.k.startsWith('data-') && attrs.v === '').toBeTruthy();
     });
 
-    test('expandStyleSheet', () => {
-        const provider = getProvider();
-        compileStyleSheet(FIRST_ID, FIRST_CONFIG);
-        expandStyleSheet(FIRST_ID, ['_:h']);
-        expect(provider.manager.get(FIRST_ID)?.cssRules?.[1]?.cssRules?.[0]?.selectorText).toBe('&:hover');
+    test('use public stylesheets', () => {
+        const resolvers = usePublicStyleSheets({[FIRST_ID]: FIRST_CONFIG});
+        const resolver = resolvers[FIRST_ID];
+        const attrs = resolver()();
+        expect(attrs.k.startsWith('data-') && attrs.v === '').toBeTruthy();
     });
 
-    test('resolveStyleSheet', () => {
-        compileStyleSheet(FIRST_ID, FIRST_CONFIG);
+    test('use private stylesheets', () => {
+        const resolvers = usePrivateStyleSheets([SECOND_CONFIG]);
+        const resolver = resolvers[0];
+        const attrs = resolver()();
+        expect(attrs.k.startsWith('data-') && attrs.v === '').toBeTruthy();
+    });
+
+    test('resolve stylesheet', () => {
+        useStyleSheet(FIRST_CONFIG, FIRST_ID);
         expect(resolveStyleSheet(FIRST_ID)()().k).toBe('data-' + FIRST_ID);
     });
 
-    test('stringifyStyleSheet', () => {
-        compileStyleSheet(FIRST_ID, FIRST_CONFIG);
-        expect(stringifyStyleSheet(FIRST_ID)).toBe(FIRST_STR);
+    test('stringify stylesheet', () => {
+        useStyleSheet(FIRST_CONFIG, FIRST_ID);
+        const str = stringifyOne(FIRST_ID);
+        expect(str).toBe(FIRST_STR);
     });
 
-    test('stringifyAllStyles', () => {
-        compileStyleSheet(FIRST_ID, FIRST_CONFIG);
-        compileStyleSheet(SECOND_ID, SECOND_CONFIG);
-        const allStr = stringifyAllStyles();
+    test('stringify many stylesheets', () => {
+        useStyleSheet(FIRST_CONFIG, FIRST_ID);
+        useStyleSheet(SECOND_CONFIG, SECOND_ID);
+        const allStr = stringifyMany([FIRST_ID, SECOND_ID]);
         expect(allStr.includes(FIRST_STR) && allStr.includes(SECOND_STR)).toBeTruthy();
     });
 
-    test('getRulesCount', () => {
-        compileStyleSheet(FIRST_ID, FIRST_CONFIG);
-        expect(getRulesCount(FIRST_ID)).toBe(1);
+    test('measure stylesheet', () => {
+        useStyleSheet(FIRST_CONFIG, FIRST_ID);
+        const count = measureOne(FIRST_ID);
+        expect(count).toBe(1);
     });
 
-    test('getTotalRulesCount', () => {
-        compileStyleSheet(FIRST_ID, FIRST_CONFIG);
-        compileStyleSheet(SECOND_ID, SECOND_CONFIG);
-        expect(getTotalRulesCount()).toBe(2);
+    test('measure many stylesheets', () => {
+        useStyleSheet(FIRST_CONFIG, FIRST_ID);
+        useStyleSheet(SECOND_CONFIG, SECOND_ID);
+        const count = measureMany([FIRST_ID, SECOND_ID]);
+        expect(count).toBe(2);
     });
 });
 
-describe('Style provider params:', () => {
-    let count = 3;
+describe('Provider scripts:', () => {
+    beforeAll(() => {
+        defineProvider();
+    });
+
+    test('JSON settings', () => {
+        const script = document.createElement('script');
+        script.type = 'application/json';
+        script.id = SETTINGS_SCRIPT_ID;
+        script.innerHTML = JSON.stringify(SETTINGS);
+        document.head.append(script);
+        const element = document.createElement(PROVIDER_TAG_NAME, {is: PROVIDER_TAG_NAME});
+        element.dataset.testid = PROVIDER_ID;
+        document.body.append(element);
+        onTestFinished(() => {
+            element.remove();
+            script.remove();
+        })
+        const provider = getProvider();
+        expect(provider.settingsContent).toEqual(SETTINGS);
+    });
+
+    test('JS settings', () => {
+        const script = document.createElement('script');
+        script.id = SETTINGS_SCRIPT_ID;
+        script.innerHTML = `document.currentScript.effcss = ${JSON.stringify(SETTINGS)};`;
+        document.head.append(script);
+        const element = document.createElement(PROVIDER_TAG_NAME, {is: PROVIDER_TAG_NAME});
+        element.dataset.testid = PROVIDER_ID;
+        document.body.append(element);
+        onTestFinished(() => {
+            element.remove();
+            script.remove();
+        })
+        const provider = getProvider();
+        expect(provider.settingsContent).toEqual(SETTINGS);
+    });
+
+    test('JSON styles', () => {
+        const script = document.createElement('script');
+        script.type = 'application/json';
+        script.classList.add(STYLES_SCRIPT_CLS);
+        script.innerHTML = JSON.stringify(STYLES);
+        document.head.append(script);
+        const element = document.createElement(PROVIDER_TAG_NAME, {is: PROVIDER_TAG_NAME});
+        element.dataset.testid = PROVIDER_ID;
+        document.body.append(element);
+        onTestFinished(() => {
+            element.remove();
+            script.remove();
+        })
+        const provider = getProvider();
+        expect(provider.initContent).toEqual(STYLES);
+    });
+
+    test('JS styles', () => {
+        const script = document.createElement('script');
+        script.classList.add(STYLES_SCRIPT_CLS);
+        script.innerHTML = `document.currentScript.effcss = ${JSON.stringify(STYLES)};`;
+        document.head.append(script);
+        const element = document.createElement(PROVIDER_TAG_NAME, {is: PROVIDER_TAG_NAME});
+        element.dataset.testid = PROVIDER_ID;
+        document.body.append(element);
+        onTestFinished(() => {
+            element.remove();
+            script.remove();
+        })
+        const provider = getProvider();
+        expect(provider.initContent).toEqual(STYLES);
+    });
+
+    test('several JS styles', () => {
+        const firstScript = document.createElement('script');
+        firstScript.classList.add(STYLES_SCRIPT_CLS);
+        firstScript.innerHTML = `document.currentScript.effcss = ${JSON.stringify({[FIRST_ID]: FIRST_CONFIG})};`;
+        document.head.append(firstScript);
+        const secondScript = document.createElement('script');
+        secondScript.classList.add(STYLES_SCRIPT_CLS);
+        secondScript.innerHTML = `document.currentScript.effcss = ${JSON.stringify({[SECOND_ID]: SECOND_CONFIG})};`;
+        document.head.append(secondScript);
+        const element = document.createElement(PROVIDER_TAG_NAME, {is: PROVIDER_TAG_NAME});
+        element.dataset.testid = PROVIDER_ID;
+        document.body.append(element);
+        onTestFinished(() => {
+            element.remove();
+            firstScript.remove();
+            secondScript.remove();
+        })
+        const provider = getProvider();
+        expect(provider.initContent).toEqual(STYLES);
+    });
+})
+
+describe('Provider params:', () => {
+    let count;
     beforeAll(() => {
         count = 3;
-        defineStyleProvider({
+        defineProvider({
             name: CUSTOM_NAME,
-            config: {
-                rootStyle: {
-                    fontSize: '24px'
-                },
-                themes: {
-                    root: {
-                        mysz: {
-                            s: 10,
-                            m: 20,
-                            l: 30
-                        },
-                        myrem: {
-                            s: 12,
-                            l: 24
-                        }
-                    },
-                    custom: {
-                        mysz: {
-                            s: 1,
-                            m: 2,
-                            l: 3
-                        },
-                        myrem: {
-                            s: 10,
-                            l: 20
-                        }
-                    } 
-                },
-                units: {
-                    myrem: '{1}rem'
-                }
-            },
-            keygen: () => 'cust' + (count+=2)
+            styles: STYLES,
+            settings: SETTINGS
         });
         return () => count = 3;
     });
@@ -150,43 +262,27 @@ describe('Style provider params:', () => {
 
     test('name', () => {
         const provider = getProvider(document, CUSTOM_NAME);
-        expect(!!provider.manager && !!provider.processor).toBeTruthy();
+        expect(provider?.tagName === CUSTOM_NAME.toUpperCase() && provider.settingsContent).toEqual(SETTINGS);
     });
 
-    test('keygen', () => {
-        const provider = getProvider(document, CUSTOM_NAME);
-        const firstResolver = useStyleSheet(FIRST_CONFIG, provider);
-        const firstAttr = firstResolver()().k;
-        const secondResolver = useStyleSheet(SECOND_CONFIG, provider);
-        const secondAttr = secondResolver()().k;
-        expect(firstAttr === 'data-effcust5' && secondAttr === 'data-effcust7').toBeTruthy();
-    });
-
-    test('config.rootStyle', () => {
+    test('settings.rootStyle', () => {
         const provider = getProvider(document, CUSTOM_NAME);
         expect([
-            ...(provider?.manager?.get?.('init')?.cssRules || [])
+            ...(provider?.get?.()?.cssRules || [])
         ].find((rule) => rule?.selectorText === ':root')?.cssText).toContain('font-size: 24px;');
     });
 
-    test('config.themes.root', () => {
+    test('settings.themes.custom', () => {
         const provider = getProvider(document, CUSTOM_NAME);
         expect([
-            ...(provider?.manager?.get?.('init')?.cssRules || [])
-        ].find((rule) => rule?.selectorText.includes('theme-root'))?.cssText).toContain('--eff-mysz-s: 10; --eff-mysz-m: 20;');
+            ...(provider.get()?.cssRules || [])
+        ].find((rule) => rule?.selectorText.includes('theme-custom'))?.cssText).toContain('--mysz-s: 1; --mysz-m: 2;');
     });
 
-    test('config.themes.custom', () => {
+    test('settings.units', () => {
         const provider = getProvider(document, CUSTOM_NAME);
         expect([
-            ...(provider?.manager?.get?.('init')?.cssRules || [])
-        ].find((rule) => rule?.selectorText.includes('theme-custom'))?.cssText).toContain('--eff-mysz-s: 1; --eff-mysz-m: 2;');
-    });
-
-    test('config.units', () => {
-        const provider = getProvider(document, CUSTOM_NAME);
-        expect([
-            ...(provider?.manager?.get?.('init')?.cssRules || [])
-        ].find((rule) => rule?.selectorText.includes(':root'))?.cssText).toContain('--eff-myrem-s: 12rem; --eff-myrem-l: 24rem;');
+            ...(provider.get()?.cssRules || [])
+        ].find((rule) => rule?.selectorText.includes(':root'))?.cssText).toContain('--myrem-s: 12rem; --myrem-l: 24rem;');
     });
 });

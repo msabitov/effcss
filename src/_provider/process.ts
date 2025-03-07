@@ -1,14 +1,7 @@
-// css
-import { keys as globalKeys } from '../css/dict';
-// defaults
-import { defaultParams, defaultUnits, defaultRootStyle } from './constants';
-// utils
-import { getBEMResolver } from '../utils';
 // types
 import {
-    IStyleProcessor, IBEMResolver, TDisplayModeValues,
-    TStyleSheetConfig, TVariable, TStyleMode,
-    IStyleConfig
+    IStyleProcessor, IStyleResolver,
+    TStyleSheetConfig, TVariable,
 } from '../types';
 
 // local types
@@ -18,13 +11,9 @@ import {
  * @private
  */
 interface IConstructorParams {
-    mode?: TStyleMode | null;
-    prefix?: string | null;
-    initkey?: string | null;
-    params?: IStyleConfig['params'];
-    themes?: IStyleConfig['themes'];
-    units?: IStyleConfig['units'];
-    rootStyle?: IStyleConfig['rootStyle'];
+    sets?: Record<string, Record<string, string | number>>;
+    keys?: Record<string, string | number>;
+    resolver: IStyleResolver;
 }
 
 const objectEntries = Object.entries;
@@ -92,154 +81,37 @@ const oklch = ({
  */
 const colorPostfixes = ['l', 'c', 'h', 'a'] as const;
 
-
-
-const initialize = ({themes, units}: {
-    themes?: IStyleConfig['themes'];
-    units?: IStyleConfig['units'];
-}) => {
-    let values = defaultParams;
-    let settingsUnits = {...defaultUnits, ...(units || {})};
-    if (themes) {
-        // apply input params
-        for (const key in themes) {
-            values[key] = merge(values[key] || {}, themes[key]);
-        }
-    }
-    // apply units
-    for (const key in settingsUnits) {
-        values.root[key] = values.root[key] && Object.fromEntries(
-            objectEntries(values.root[key]).map(([k, v]) => [k, settingsUnits[key].replace('{1}', '' + v)])
-        );
-    }
-    // computed keys
-    const keys: Record<string, string> = {};
-    if (values.root.bp) {
-        objectEntries(values.root.bp || {}).forEach(([key, val]) => {
-            keys[`min_${key}_`] = `@media (min-width:${val})`;
-            keys[`max_${key}_`] = `@media (max-width:${val})`;
-        });
-    }
-    if (values.root.cbp) {
-        objectEntries(values.root.bp || {}).forEach(([key, val]) => {
-            keys[`cmin_${key}_`] = `@container (min-width:${val})`;
-            keys[`cmax_${key}_`] = `@container (max-width:${val})`;
-        });
-    }
-    return {
-        values,
-        keys
-    };
-};
-
 /**
  * Style processor
  */
 class Processor implements IStyleProcessor {
     /**
-     * Initial styles
-     */
-    baseStyles: string = '';
-    /**
      * BEM selectors resolver
      */
-    bem: IBEMResolver;
-    /**
-     * Style identifiers prefix
-     */
-    protected _prefix: string | null = 'eff';
-    /**
-     * Style mode
-     */
-    protected _mode: TStyleMode | null = 'a';
-    /**
-     * Initial stylesheet key
-     */
-    protected _initkey: string | null = 'init';
-    /**
-     * Manager vars
-     */
-    protected _params: TDisplayModeValues = defaultParams;
+    protected _resolver: IStyleResolver;
     /**
      * Dictionary keys
      */
-    protected _compKeys: Record<string, string> = {};
+    protected _outerKeys: Record<string, string | number> = {};
     /**
-     * Dictionary values
+     * Dictionary sets
      */
-    protected _compValues: Record<string, Record<string, string | number>> = {};
+    protected _outerSets: Record<string, Record<string, string | number>> = {};
 
     constructor(config: IConstructorParams) {
         const {
-            mode = 'a', prefix = 'eff', initkey = 'init',
-            params, themes, units, rootStyle = defaultRootStyle
+            sets, keys, resolver
         } = config;
-        this._mode = mode;
-        this._prefix = prefix;
-        this._initkey = initkey;
-        this.bem = getBEMResolver({mode: this._mode})
-        const {values, keys} = initialize({themes: themes || params, units});
-        this._params = values;
-        this._compKeys = keys;
-        
-        // ignores empty key
-        if (this._initkey) {
-            const {root, ...other} = this._params;
-            const otherEntries = objectEntries(other);
-            const modeVariables: {
-                _mode: Record<string, Record<string, string | number>>,
-                _theme: Record<string, Record<string, string | number>>,
-            } = {
-                _mode: {
-                    root: {}
-                },
-                _theme: {
-                    root: {}
-                }
-            };
-            const changedVariants: Record<string, Record<string, string | number>> = {};
-            // mode loop
-            otherEntries.forEach(([key, variants]) => {
-                if (!modeVariables._mode[key]) modeVariables._mode[key] = {};
-                // mode vakues loop
-                objectEntries(variants).forEach(([dynamicVariantKey, dynVariant]) => {
-                    // dynamic value loop
-                    objectEntries(dynVariant).forEach(([dynKey, dynVal]) => {
-                        const varName = this._prepareVarName(dynamicVariantKey, dynKey);
-                        modeVariables._mode[key][varName] = dynVal;
-                        // create root variables
-                        if (!modeVariables._mode.root[varName]) {
-                            modeVariables._mode.root[varName] = root[dynamicVariantKey][dynKey];// dynVal;
-                            if (!changedVariants[dynamicVariantKey]) changedVariants[dynamicVariantKey] = {};
-                            changedVariants[dynamicVariantKey][dynKey] = `var(${varName})`;
-                        }
-                    })
-                    
-                })
-            });
-            // mode will be replaced with theme in 2.x.x
-            modeVariables._theme = modeVariables._mode;
-            this._compValues = changedVariants;
-            this.baseStyles = this.compile(this._initkey, {c: {
-                ...modeVariables,
-                $r_: merge(modeVariables._mode.root, rootStyle),
-                ...(modeVariables._mode?.dark ? {
-                    $dark_: {
-                        $r_: modeVariables._mode.dark
-                    }} : {}),
-                ...(modeVariables._mode?.light ? {
-                    $light_: {
-                        $r_: modeVariables._mode.light
-                    }} : {}),
-            }});
-        }
+        this._resolver = resolver;
+        if (keys) this._outerKeys = keys;
+        if (sets) this._outerSets = sets;
     }
 
     /**
      * Parse string to find selector parts
      * @param key
      */
-    parseSelector = (key: string) => {
+    protected _parseSelector = (key: string) => {
         // clear selector
         let clear;
         // element
@@ -256,44 +128,16 @@ class Processor implements IStyleProcessor {
         return {e, m, mv, s};
     }
 
-    expandSelector = (b: string, selector: string): [string, string] => {
-        const {e, m, mv, s} = this.parseSelector(selector);
-        const stateSelector = s && this._getStateSelector(s);
-        const withState = this.bem.selector({
-            b, e, m, mv, s
-        });
-        let expanded = '';
-        if (stateSelector?.startsWith('@')) expanded = stateSelector + '{' + withState;
-        else if (stateSelector?.startsWith(':')) expanded = withState + '{&' + stateSelector;
-        return [this.bem.selector({
-            b, e, m, mv
-        }), expanded];
-    }
-
-    /**
-     * Get state selector
-     * @param state
-     */
-    protected _getStateSelector(state: string) {
-        const stateKey = state + '_';
-        return this._compKeys[stateKey] || globalKeys[stateKey] || state;
-    }
-
     /**
      * Prepare name of variable
      * @param parts
      */
-    protected _prepareVarName = (...parts: string[]) => {
-        return ['-', this._prefix, ...parts].join('-');
-    };
-
+    protected _prepareVarName = (...parts: string[]) => this._resolver.varName(...parts);
     /**
      * Prepare name of keyframes object
      * @param parts
      */
-    protected _prepareKeyframesName = (...parts: string[]) => {
-        return [this._prefix, ...parts].join('-');
-    };
+    protected _prepareKeyframesName = (...parts: string[]) => this._resolver.kfName(...parts);
 
     /**
      * Compile style config to CSS stylesheet text content
@@ -302,8 +146,8 @@ class Processor implements IStyleProcessor {
      */
     compile = (b: string, styleConfig: TStyleSheetConfig) => {
         const { _, kf, k = {}, v = {}, c} = styleConfig;
-        const prepareSelector = this.bem.selector.bind(this);
-        const parseSelector = this.parseSelector;
+        const prepareSelector = this._resolver.selector.bind(this);
+        const parseSelector = this._parseSelector;
         let config = merge({}, c) as Record<string, string | number | object | unknown>;
         let localKeys = merge({}, k);
         let localVariants = merge({_:{} as Record<string, string>}, v);
@@ -349,15 +193,15 @@ class Processor implements IStyleProcessor {
          * Get key from dictionary
          * @param key
          */
-        const getKey = (key: string): string => {
-            return localKeys[key] || this._compKeys[key] || globalKeys[key];
+        const getKey = (key: string): string | number => {
+            return localKeys[key] || this._outerKeys[key];
         };
         /**
          * Get variant from dictionary
          * @param key
          */
         const getVariant = (key: string): Record<string, string | number> | undefined => {
-            return localVariants[key] || this._compValues[key] || this._params.root[key];
+            return localVariants[key] || this._outerSets[key] || this._outerSets?.root[key];
         };
         /**
          * Interpolate string from dictionary
@@ -428,7 +272,7 @@ class Processor implements IStyleProcessor {
         ): string {
             let resKey = '' + key;
             if (key?.startsWith?.('$')) {
-                resKey = getKey(key.slice(1));
+                resKey = '' + getKey(key.slice(1));
                 if (!resKey) return '';
             }
             if (Array.isArray(value)){

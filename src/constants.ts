@@ -1,5 +1,6 @@
-import { comma } from './functions';
+const comma = (...args: (string | number)[]) => args.join(',');
 
+const REM = 'rem';
 const _ = '-';
 const __ = ' ';
 const X = 'x';
@@ -106,7 +107,6 @@ const LIST = 'list';
 const Z_INDEX = 'z-index';
 const ORIGIN = 'origin';
 const HUE = 'hue';
-const LIGHTNESS = 'lightness';
 const ALPHA = 'alpha';
 const LUMINANCE = 'luminance';
 const MATCH_SOURCE = 'match-source';
@@ -482,9 +482,6 @@ const LOOSE = 'loose';
 const STRICT = 'strict';
 const ITALIC = 'italic';
 const OBLIQUE = 'oblique';
-const BOLD = 'bold';
-const LIGHTER = LIGHT + 'er';
-const BOLDER = BOLD + 'er';
 const LOWERCASE = 'lowercase';
 const UPPERCASE = 'uppercase';
 const CAPITALIZE = 'capitalize';
@@ -602,19 +599,10 @@ const PREFERS_CONTRAST = PREFERS_ + 'contrast';
 const SCRIPTING = 'scripting';
 const COLON_AFTER = '::' + AFTER;
 const COLON_BEFORE = '::' + BEFORE;
+const SIDEWAYS = 'sideways';
+const SIDEWAYS_RIGHT = SIDEWAYS + _RIGHT;
 
-/**
- * Scoped unitless values
- */
-const scu = {
-    0: 0,
-    '1/4': 25,
-    '1/2': 50,
-    '3/4': 75,
-    1: 100
-};
-
-const perc = {
+const fr = {
     0: 0,
     '1/12': '0.0833',
     '1/10': '0.1',
@@ -641,12 +629,38 @@ const perc = {
 /**
  * Coefficients
  */
-const coef = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].reduce((acc, val) => {
+const coef = [...Array(12).keys()].reduce((acc, val) => {
     acc[val] = val;
     return acc;
 }, {} as Record<number, number>);
 
-export const values: Record<string, Record<string, string | number>> = {
+export const sets: Record<string, Record<string, string | number>> = {
+    // common
+
+    /**
+     * Universal
+     */
+    u: {
+        ini: 'initial',
+        inh: INHERIT,
+        u: 'unset',
+        r: REVERT,
+        rl: REVERT_LAYER
+    },
+    /**
+     * Repeat
+     */
+    rep: {
+        rx: REPEAT_X,
+        ry: REPEAT_Y,
+        r: REPEAT,
+        s: SPACE,
+        ro: 'round',
+        nr: NO_REPEAT
+    },
+
+    // palette
+
     /**
      * Lightness
      */
@@ -710,18 +724,17 @@ export const values: Record<string, Record<string, string | number>> = {
         c: CURRENT_COLOR,
         t: TRANSPARENT
     },
-    /**
-     * Root font-size
-     */
-    rem: {
-        def: 16
-    },
+
+    // typography
+
     /**
      * Font-family
      */
     ff: {
+        // default
         def: 'Roboto, sans-serif',
-        b: 'Georgia, serif'
+        // headers
+        h: 'Georgia, serif'
     },
     /**
      * Font-weight
@@ -734,221 +747,6 @@ export const values: Record<string, Record<string, string | number>> = {
         xl: 700
     },
     /**
-     * Time
-     */
-    time: {
-        def: 300,
-        xs: 100,
-        s: 200,
-        m: 300,
-        l: 450,
-        xl: 600,
-        no: 0,
-        min: 50,
-        max: 750
-    },
-    /**
-     * Coefficients
-     */
-    coef,
-    /**
-     * Ratio coefficients
-     */
-    rat: {
-        1: 1,
-        '2/1': 2,
-        '1/2': 0.5,
-        '4/3': 1.3333,
-        '3/4': 0.75,
-        '9/16': 0.5625,
-        '16/9': 1.7778
-    },
-    /**
-     * Spacing
-     */
-    sp: {
-        '3xs': 0.125,
-        '2xs': 0.25,
-        xs: 0.5,
-        s: 0.75,
-        m: 1,
-        l: 1.25,
-        xl: 1.5,
-        '2xl': 2,
-        '3xl': 4
-    },
-    /**
-     * Size
-     */
-    sz: {
-        '3xs': 1,
-        '2xs': 1.5,
-        xs: 2,
-        s: 5,
-        m: 10,
-        l: 15,
-        xl: 20,
-        '2xl': 25,
-        '3xl': 30
-    },
-    /**
-     * Universal size
-     */
-    szu: {
-        a: 'auto',
-        no: 0,
-        min: MIN_CONTENT,
-        max: MAX_CONTENT,
-        fit: FIT_CONTENT
-    },
-    /**
-     * Media breakpoints
-     */
-    bp: {
-        xs: 30,
-        sm: 40,
-        md: 48,
-        lg: 64,
-        xl: 80
-    },
-    /**
-     * Container breakpoints
-     */
-    cbp: {
-        xs: 10,
-        sm: 20,
-        md: 30,
-        lg: 40,
-        xl: 48
-    },
-    /**
-     * Opacity
-     */
-    o: {
-        min: 0,
-        xs: 0.1,
-        s: 0.25,
-        m: 0.5,
-        l: 0.75,
-        xl: 0.9,
-        max: 1
-    },
-    /**
-     * Viewport width
-     */
-    vw: scu,
-    /**
-     * Viewport height
-     */
-    vh: scu,
-    /**
-     * Viewport min size
-     */
-    vmin: scu,
-    /**
-     * Viewport max size
-     */
-    vmax: scu,
-    /**
-     * Query container's width
-     */
-    cqw: scu,
-    /**
-     * Query container's height
-     */
-    cqh: scu,
-    /**
-     * Query container's block size
-     */
-    cqb: scu,
-    /**
-     * Query container's inline size
-     */
-    cqi: scu,
-    /**
-     * Query container's min size
-     */
-    cqmin: scu,
-    /**
-     * Query container's max size
-     */
-    cqmax: scu,
-    /**
-     * Percents (between 0 and 1)
-     */
-    perc,
-    /**
-     * Radius
-     */
-    rad: {
-        s: 0.5,
-        m: 1,
-        l: 2
-    },
-    /**
-     * Thickness
-     */
-    th: {
-        s: 0.1,
-        m: 0.25,
-        l: 0.5
-    },
-    /**
-     * Scale coefficients
-     */
-    sc: {
-        xs: 0.5,
-        s: 0.67,
-        m: 1,
-        l: 1.5,
-        xl: 2
-    },
-    /**
-     * Translate coefficients
-     */
-    tr: {
-        xs: 0.25,
-        s: 0.5,
-        m: 1,
-        l: 1.5,
-        xl: 2
-    },
-    /**
-     * Skew coefficients
-     */
-    sk: {
-        xs: -15,
-        s: -10,
-        m: 0,
-        l: 10,
-        xl: 15
-    },
-    /**
-     * Rotate coefficients
-     */
-    rot: {
-        xs: -180,
-        s: -90,
-        m: 0,
-        l: 90,
-        xl: 180
-    },
-    /**
-     * Zoom coefficients
-     */
-    zm: {
-        s: 0.8,
-        m: 1,
-        l: 1.2
-    },
-    /**
-     * Perspective coefficients
-     */
-    pers: {
-        s: '100px',
-        m: '200px'
-    },
-    /**
      * Font-size coefficients
      */
     fsz: {
@@ -959,14 +757,12 @@ export const values: Record<string, Record<string, string | number>> = {
         xl: 2
     },
     /**
-     * Line-height coefficients
+     * Font-style
      */
-    lh: {
-        xs: 1,
-        s: 1.25,
-        m: 1.5,
-        l: 1.75,
-        xl: 2
+    fst: {
+        i: ITALIC,
+        n: NORMAL,
+        o: OBLIQUE
     },
     /**
      * Letter-spacing coefficients
@@ -976,137 +772,6 @@ export const values: Record<string, Record<string, string | number>> = {
         s: 0.05,
         m: 0.1,
         l: 0.2
-    },
-    /**
-     * Z-index coefficients
-     */
-    zi: {
-        1: 1,
-        2: 2,
-        3: 3,
-        4: 4,
-        5: 5
-    },
-    /**
-     * Animation-iteration-count coefficients
-     */
-    ic: {
-        inf: 'infinite',
-        1: 1,
-        2: 2
-    },
-    /**
-     * Inset
-     */
-    ins: perc,
-    /**
-     * Universal
-     */
-    uni: {
-        ini: 'initial',
-        inh: INHERIT,
-        u: 'unset',
-        r: REVERT,
-        rl: REVERT_LAYER
-    },
-    /**
-     * Alignment
-     */
-    ali: {
-        s: START,
-        e: END,
-        c: CENTER,
-        st: STRETCH,
-        sb: SPACE_BETWEEN,
-        sa: SPACE_AROUND,
-        se: SPACE_EVENLY,
-        b: BASELINE,
-        fs: FLEX_START,
-        fe: FLEX_END,
-        no: NONE
-    },
-    /**
-     * Display
-     */
-    dis: {
-        g: GRID,
-        ig: INLINE_GRID,
-        f: FLEX,
-        if: INLINE_FLEX,
-        b: BLOCK,
-        i: INLINE
-    },
-    /**
-     * Column amount
-     */
-    ca: coef,
-    /**
-     * Column offset
-     */
-    co: coef,
-    /**
-     * Row amount
-     */
-    ra: coef,
-    /**
-     * Row offset
-     */
-    ro: coef,
-    /**
-     * Flex-direction
-     */
-    fd: {
-        r: ROW,
-        rr: ROW_REVERSE,
-        c: COLUMN,
-        cr: COLUMN_REVERSE
-    },
-    /**
-     * Flex-basis
-     */
-    fb: perc,
-    /**
-     * Flex-order
-     */
-    fo: coef,
-    /**
-     * Flex-grow
-     */
-    fg: coef,
-    /**
-     * Flex-shrink
-     */
-    fs: coef,
-    /**
-     * Flex-wrap
-     */
-    fw: {
-        w: WRAP,
-        nw: NOWRAP,
-        wr: WRAP_REVERSE
-    },
-    /**
-     * Repeat
-     */
-    rep: {
-        rx: REPEAT_X,
-        ry: REPEAT_Y,
-        r: REPEAT,
-        s: SPACE,
-        ro: 'round',
-        nr: NO_REPEAT
-    },
-    /**
-     * Transition-timing-function
-     */
-    ttf: {
-        l: LINEAR,
-        e: EASE,
-        ei: EASE_IN,
-        eo: EASE_OUT,
-        eio: EASE_IN_OUT,
-        ss: STEP_START,
-        se: STEP_END
     },
     /**
      * White-space
@@ -1166,8 +831,8 @@ export const values: Record<string, Record<string, string | number>> = {
     tor: {
         m: 'mixed',
         u: 'upright',
-        sr: 'sideways-right',
-        s: 'sideways',
+        sr: SIDEWAYS_RIGHT,
+        s: SIDEWAYS,
         ugo: 'use-glyph-' + ORIENTATION
     },
     /**
@@ -1181,23 +846,294 @@ export const values: Record<string, Record<string, string | number>> = {
         s: START,
         e: END
     },
+
+    // timings
+
     /**
-     * Transition-property
+     * Time
      */
-    tp: {
-        all: ALL,
-        col: comma(COLOR, BACKGROUND_COLOR, BORDER_COLOR, TEXT_DECORATION_COLOR),
-        icon: comma(FILL, STROKE),
-        flt: comma(FILTER, BACKDROP_FILTER),
-        ind: comma(PADDING, MARGIN),
-        sz: comma(WIDTH, MAX_WIDTH, MIN_WIDTH, HEIGHT, MAX_HEIGHT, MIN_HEIGHT),
-        esz: comma(MIN_BLOCK_SIZE, BLOCK_SIZE, MAX_BLOCK_SIZE, MIN_INLINE_SIZE, INLINE_SIZE, MAX_INLINE_SIZE),
-        o: OPACITY,
-        b: BORDER,
-        f: FLEX,
+    time: {
+        def: 300,
+        xs: 100,
+        s: 200,
+        m: 300,
+        l: 450,
+        xl: 600,
+        no: 0,
+        min: 50,
+        max: 750
+    },
+
+    // unitless
+
+    /**
+     * Fractions coefficients
+     */
+    fr,
+    /**
+     * Integer coefficients
+     */
+    coef,
+    /**
+     * Ratio coefficients
+     */
+    rat: {
+        1: 1,
+        '2/1': 2,
+        '1/2': 0.5,
+        '4/3': 1.3333,
+        '3/4': 0.75,
+        '9/16': 0.5625,
+        '16/9': 1.7778
+    },
+    /**
+     * Z-index coefficients
+     */
+    zi: {
+        min: -1,
+        1: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5,
+        max: 10
+    },
+
+    // size
+
+    /**
+     * Spacing
+     */
+    sp: {
+        '3xs': 0.125,
+        '2xs': 0.25,
+        xs: 0.5,
+        s: 0.75,
+        m: 1,
+        l: 1.25,
+        xl: 1.5,
+        '2xl': 2,
+        '3xl': 4
+    },
+    /**
+     * Size
+     */
+    sz: {
+        '3xs': 1,
+        '2xs': 1.5,
+        xs: 2,
+        s: 5,
+        m: 10,
+        l: 15,
+        xl: 20,
+        '2xl': 25,
+        '3xl': 30
+    },
+    /**
+     * Universal size
+     */
+    usz: {
+        a: 'auto',
+        no: 0,
+        min: MIN_CONTENT,
+        max: MAX_CONTENT,
+        fit: FIT_CONTENT
+    },
+    /**
+     * Radius
+     */
+    rad: {
+        s: 0.5,
+        m: 1,
+        l: 2
+    },
+    /**
+     * Thickness
+     */
+    th: {
+        s: 0.1,
+        m: 0.25,
+        l: 0.5
+    },
+    /**
+     * Content-size
+     */
+    csz: {
+        cv: COVER,
+        cn: CONTAIN,
+        a: AUTO,
+        f: FILL,
+        sd: SCALE_DOWN
+    },
+    /**
+     * Box-sizing
+     */
+    box: {
+        c: CONTENT_BOX,
+        p: PADDING_BOX,
+        b: BORDER_BOX,
+        f: FILL_BOX,
+        s: STROKE_BOX,
+        v: VIEW_BOX,
+        nc: NO_CLIP,
+        t: TEXT
+    },
+
+    // transformations
+
+    /**
+     * Scale coefficients
+     */
+    sc: {
+        xs: 0.5,
+        s: 0.67,
+        m: 1,
+        l: 1.5,
+        xl: 2
+    },
+    /**
+     * Translate coefficients
+     */
+    tr: {
+        xs: 0.25,
+        s: 0.5,
+        m: 1,
+        l: 1.5,
+        xl: 2
+    },
+    /**
+     * Skew coefficients
+     */
+    sk: {
+        xs: -15,
+        s: -10,
+        m: 0,
+        l: 10,
+        xl: 15
+    },
+    /**
+     * Rotate coefficients
+     */
+    rot: {
+        xs: -180,
+        s: -90,
+        m: 0,
+        l: 90,
+        xl: 180
+    },
+    /**
+     * Zoom coefficients
+     */
+    z: {
+        s: 0.8,
+        m: 1,
+        l: 1.2
+    },
+    /**
+     * Perspective coefficients
+     */
+    pers: {
+        s: 10,
+        m: 15,
+        l: 20
+    },
+    
+    // layout
+
+    /**
+     * Alignment
+     */
+    ali: {
+        s: START,
+        e: END,
+        c: CENTER,
+        st: STRETCH,
+        sb: SPACE_BETWEEN,
+        sa: SPACE_AROUND,
+        se: SPACE_EVENLY,
+        b: BASELINE,
+        fs: FLEX_START,
+        fe: FLEX_END,
+        no: NONE
+    },
+    /**
+     * Display
+     */
+    dis: {
         g: GRID,
-        pos: comma(POSITION, LEFT, TOP, BOTTOM, RIGHT),
-        tf: comma(TRANSFORM, TRANSLATE, SCALE, ROTATE, SKEW, PERSPECTIVE)
+        ig: INLINE_GRID,
+        f: FLEX,
+        if: INLINE_FLEX,
+        b: BLOCK,
+        i: INLINE
+    },
+
+    // grid
+
+    /**
+     * Column amount
+     */
+    ca: coef,
+    /**
+     * Column offset
+     */
+    co: coef,
+    /**
+     * Row amount
+     */
+    ra: coef,
+    /**
+     * Row offset
+     */
+    ro: coef,
+
+    // flex
+
+    /**
+     * Flex-direction
+     */
+    fd: {
+        r: ROW,
+        rr: ROW_REVERSE,
+        c: COLUMN,
+        cr: COLUMN_REVERSE
+    },
+    /**
+     * Flex-basis
+     */
+    fb: fr,
+    /**
+     * Flex-order
+     */
+    fo: coef,
+    /**
+     * Flex-grow
+     */
+    fg: coef,
+    /**
+     * Flex-shrink
+     */
+    fs: coef,
+    /**
+     * Flex-wrap
+     */
+    fw: {
+        w: WRAP,
+        nw: NOWRAP,
+        wr: WRAP_REVERSE
+    },
+
+    // line
+
+    /**
+     * Line-height coefficients
+     */
+    lh: {
+        xs: 1,
+        s: 1.25,
+        m: 1.5,
+        l: 1.75,
+        xl: 2
     },
     /**
      * Line-break
@@ -1209,6 +1145,24 @@ export const values: Record<string, Record<string, string | number>> = {
         l: LOOSE,
         s: STRICT
     },
+    /**
+     * Line-style
+     */
+    ls: {
+        no: NONE,
+        dt: DOTTED,
+        i: INSET,
+        h: HIDDEN,
+        ds: DASHED,
+        s: SOLID,
+        db: DOUBLE,
+        o: OUTSET,
+        r: RIDGE,
+        g: GROOVE
+    },
+
+    // view
+
     /**
      * Overflow
      */
@@ -1229,6 +1183,71 @@ export const values: Record<string, Record<string, string | number>> = {
         a: AUTO
     },
     /**
+     * Opacity
+     */
+    o: {
+        min: 0,
+        xs: 0.1,
+        s: 0.25,
+        m: 0.5,
+        l: 0.75,
+        xl: 0.9,
+        max: 1
+    },
+
+    // transitions
+
+    /**
+     * Transition-timing-function
+     */
+    ttf: {
+        l: LINEAR,
+        e: EASE,
+        ei: EASE_IN,
+        eo: EASE_OUT,
+        eio: EASE_IN_OUT,
+        ss: STEP_START,
+        se: STEP_END
+    },
+    /**
+     * Transition-property
+     */
+    tp: {
+        col: comma(COLOR, BACKGROUND_COLOR, BORDER_COLOR, TEXT_DECORATION_COLOR),
+        icon: comma(FILL, STROKE),
+        flt: comma(FILTER, BACKDROP_FILTER),
+        ind: comma(PADDING, MARGIN),
+        sz: comma(WIDTH, MAX_WIDTH, MIN_WIDTH, HEIGHT, MAX_HEIGHT, MIN_HEIGHT),
+        esz: comma(MIN_BLOCK_SIZE, BLOCK_SIZE, MAX_BLOCK_SIZE, MIN_INLINE_SIZE, INLINE_SIZE, MAX_INLINE_SIZE),
+        o: OPACITY,
+        b: BORDER,
+        f: FLEX,
+        g: GRID,
+        pos: comma(POSITION, LEFT, TOP, BOTTOM, RIGHT),
+        tf: comma(TRANSFORM, TRANSLATE, SCALE, ROTATE, SKEW, PERSPECTIVE)
+    },
+    /**
+     * Transition-behavior
+     */
+    tb: {
+        ad: ALLOW_DISCRETE,
+        n: NORMAL
+    },
+
+    // animation
+
+    /**
+     * Animation-iteration-count coefficients
+     */
+    aic: {
+        inf: 'infinite',
+        1: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5
+    },
+    /**
      * Will-change
      */
     wc: {
@@ -1238,7 +1257,7 @@ export const values: Record<string, Record<string, string | number>> = {
         tf: TRANSFORM,
         o: OPACITY,
         i: INSET,
-        tfi: TRANSFORM + ',' + INSET
+        tfi: comma(TRANSFORM, INSET)
     },
     /**
      * Animation-fill-mode
@@ -1264,20 +1283,9 @@ export const values: Record<string, Record<string, string | number>> = {
         r: RUNNING,
         p: PAUSED
     },
-    /**
-     * Transition-behavior
-     */
-    tb: {
-        ad: ALLOW_DISCRETE,
-        n: NORMAL
-    },
-    /**
-     * Appearance
-     */
-    app: {
-        n: NONE,
-        a: AUTO
-    },
+
+    // interaction
+
     /**
      * Pointer-events
      */
@@ -1356,6 +1364,9 @@ export const values: Record<string, Record<string, string | number>> = {
         all: ALL,
         a: AUTO
     },
+
+    // scroll
+
     /**
      * Scroll-behavior
      */
@@ -1391,14 +1402,9 @@ export const values: Record<string, Record<string, string | number>> = {
         ip: INLINE_PROXIMITY,
         bothp: BOTH_PROXIMITY
     },
-    /**
-     * Font-style
-     */
-    fst: {
-        i: ITALIC,
-        n: NORMAL,
-        o: OBLIQUE
-    },
+    
+    // position
+
     /**
      * Position
      */
@@ -1422,16 +1428,9 @@ export const values: Record<string, Record<string, string | number>> = {
         lb: LEFT_BOTTOM,
         rb: RIGHT_BOTTOM
     },
-    /**
-     * Content-size
-     */
-    csz: {
-        cv: COVER,
-        cn: CONTAIN,
-        a: AUTO,
-        f: FILL,
-        sd: SCALE_DOWN
-    },
+    
+    // column
+
     /**
      * Column-fill
      */
@@ -1446,23 +1445,13 @@ export const values: Record<string, Record<string, string | number>> = {
         no: NONE,
         all: ALL
     },
-    /**
-     * Box-sizing
-     */
-    box: {
-        c: CONTENT_BOX,
-        p: PADDING_BOX,
-        b: BORDER_BOX,
-        f: FILL_BOX,
-        s: STROKE_BOX,
-        v: VIEW_BOX,
-        nc: NO_CLIP,
-        t: TEXT
-    },
+
+    // mask
+
     /**
      * Mask-composite
      */
-    mcm: {
+    mc: {
         a: ADD,
         s: SUBTRACT,
         i: INTERSECT,
@@ -1471,7 +1460,7 @@ export const values: Record<string, Record<string, string | number>> = {
     /**
      * Mask-type
      */
-    mtp: {
+    mt: {
         a: ALPHA,
         l: LUMINANCE
     },
@@ -1483,6 +1472,9 @@ export const values: Record<string, Record<string, string | number>> = {
         l: LUMINANCE,
         m: MATCH_SOURCE
     },
+
+    // background
+
     /**
      * Background-blend-mode
      */
@@ -1512,21 +1504,9 @@ export const values: Record<string, Record<string, string | number>> = {
         f: FIXED,
         l: LOCAL
     },
-    /**
-     * Line-style
-     */
-    ls: {
-        no: NONE,
-        dt: DOTTED,
-        i: INSET,
-        h: HIDDEN,
-        ds: DASHED,
-        s: SOLID,
-        db: DOUBLE,
-        o: OUTSET,
-        r: RIDGE,
-        g: GROOVE
-    },
+
+    // container
+    
     /**
      * Container-type
      */
@@ -1549,7 +1529,7 @@ export const keys: Record<string, string> = {
     aic: ANIMATION_ITERATION_COUNT,
     atf: ANIMATION_TIMING_FUNCTION,
     // transition
-    trn: TRANSITION,
+    tn: TRANSITION,
     tdur: TRANSITION_DURATION,
     tdel: TRANSITION_DELAY,
     tb: TRANSITION_BEHAVIOR,
@@ -1622,10 +1602,9 @@ export const keys: Record<string, string> = {
     flt: FILTER,
     bf: BACKDROP_FILTER,
 
+    dis: DISPLAY,
     // grid && flex
     g: GRID,
-    f: FLEX,
-    dis: DISPLAY,
     jc: JUSTIFY_CONTENT,
     ji: JUSTFY_ITEMS,
     ai: ALIGN_ITEMS,
@@ -1647,11 +1626,12 @@ export const keys: Record<string, string> = {
     gce: GRID_COLUMN_END,
     gcs: GRID_COLUMN_START,
 
-    fd: FLEX_DIRECTION,
-    fw: FLEX_WRAP,
-    fs: FLEX_SHRINK,
-    fg: FLEX_GROW,
-    fb: FLEX_BASIS,
+    fx: FLEX,
+    fxd: FLEX_DIRECTION,
+    fxw: FLEX_WRAP,
+    fxs: FLEX_SHRINK,
+    fxg: FLEX_GROW,
+    fxb: FLEX_BASIS,
     ord: ORDER,
     dir: DIRECTION,
 
@@ -1667,6 +1647,7 @@ export const keys: Record<string, string> = {
     pt: PADDING_TOP,
     pb: PADDING_BOTTOM,
     // outline
+    out: OUTLINE,
     oc: OUTLINE_COLOR,
     ow: OUTLINE_WIDTH,
     os: OUTLINE_STYLE,
@@ -1754,6 +1735,7 @@ export const keys: Record<string, string> = {
     lts: LETTER_SPACING,
     lh: LINE_HEIGHT,
     lb: LINE_BREAK,
+    f: FONT,
     fst: FONT_STYLE,
     ff: FONT_FAMILY,
     fwg: FONT_WEIGHT,
@@ -1831,147 +1813,267 @@ export const keys: Record<string, string> = {
     cv: CONTENT_VISIBILITY,
     o: OPACITY,
     zi: Z_INDEX,
-    zm: ZOOM,
     lgr: LINEAR_GRADIENT,
     rgr: RADIAL_GRADIENT,
     cgr: CONIC_GRADIENT,
     inf: INFINITE,
     cnt: CONTAINER_TYPE,
     cnn: CONTAINER_NAME,
-    r_: ':root',
+
+    // special keys
+
+    $: ':root',
     /**
      * Universal selector
      */
-    u_: '*',
+    $u: '*',
     /**
      * :hover
      */
-    h_: ':hover',
+    $h: ':hover',
     /**
      * :focus
      */
-    f_: ':focus',
+    $f: ':focus',
     /**
      * :focus-visible
      */
-    fv_: ':focus-visible',
+    $fv: ':focus-visible',
     /**
      * :active
      */
-    a_: ':active',
+    $a: ':active',
     /**
      * :visited
      */
-    v_: ':visited',
+    $v: ':visited',
     /**
      * :valid
      */
-    val_: ':valid',
+    $val: ':valid',
     /**
      * :invalid
      */
-    inv_: ':invalid',
+    $inv: ':invalid',
     /**
      * :empty
      */
-    e_: ':empty',
+    $e: ':empty',
     /**
      * :disabled
      */
-    d_: ':disabled',
+    $d: ':disabled',
     /**
      * :required
      */
-    rq_: ':required',
+    $r: ':required',
     /**
      * :optional
      */
-    o_: ':optional',
+    $o: ':optional',
     /**
      * :modal
      */
-    m_: ':modal',
+    $m: ':modal',
     /**
      * :link
      */
-    l_: ':link',
+    $l: ':link',
 
     // collections
 
     /**
      * :first-child
      */
-    fc_: COLON_FIRST + CHILD,
+    $fc: COLON_FIRST + CHILD,
     /**
      * :last-child
      */
-    lc_: COLON_LAST + CHILD,
+    $lc: COLON_LAST + CHILD,
     /**
      * :only-child
      */
-    oc_: COLON_ONLY + CHILD,
+    $oc: COLON_ONLY + CHILD,
     /**
      * :nth-child(odd)
      */
-    odd_: NTH_CHILD + '(odd)',
+    $1: NTH_CHILD + '(odd)',
     /**
      * :nth-child(even)
      */
-    even_:  NTH_CHILD + '(even)',
+    $2:  NTH_CHILD + '(even)',
     /**
      * :first-of-type
      */
-    ft_: COLON_FIRST + OF_TYPE,
+    $ft: COLON_FIRST + OF_TYPE,
     /**
      * :last-of-type
      */
-    lt_: COLON_LAST + OF_TYPE,
+    $lt: COLON_LAST + OF_TYPE,
     /**
      * :only-of-type
      */
-    ot_: COLON_ONLY + OF_TYPE,
+    $ot: COLON_ONLY + OF_TYPE,
 
     // pseudoelements
 
     /**
      * ::before
      */
-    bef_: COLON_BEFORE,
+    $bef: COLON_BEFORE,
     /**
      * ::after
      */
-    aft_: COLON_AFTER,
+    $aft: COLON_AFTER,
     /**
      * ::backdrop
      */
-    bd_: '::backdrop',
+    $bd: '::backdrop',
     /**
      * &::before,&::after
      */
-    ba_: `&${COLON_BEFORE},&${COLON_AFTER}`,
+    $ba: `&${COLON_BEFORE},&${COLON_AFTER}`,
     /**
      * :placeholder
      */
-    pl_: ':placeholder',
+    $pl: ':placeholder',
 
     // media queries
 
-    light_: AT_MEDIA + `(${PREFERS_COLOR_SCHEME}: light)`,
-    dark_: AT_MEDIA + `(${PREFERS_COLOR_SCHEME}: dark)`,
-    red_m_: AT_MEDIA + '(prefers-reduced-motion: reduce)',
-    ori_l_: AT_MEDIA + `(${ORIENTATION}: landscape)`,
-    ori_p_: AT_MEDIA + `(${ORIENTATION}: portrait)`,
-    gam_srgb_: AT_MEDIA + `(${COLOR_GAMUT}: srgb)`,
-    gam_p3_: AT_MEDIA + `(${COLOR_GAMUT}: p3)`,
-    gam_rec_: AT_MEDIA + `(${COLOR_GAMUT}: rec2020)`,
-    con_no_: AT_MEDIA + `(${PREFERS_CONTRAST}: no-preference)`,
-    con_m_: AT_MEDIA + `(${PREFERS_CONTRAST}: more)`,
-    con_l_: AT_MEDIA + `(${PREFERS_CONTRAST}: less)`,
-    con_c_: AT_MEDIA + `(${PREFERS_CONTRAST}: custom)`,
-    scr_no_: AT_MEDIA + `(${SCRIPTING}: none)`,
-    scr_ini_: AT_MEDIA + `(${SCRIPTING}: initial-only)`,
-    scr_en_: AT_MEDIA + `(${SCRIPTING}: enabled)`,
+    $light: AT_MEDIA + `(${PREFERS_COLOR_SCHEME}: light)`,
+    $dark: AT_MEDIA + `(${PREFERS_COLOR_SCHEME}: dark)`,
+    $red_m: AT_MEDIA + '(prefers-reduced-motion: reduce)',
+    $ori_l: AT_MEDIA + `(${ORIENTATION}: landscape)`,
+    $ori_p: AT_MEDIA + `(${ORIENTATION}: portrait)`,
+    $gam_srgb: AT_MEDIA + `(${COLOR_GAMUT}: srgb)`,
+    $gam_p3: AT_MEDIA + `(${COLOR_GAMUT}: p3)`,
+    $gam_rec: AT_MEDIA + `(${COLOR_GAMUT}: rec2020)`,
+    $con_no: AT_MEDIA + `(${PREFERS_CONTRAST}: no-preference)`,
+    $con_m: AT_MEDIA + `(${PREFERS_CONTRAST}: more)`,
+    $con_l: AT_MEDIA + `(${PREFERS_CONTRAST}: less)`,
+    $con_c: AT_MEDIA + `(${PREFERS_CONTRAST}: custom)`,
+    $scr_no: AT_MEDIA + `(${SCRIPTING}: none)`,
+    $scr_ini: AT_MEDIA + `(${SCRIPTING}: initial-only)`,
+    $scr_en: AT_MEDIA + `(${SCRIPTING}: enabled)`,
+};
+/**
+* Media breakpoints
+*/
+export const mediaBP = {
+   xs: 30 + REM,
+   sm: 40 + REM,
+   md: 48 + REM,
+   lg: 64 + REM,
+   xl: 80 + REM,
+};
+/**
+ * Container breakpoints
+ */
+export const containerBP =  {
+   xs: 10 + REM,
+   sm: 20 + REM,
+   md: 30 + REM,
+   lg: 40 + REM,
+   xl: 48 + REM
+};
+/**
+ * Default root styles
+ */
+export const rootStyle = {
+    $c: '{u.inh}',
+    $fsz: '16px',
+    $ff: '{ff.def}',
+    $$u: {
+        $c: '{u.inh}',
+        $fsz: '16px',
+        $ff: '{ff.def}'
+    }
 };
 
-export type IGlobalValues = typeof values;
-export type IGlobalKeys = typeof keys;
+/**
+ * Default style params
+ */
+export const themes = {
+    /**
+     * Light mode
+     */
+    light: {
+        // lightness
+        lig: {
+            def: 0.75,
+            // contrast
+            c: 0.05,
+            s: 0.65,
+            m: 0.75,
+            l: 0.85,
+            // neutral
+            n: 0.9
+        }
+    },
+    /**
+     * Dark mode
+     */
+    dark: {
+        // lightness
+        lig: {
+            def: 0.4,
+            n: 0.25,
+            s: 0.3,
+            m: 0.4,
+            l: 0.5,
+            c: 0.95
+        }
+    }
+};
+
+const toRem = '{1}rem';
+const toDeg = '{1}deg';
+const toPerc = 'calc(100% * {1})';
+const toSpan = 'span {1}';
+const toMs = '{1}ms';
+
+export const units: Record<string, string> = {
+    // perc
+    fb: toPerc,
+    // span
+    ra: toSpan,
+    ca: toSpan,
+    // rem
+    sz: toRem,
+    sp: toRem,
+    rad: toRem,
+    th: toRem,
+    bp: toRem,
+    cbp: toRem,
+    fsz: toRem,
+    lsp: toRem,
+    tr: toRem,
+    pers: toRem,
+    // deg
+    sk: toDeg,
+    rot: toDeg,
+    // ms
+    time: toMs
+};
+
+/**
+ * Prefix which will be used for private stylesheets
+ */
+export const PREFIX = 'eff';
+
+/**
+ * Id for special script element,
+ * which contains provider settings
+ */
+export const SETTINGS_SCRIPT_ID = 'effcss';
+
+/**
+ * ClassName for special script elements,
+ * which contain initial stylesheet configs
+ */
+export const STYLES_SCRIPT_CLS = 'effcss_init';
+
+/**
+ * Name of the custom style provider element
+ */
+export const PROVIDER_TAG_NAME = 'style-provider';

@@ -4,217 +4,378 @@ import {
     IStyleManager,
     TStyleSheetConfig,
     IStyleProcessor,
-    IStyleConfig,
+    TProviderSettings,
+    TProviderInitContent,
     TStyleMode,
-    TKeyGenerator
+    IStyleResolver,
+    IStyleCollector,
+    TStyleTarget,
+    TResolveAttr
 } from './types';
 // provider
 import { createProcessor } from './_provider/process';
 import { createManager } from './_provider/manage';
-// utils
+// constants
 import {
-    generateStyleSheetKey,
-    COMPONENT_NAME, PREFIX, SETTINGS_ID
-} from './utils';
+    PROVIDER_TAG_NAME, PREFIX,
+    SETTINGS_SCRIPT_ID,
+    STYLES_SCRIPT_CLS,
+    keys as defaultKeys,
+    sets as defaultSets,
+    themes as defaultThemes,
+    rootStyle as defaultRootStyle,
+    units as defaultUnits,
+    mediaBP as defaultMediaBP,
+    containerBP as defaultContainerBP,
+} from './constants';
+import { createCollector, createResolver } from './utils/common';
+
+const doc = globalThis.document;
+const isJSON = (script?: HTMLScriptElement & {effcss: object;}) => script?.getAttribute('type') === 'application/json'
 
 /**
- * Get provider styles
+ * Define style provider custom element
  */
-const getProviderStyles = () => `${COMPONENT_NAME} {display: contents;}`;
-
-/**
- * Create {@link IStyleProcessor | style processor}
- */
-export const createStyleProcessor = createProcessor;
-
-/**
- * Create {@link IStyleManager | style manager}
- */
-export const createStyleManager = createManager;
-
-/**
- * Define style provider as custom element
- */
-export function defineStyleProvider(props?: {
+export function defineProvider(props: {
     /**
      * Element name
      * @defaultValue style-provider
      */
     name?: string;
     /**
-     * Style config
+     * Initial styles
+     */
+    styles?: TProviderInitContent;
+    /**
+     * Provider config
      * @description
      * Will be used for initial stylesheets generation
      */
-    config?: IStyleConfig;
-    /**
-     * Stylesheet key generator
-     */
-    keygen?: TKeyGenerator;
-}) {
-    const getKey = props?.keygen || generateStyleSheetKey;
-    customElements.define(props?.name || COMPONENT_NAME, class extends HTMLElement implements IStyleProvider {
-        /**
-         * Style processor
-         */
-        processor: IStyleProcessor;
-        /**
-         * Style manager
-         */
-        manager: IStyleManager;
+    settings?: TProviderSettings;
+} = {}): boolean {
+    const {
+        name = PROVIDER_TAG_NAME,
+        styles = {},
+        settings = {}
+    } = props;
 
-        /**
-         * Stylesheet sources
-         */
-        protected _sources = new Map<TStyleSheetConfig, string>();
+    const custom = globalThis.customElements;
+    if (custom?.get(name)) return false;
+    else {
+        custom.define(name, class extends HTMLElement implements IStyleProvider {
+            // properties
 
-        /**
-         * Settings element id
-         */
-        get settingsId() {
-            return this.getAttribute('settingsid') || SETTINGS_ID;
-        }
-
-        /**
-         * Prefix for keyframes and variables
-         */
-        get prefix() {
-            return this.getAttribute('prefix') || PREFIX;
-        }
-
-        /**
-         * BEM generation mode
-         */
-        get mode() {
-            return this.getAttribute('mode') as TStyleMode;
-        }
-
-        /**
-         * Dont register document as dependent
-         */
-        get isolated() {
-            return this.getAttribute('isolated');
-        }
-
-        /**
-         * Initializer stylesheet key
-         */
-        get initkey() {
-            return this.getAttribute('initkey') ?? 'init';
-        }
-    
-        constructor() {
-            super();
-        }
-    
-        connectedCallback() {
-            const settings = this.getSettings();
-            const { params, themes, styles, ext, units, rootStyle } = settings;
-            const initkey = this.initkey;
-            this.processor = createProcessor({
-                prefix: this.prefix,
-                mode: this.mode,
-                initkey,
-                params,
-                rootStyle,
-                themes,
-                units
-            });
-            this.manager = createManager(initkey ? {
-                [initkey]: getProviderStyles() + this.processor.baseStyles
-            } : {});
-            this.processStyles(styles, ext);
-            if (this.isolated === null) this.manager.registerNode(document);
-        }
-    
-        /**
-         * Get component settings
-         */
-        getSettings = (): IStyleConfig => {
-            const textContent = document?.getElementById(this.settingsId)?.textContent;
-            return textContent ? JSON.parse(textContent) : (props?.config || {});
-        }
-
-        /**
-         * Compile stylesheet
-         * @param key - stylesheet key
-         * @param config - stylesheet config
-         */
-        compileStyleSheet = (key: string, config: TStyleSheetConfig) => {
-            const styleString = this.processor?.compile(
-                key,
-                config
-            );
-            if (styleString && this.manager?.pack(key, styleString)) {
-                this._sources.set(config, key)
-                return true;
-            }
-        }
-
-        /**
-         * Use stylesheet
-         * @param config - stylesheet config
-         * @returns BEM resolver
-         */
-        useStyleSheet = (config: TStyleSheetConfig) => {
-            let key = this._sources.get(config);
-            if (!key) {
-                key = this.prefix + getKey(this._sources);
-                this.compileStyleSheet(key, config) && key;
+            /**
+             * Initial stylesheet config
+             */
+            protected _mainConfig: TStyleSheetConfig;
+            /**
+             * Theme variables
+             */
+            protected _themeVariables: Record<string, Record<string, string | number>>;
+            protected _dict: {
+                sets: Record<string, Record<string, string | number>>;
+                keys: Record<string, string | number>;
             };
-            return this.resolveStyleSheet(key);
-        }
+            /**
+             * Style processor
+             */
+            protected _processor: IStyleProcessor;
+            /**
+             * Style manager
+             */
+            protected _manager: IStyleManager;
+            /**
+             * Selector resolver
+             */
+            protected _resolver: IStyleResolver;
+            /**
+             * Stylesheets collection
+             */
+            protected _collector: IStyleCollector;
 
-        /**
-         * Expand stylesheet
-         * @param key - stylesheet key
-         * @param selectors - expanded selectors
-         */
-        expandStyleSheet = (key: string, selectors: string[]) => {
-            const expanded = this.manager?.getExpandedSelectors(key);
-            if (this.processor && expanded) {
-                const next = new Set(selectors);
-                const diff = next.difference(expanded);
-                let size = diff.size;
-                if (size && this.processor.expandSelector) {
-                    const expand = this.processor.expandSelector;
-                    diff.keys().forEach((selector) => {
-                        const [initSelector, expSelector] = expand(key, selector);
-                        if (expSelector) this.manager.expandRule(key, initSelector, expSelector);
-                        else size--;
+            // computed
+
+            /**
+             * Prefix for keyframes and variables
+             */
+            get prefix() {
+                return this.getAttribute('prefix') || PREFIX;
+            }
+            /**
+             * Selector generation mode
+             */
+            get mode(): TStyleMode {
+                return (this.getAttribute('mode') || 'a') as TStyleMode;
+            }
+            /**
+             * Dont register document as dependent
+             */
+            get isolated() {
+                return this.getAttribute('isolated') !== null;
+            }
+            /**
+             * Use settings script as styles from server-side rendering
+             */
+            get hydrate() {
+                return this.getAttribute('hydrate') !== null;
+            }
+            /**
+             * Settings script selector
+             */
+            get _settingsSelector() {
+                return '#' + (this.getAttribute('settingsid') || SETTINGS_SCRIPT_ID);
+            }
+            /**
+             * Initial style script selector
+             */
+            get _initSelector() {
+                return '.' + (this.getAttribute('initcls') || STYLES_SCRIPT_CLS);
+            }
+
+            /**
+             * Get component settings
+             */
+            get settingsContent(): TProviderSettings {
+                const script = doc?.querySelector(this._settingsSelector) as HTMLScriptElement & {effcss: TProviderSettings;};
+                let content;
+                if (isJSON(script)) content = script?.textContent && JSON.parse(script?.textContent);
+                else if (script) content = script?.effcss;
+                else content = settings;
+                return content || {};
+            }
+
+            /**
+             * Get init style configs
+             */
+            get initContent(): TProviderInitContent {
+                const initScripts = doc.querySelectorAll(this._initSelector) as NodeListOf<HTMLScriptElement & {effcss: Record<string, TStyleSheetConfig>;}>;
+                let content: Record<string, TStyleSheetConfig> = styles || {};
+                initScripts.forEach((script) => {
+                    let scriptContent: Record<string, TStyleSheetConfig>;
+                    if (isJSON(script)) scriptContent = script?.textContent && JSON.parse(script?.textContent);
+                    else scriptContent = script?.effcss;
+                    content = {...content, ...(scriptContent || {})};
+                });
+                return content;
+            }
+
+            constructor() {
+                super();
+            }
+
+            protected _setState = () => {
+                const {
+                    units, keys, sets,
+                    mediaBP = defaultMediaBP, containerBP = defaultContainerBP,
+                    rootStyle = defaultRootStyle, themes = defaultThemes
+                } = this.settingsContent;
+
+                // merged values
+                const settingsUnits = {...defaultUnits, ...(units || {})};
+                const settingsKeys = {...defaultKeys, ...(keys || {})};
+                const settingsSets = {...defaultSets };
+                if (sets) Object.entries(sets).forEach(([setKey, setVal]) => settingsSets[setKey] = {...setVal});
+                const themeEntries = Object.entries(themes);
+
+                // apply units
+                if (settingsUnits) {
+                    for (const itemKey in settingsUnits) {
+                        settingsSets[itemKey] = settingsSets[itemKey] && Object.fromEntries(
+                            Object.entries(settingsSets[itemKey]).map(([k, v]) => [k, settingsUnits[itemKey].replace('{1}', '' + v)])
+                        );
+                    }
+                }
+
+                // apply media breakpoints
+                if (mediaBP) {
+                    Object.entries(mediaBP).forEach(([key, val]) => {
+                        settingsKeys[`min_${key}_`] = `@media (min-width:${val})`;
+                        settingsKeys[`max_${key}_`] = `@media (max-width:${val})`;
                     });
-                    return size;
                 }
-            }
-        }
 
-        /**
-         * Process styles
-         * @param styles - stylesheets dictionary
-         * @param ext - stylesheets extra selectors
-         */
-        processStyles = (styles?: Record<string, TStyleSheetConfig>, ext?: Record<string, string[]>) => {
-            if (styles) {
-                for (let key in styles) {
-                    const styleConfig = styles[key];
-                    this.compileStyleSheet(key, styleConfig);
+                // apply container breakpoints
+                if (containerBP) {
+                    Object.entries(containerBP).forEach(([key, val]) => {
+                        settingsKeys[`cmin_${key}_`] = `@container (min-width:${val})`;
+                        settingsKeys[`cmax_${key}_`] = `@container (max-width:${val})`;
+                    });
                 }
-            }
-            if (ext) {
-                for (let key in ext) {
-                    const extConfig = ext[key];
-                    this.expandStyleSheet(key, extConfig);
-                }
-            }
-            return true;
-        }
 
-        /**
-         * Resolve styles
-         * @param key - stylesheet key
-         */
-        resolveStyleSheet = (key: string) => {
-            return this.processor.bem.attr(key);
-        }
-    })
+                const rootVars: Record<string, string | number> = {};
+                const themeVars: Record<string, Record<string, string | number>> = {};
+
+                // create vars for themes
+                if (themes && settingsSets) {
+                    themeEntries.forEach(([themeKey, themeVal]) => {
+                        const themeSets: Record<string, string | number> = {};
+                        Object.entries(themeVal).forEach(([setKey, setVal]) => {
+                            // set value loop
+                            Object.entries(setVal).forEach(([variantKey, variantVal]) => {
+                                const varName = this._resolver.varName(setKey, variantKey);
+                                if (settingsUnits[setKey]) themeSets[varName] = settingsUnits[setKey].replace('{1}', '' + variantVal);
+                                else themeSets[varName] = variantVal;
+                                // create root variables
+                                if (!rootVars[varName]) {
+                                    rootVars[varName] = settingsSets[setKey][variantKey];
+                                    settingsSets[setKey][variantKey] = `var(${varName})`;
+                                }
+                            })
+                            
+                        })
+                        themeVars[themeKey] = themeSets;
+                    })
+                };
+
+                // save dictionaries
+                this._dict = {
+                    sets: settingsSets, keys: settingsKeys
+                };
+                // save init stylesheet config
+                this._mainConfig = {
+                    c: {
+                        [name]: {
+                            display: 'contents'
+                        },
+                        _theme: themeVars,
+                        $$: Object.assign(rootVars, rootStyle),
+                        ...(themeVars?.dark ? {
+                            $dark_: {
+                                $$: themeVars.dark
+                            }} : {}),
+                        ...(themeVars?.light ? {
+                            $light_: {
+                                $$: themeVars.light
+                            }} : {}),
+                    }
+                };
+            }
+
+            connectedCallback() {
+                // prepare resolver
+                this._resolver = createResolver({
+                    mode: this.mode,
+                });
+                // init state
+                this._setState();
+                const initContent = this.initContent;
+                const prefix = this.prefix;
+                // prepare collector
+                this._collector = createCollector({
+                    hydrate: this.hydrate,
+                    prefix,
+                    initContent
+                });
+                // prepare processor
+                this._processor = createProcessor({
+                    sets: this._dict.sets, keys: this._dict.keys, resolver: this._resolver
+                });
+                // prepare manager
+                this._manager = createManager();
+                // use main config
+                this.use(this._mainConfig);
+                // process init content
+                this.usePublic(initContent);
+                // register document
+                if (doc && !this.isolated) this._manager.registerNode(doc);
+            }
+
+            // public methods
+
+            /**
+             * Use stylesheet config
+             * @param config - stylesheet config
+             * @returns BEM resolver
+             */
+            use = (config: TStyleSheetConfig, key?: string) => {
+                let k = this._collector.use(config, key);
+                if (this._manager && !this._manager.has(key)) this._manager.pack(k, this.css(
+                    config,
+                    k
+                ));
+                return this.resolve(k);
+            }
+
+            /**
+             * Use public stylesheet configs
+             * @param configs - stylesheet configs
+             */
+            usePublic: IStyleProvider['usePublic'] = (styles) => {
+                return Object.fromEntries(Object.entries(styles).map(([key, config]) => {
+                    return [key, this.use(config, key)];
+                }));
+            }
+
+            /**
+             * Use private stylesheet configs
+             * @param configs - stylesheet configs
+             */
+            usePrivate: IStyleProvider['usePrivate'] = (styles) => {
+                return styles.map((config) => {
+                    return this.use(config);
+                });
+            }
+
+            /**
+             * Prepare CSS from config
+             * @param config - stylesheet config
+             * @param key - stylesheet key
+             */
+            css = (config: TStyleSheetConfig, key: string) => {
+                return this._processor?.compile(
+                    key,
+                    config
+                );
+            }
+
+            /**
+             * Switch stylesheet on
+             * @param param - stylesheet config or key
+             */
+            on = (param: TStyleTarget) => {
+                let source;
+                if (typeof param === 'string') source = param;
+                else source = this._collector.getKey(param);
+                return source ? this._manager.on(source) : undefined;
+            }
+
+            /**
+             * Switch stylesheet off
+             * @param param - stylesheet config or key
+             */
+            off = (param: TStyleTarget) => {
+                let source;
+                if (typeof param === 'string') source = param;
+                else source = this._collector.getKey(param);
+                return source ? this._manager.off(source) : undefined;
+            }
+
+            /**
+             * Get stylesheet
+             * @param target - stylesheet config or key
+             */
+            get = (target: TStyleTarget = this._mainConfig) => {
+                let resTarget;
+                if (typeof target === 'object') resTarget = this._collector.getKey(target);
+                else resTarget = target;
+                return this._manager.get(resTarget);
+            }
+
+            /**
+             * Get stylesheets
+             * @param targets - stylesheet configs or keys
+             */
+            getMany = (targets: TStyleTarget[] = this._collector.getKeys()) => {
+                return targets.map((target) => this.get(target));
+            }
+
+            /**
+             * Resolve styles
+             * @param key - stylesheet key
+             */
+            resolve = (key?: string): ReturnType<TResolveAttr> => this._resolver.attr(key || this._collector.getKey(this._mainConfig));
+        });
+        return true;
+    }
 }
