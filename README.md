@@ -26,6 +26,7 @@ Effcss is a self-confident CSS-in-JS library based only on the browser APIs.
 ## Use with
 
 - [React](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
+- [React SSR](https://stackblitz.com/edit/vitejs-react-ssr-effcss?file=index.html)
 - [Svelte](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html)
 - [Vue](https://stackblitz.com/edit/vitejs-vue-effcss?file=index.html)
 - [Preact](https://stackblitz.com/edit/vitejs-preact-effcss?file=index.html)
@@ -88,20 +89,33 @@ const cardStyle = {
   c: {
     // block
     _: {
-      $dis: 'flex',
-      $jc: 'center'
+      display: 'flex',
+      justifyContent: 'center'
     },
     // element
     __logo: {
-      $p: '2em'
+      padding: '2em'
     },
     // boolean element modifier
     __logo_c_: {
-      $c: '#888'
+      color: '#888',
+      ':hover': {
+        color: 'black',
+      }
     },
     // element modifier with value
     __logo_sz_lg: {
-      $w: '5rem'
+      width: '5rem'
+    },
+    // ordinary CSS
+    '.square': {
+      aspectRatio: 1,
+      ':focus': {
+        aspectRatio: '1/2'
+      }
+    },
+    body: {
+      boxSizing: 'border-box'
     }
   }
 };
@@ -111,12 +125,12 @@ export const App = (props) => {
 
   const attrsRef = useRef();
   if (!stylesRef.current) {
-    const resolve = css.use(cardStyle);
+    const cardCSS = css.use(cardStyle);
     attrsRef.current = {
       // just block selector
-      block: resolve()(),
+      block: cardCSS()(),
       // element with modifiers
-      logoMod: resolve('logo')({
+      logoMod: cardCSS('logo')({
         c: '',
         sz: 'lg'
       }),

@@ -241,11 +241,11 @@ export function defineProvider(props: {
                         _theme: themeVars,
                         $$: Object.assign(rootVars, rootStyle),
                         ...(themeVars?.dark ? {
-                            $dark_: {
+                            $$dark: {
                                 $$: themeVars.dark
                             }} : {}),
                         ...(themeVars?.light ? {
-                            $light_: {
+                            $$light: {
                                 $$: themeVars.light
                             }} : {}),
                     }

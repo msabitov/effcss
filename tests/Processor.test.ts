@@ -132,13 +132,23 @@ describe('Interpolation:', () => {
     expect(styleString).toBe('.custom{color:transparent;}')
   });
 
-  test('special global key:', () => {
+  test('special global keys:', () => {
     const styleString = processor.compile('cust', {c: {
       $$: {
         color: 'transparent'
+      },
+      $$light: {
+        div: {
+          $$h: {
+            width: '100%'
+          }
+        }
       }
     }});
-    expect(styleString).toBe(':root{color:transparent;}')
+    expect(styleString).toBe(
+      ':root{color:transparent;}@media(prefers-color-scheme: light){' +
+      'div{&:hover{width:100%;}}}'
+    )
   });
 
   test('local keys dict:', () => {
