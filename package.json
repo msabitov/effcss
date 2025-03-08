@@ -1,6 +1,6 @@
 {
   "name": "effcss",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Self-confident CSS-in-JS",
   "type": "module",
   "scripts": {
@@ -56,7 +56,6 @@
     "LICENSE",
     "README.md",
     "package.json",
-    "logo.svg",
     "dist"
   ],
   "repository": {
