@@ -66,6 +66,10 @@ const SETTINGS = {
             myrem: {
                 s: 10,
                 l: 20
+            },
+            newsz: {
+                s: '1rem',
+                l: '2rem'
             }
         } 
     },
@@ -272,17 +276,24 @@ describe('Provider params:', () => {
         ].find((rule) => rule?.selectorText === ':root')?.cssText).toContain('font-size: 24px;');
     });
 
-    test('settings.themes.custom', () => {
+    test('existing sets in settings.themes.custom', () => {
         const provider = getProvider(document, CUSTOM_NAME);
         expect([
             ...(provider.get()?.cssRules || [])
-        ].find((rule) => rule?.selectorText.includes('theme-custom'))?.cssText).toContain('--mysz-s: 1; --mysz-m: 2;');
+        ].find((rule) => rule?.selectorText.includes('theme-custom'))?.cssText).toContain('--eff-mysz-s: 1; --eff-mysz-m: 2;');
+    });
+
+    test('new sets in settings.themes.custom', () => {
+        const provider = getProvider(document, CUSTOM_NAME);
+        expect([
+            ...(provider.get()?.cssRules || [])
+        ].find((rule) => rule?.selectorText.includes(':root'))?.cssText).toContain('--eff-newsz-s: unset; --eff-newsz-l: unset;');
     });
 
     test('settings.units', () => {
         const provider = getProvider(document, CUSTOM_NAME);
         expect([
             ...(provider.get()?.cssRules || [])
-        ].find((rule) => rule?.selectorText.includes(':root'))?.cssText).toContain('--myrem-s: 12rem; --myrem-l: 24rem;');
+        ].find((rule) => rule?.selectorText.includes(':root'))?.cssText).toContain('--eff-myrem-s: 12rem; --eff-myrem-l: 24rem;');
     });
 });

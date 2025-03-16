@@ -27,7 +27,7 @@ Effcss is a self-confident CSS-in-JS library based only on the browser APIs.
 
 ## Links
 
-- [Docs (in development)](https://effcss.surge.sh)
+- [Docs](https://effcss.surge.sh)
 - [Repository](https://gitverse.ru/msabitov/effcss)
 - [Github mirror](https://github.com/msabitov/effcss)
 
@@ -67,13 +67,25 @@ yarn add effcss
 
 ## Quick start
 
-First you need to connect the `<style-provider>`. One script is all it takes:
+First you need to connect the `<style-provider>`:
 
 ```html
-  <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!--app-head-->
+    <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <style-provider>
+      <div id="root"></div>
+    </style-provider>
+    <!--app-body-->
+  </body>
+</html>
 ```
 
-Then you only need to create the necessary styles before rendering. The easiest way to do this is via the `createDispatcher`:
+Then you only need to create the necessary styles before rendering. The easiest way to do this is via the `Style Dispatcher`:
 
 **main.js**
 
@@ -129,10 +141,10 @@ const cardStyle = {
 export const App = (props) => {
   const { css } = props;
 
-  const attrsRef = useRef();
+  const stylesRef = useRef();
   if (!stylesRef.current) {
     const cardCSS = css.use(cardStyle);
-    attrsRef.current = {
+    stylesRef.current = {
       // just block selector
       block: cardCSS()(),
       // element with modifiers
@@ -142,7 +154,7 @@ export const App = (props) => {
       }),
     };
   }
-  const styles = attrsRef.current;
+  const styles = stylesRef.current;
 
   // apply attributes to appropriate nodes
   return <div {...styles.block}>

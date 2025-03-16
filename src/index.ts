@@ -213,12 +213,14 @@ export function defineProvider(props: {
                         Object.entries(themeVal).forEach(([setKey, setVal]) => {
                             // set value loop
                             Object.entries(setVal).forEach(([variantKey, variantVal]) => {
-                                const varName = this._resolver.varName(setKey, variantKey);
+                                // global vars should have name prefix
+                                const varName = this._resolver.varName(this.prefix, setKey, variantKey);
                                 if (settingsUnits[setKey]) themeSets[varName] = settingsUnits[setKey].replace('{1}', '' + variantVal);
                                 else themeSets[varName] = variantVal;
                                 // create root variables
                                 if (!rootVars[varName]) {
-                                    rootVars[varName] = settingsSets[setKey][variantKey];
+                                    rootVars[varName] = settingsSets[setKey]?.[variantKey] || 'unset';
+                                    if (!settingsSets[setKey]) settingsSets[setKey] = {};
                                     settingsSets[setKey][variantKey] = `var(${varName})`;
                                 }
                             })

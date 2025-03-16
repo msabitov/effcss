@@ -658,6 +658,28 @@ export const sets: Record<string, Record<string, string | number>> = {
         ro: 'round',
         nr: NO_REPEAT
     },
+    /**
+     * Container-type
+     */
+    cnt: {
+        n: NORMAL,
+        s: SIZE,
+        is: INLINE_SIZE
+    },
+    /**
+     * Time
+     */
+    time: {
+        def: 300,
+        xs: 100,
+        s: 200,
+        m: 300,
+        l: 450,
+        xl: 600,
+        no: 0,
+        min: 50,
+        max: 750
+    },
 
     // palette
 
@@ -847,23 +869,6 @@ export const sets: Record<string, Record<string, string | number>> = {
         e: END
     },
 
-    // timings
-
-    /**
-     * Time
-     */
-    time: {
-        def: 300,
-        xs: 100,
-        s: 200,
-        m: 300,
-        l: 450,
-        xl: 600,
-        no: 0,
-        min: 50,
-        max: 750
-    },
-
     // unitless
 
     /**
@@ -885,18 +890,6 @@ export const sets: Record<string, Record<string, string | number>> = {
         '3/4': 0.75,
         '9/16': 0.5625,
         '16/9': 1.7778
-    },
-    /**
-     * Z-index coefficients
-     */
-    zi: {
-        min: -1,
-        1: 1,
-        2: 2,
-        3: 3,
-        4: 4,
-        5: 5,
-        max: 10
     },
 
     // size
@@ -1193,6 +1186,18 @@ export const sets: Record<string, Record<string, string | number>> = {
         l: 0.75,
         xl: 0.9,
         max: 1
+    },
+    /**
+     * Z-index coefficients
+     */
+    zi: {
+        min: -1,
+        1: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5,
+        max: 10
     },
 
     // transitions
@@ -1503,17 +1508,6 @@ export const sets: Record<string, Record<string, string | number>> = {
         s: SCROLL,
         f: FIXED,
         l: LOCAL
-    },
-
-    // container
-    
-    /**
-     * Container-type
-     */
-    cnt: {
-        n: NORMAL,
-        s: SIZE,
-        is: INLINE_SIZE
     }
 };
 
