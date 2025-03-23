@@ -4,7 +4,7 @@ import cleaner from 'rollup-plugin-cleaner';
 import json from './package.json' with { type: 'json' };
 
 const banner = `/*
-* Effcss v${json.version}
+* EffCSS v${json.version}
 * {@link ${json.repository.url}}
 * Copyright (c) Marat Sabitov
 * @license ${json.license}

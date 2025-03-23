@@ -140,6 +140,11 @@ export interface IStyleManager {
      */
     has(key?: string): boolean;
     /**
+     * Is stylesheet on
+     * @param key - stylesheet key
+     */
+    status(key?: string): boolean;
+    /**
      * Switch stylesheet on
      * @param key - stylesheet key
      */
@@ -225,16 +230,16 @@ export type TResolveAttr = (
      * {@link https://en.bem.info/methodology/key-concepts/#block | Block}
      */
     b?: string
-) => (
+) => <E extends string>(
     /**
      * {@link https://en.bem.info/methodology/key-concepts/#element | Element}
      */
-    e?: string
-) => (
+    e?: E
+) => <M extends Record<string, Record<string, string | number | boolean | undefined | null>>>(
     /**
      * {@link https://en.bem.info/methodology/key-concepts/#modifier | Modifiers}
      */
-    m?: string | object
+    m?: string | Partial<M[NoInfer<E>]>
 ) => Record<string, string>;
 
 /**
@@ -324,6 +329,10 @@ export interface IStyleProvider {
      */
     settingsContent: TProviderSettings;
     /**
+     * All collected stylesheet configs
+     */
+    configs: Record<string, TStyleSheetConfig>;
+    /**
      * Use stylesheet
      * @param config - stylesheet config
      * @returns {@link IStyleResolver.attr | attribute resolver}
@@ -369,6 +378,11 @@ export interface IStyleProvider {
      * @param target - target stylesheet config or key
      */
     off(target?: TStyleTarget): boolean | undefined;
+    /**
+     * Check if stylesheet is on
+     * @param target - target stylesheet config or key
+     */
+    status(target?: TStyleTarget): boolean | undefined;
     /**
      * Get many CSS stylesheets
      * @param target - target stylesheet configs and/or keys

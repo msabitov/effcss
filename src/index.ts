@@ -160,6 +160,13 @@ export function defineProvider(props: {
                 return content;
             }
 
+            /**
+             * Get collected style configs
+             */
+            get configs(): ReturnType<IStyleCollector['getConfigs']> {
+                return this._collector.getConfigs();
+            }
+
             constructor() {
                 super();
             }
@@ -329,6 +336,17 @@ export function defineProvider(props: {
                     key,
                     config
                 );
+            }
+
+            /**
+             * Check if stylesheet is on
+             * @param param - stylesheet config or key
+             */
+            status = (param: TStyleTarget) => {
+                let source;
+                if (typeof param === 'string') source = param;
+                else source = this._collector.getKey(param);
+                return !!source && this._manager.status(source);
             }
 
             /**

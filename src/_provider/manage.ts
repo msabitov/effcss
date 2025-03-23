@@ -42,12 +42,14 @@ class Manager implements IStyleManager {
         }
     }
 
+    status = (key: string) => {
+        const styleSheet = key && this._stylesheets[key];
+        return !!styleSheet && (this._styleSheetsArray.findIndex((item) => item === styleSheet) !== -1);
+    }
+
     on = (key: string) => {
-        if (!key) return;
-        const styleSheet = this._stylesheets[key];
-        if (!styleSheet) return;
-        const index = this._styleSheetsArray.findIndex((item) => item === styleSheet);
-        if (index === -1) {
+        const styleSheet = key && this._stylesheets[key];
+        if (styleSheet && !this.status(key)) {
             this._styleSheetsArray.push(styleSheet);
             this.notify();
             return true;
@@ -55,11 +57,9 @@ class Manager implements IStyleManager {
     }
 
     off = (key: string) => {
-        if (!key) return;
-        const styleSheet = this._stylesheets[key];
-        if (!styleSheet) return;
-        const index = this._styleSheetsArray.findIndex((item) => item === styleSheet);
-        if (index !== -1) {
+        const styleSheet = key && this._stylesheets[key];
+        if (styleSheet && this.status(key)) {
+            const index = this._styleSheetsArray.findIndex((item) => item === styleSheet);
             this._styleSheetsArray.splice(index, 1);
             this.notify();
             return true;

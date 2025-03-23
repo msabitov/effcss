@@ -15,7 +15,7 @@
 
 </div>
 
-Effcss is a self-confident CSS-in-JS library based only on the browser APIs.
+EffCSS is a self-confident CSS-in-JS library based only on the browser APIs.
 
 ## Some features
 

@@ -100,6 +100,15 @@ describe('Provider utils:', () => {
         expect(getProvider()).toBe(provider);
     });
 
+    test('get collected configs', () => {
+        const configs = {[FIRST_ID]: FIRST_CONFIG, [SECOND_ID]: SECOND_CONFIG};
+        usePublicStyleSheets(configs);
+        const providerConfigs = getProvider().configs;
+        expect(
+            providerConfigs[FIRST_ID] === FIRST_CONFIG && providerConfigs[SECOND_ID] === SECOND_CONFIG
+        ).toBeTruthy();
+    });
+
     test('use stylesheet', () => {
         const resolver = useStyleSheet(FIRST_CONFIG);
         const attrs = resolver()();

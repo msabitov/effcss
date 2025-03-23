@@ -64,6 +64,15 @@ describe('Manager:', () => {
         expect(document.adoptedStyleSheets).toContain(firstStylesheet);
     });
 
+    test('add & registerNode & status & off & status', () => {
+        manager.add(firstId, firstStylesheet);
+        manager.registerNode(document);
+        const initStatus = manager.status(firstId);
+        manager.off(firstId);
+        const resultStatus = manager.status(firstId);
+        expect(initStatus && !resultStatus).toBeTruthy();
+    });
+
     test('add & removeAll', () => {
         manager.add(firstId, firstStylesheet);
         manager.add(secondId, firstStylesheet);
