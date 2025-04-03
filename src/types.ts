@@ -113,6 +113,13 @@ export interface IStyleManager {
      */
     add(key: string, stylesheet: CSSStyleSheet): true | void;
     /**
+     * Replace stylesheet content
+     * @param key - stylesheet key
+     * @param styles - stylesheet content string
+     * @returns `true` if stylesheet is replaced, otherwise `undefined`
+     */
+    replace(key: string, styles: string): boolean | void;
+    /**
      * Remove stylesheet
      * @param key - stylesheet key
      * @returns `true` if stylesheet is removed, otherwise `undefined`
@@ -300,6 +307,12 @@ export interface IStyleCollector {
      */
     use(config: TStyleSheetConfig, key?: string): string;
     /**
+     * Mutates original stylesheet config with new content
+     * @param key - stylesheet key
+     * @param nextConfig - new stylesheet config
+     */
+    mutate(key: string, nextConfig: TStyleSheetConfig): TStyleSheetConfig;
+    /**
      * Get key of collected config
      * @param config - stylesheet config
      */
@@ -341,6 +354,12 @@ export interface IStyleProvider {
      * It returns {@link IStyleResolver.attr | attribute resolver}, that can create BEM selectors for config passed.
      */
     use(config: TStyleSheetConfig, key?: string): ReturnType<TResolveAttr>;
+    /**
+     * Alter stylesheet with merged config
+     * @param target - target stylesheet config or key
+     * @param nextConfig - next stylesheet config, that will be merged with previous
+     */
+    alter(target: TStyleTarget, nextConfig: TStyleSheetConfig): ReturnType<TResolveAttr>;
     /**
      * Use public stylesheet configs
      * @param configs - stylesheet configs

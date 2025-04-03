@@ -88,6 +88,10 @@ class Collector implements IStyleCollector {
         return resKey;
     }
 
+    mutate = (key: string, nextConfig: TStyleSheetConfig) => {
+        return Object.assign(this.getConfigs()[key], nextConfig);
+    }
+
     getKey = (config: TStyleSheetConfig) => {
         return this._configs.get(config);
     }

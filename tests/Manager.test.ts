@@ -4,6 +4,7 @@ import { IStyleManager } from '../src/types';
 
 describe('Manager:', () => {
     const cssText = '.cls{padding:2px;}';
+    const nextCssText = '.cls{padding:4px;}';
     const firstId = 'first';
     const secondId = 'second';
 
@@ -29,6 +30,15 @@ describe('Manager:', () => {
     test('add & get', () => {
         manager.add(firstId, firstStylesheet);
         expect(manager.get(firstId)).toBe(firstStylesheet);
+    });
+
+    test('add & replace & get', () => {
+        manager.add(firstId, firstStylesheet);
+        manager.replace(firstId, nextCssText);
+        const stylesheet = manager.get(firstId); 
+        expect(stylesheet === firstStylesheet && !!stylesheet && [
+            ...stylesheet?.cssRules
+        ].map(i=>i.cssText).join('').replaceAll(' ','') === nextCssText).toBeTruthy();
     });
 
     test('add & getAll', () => {

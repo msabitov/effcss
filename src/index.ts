@@ -307,6 +307,26 @@ export function defineProvider(props: {
             }
 
             /**
+             * Alter stylesheet with merged config
+             * @param target - target stylesheet config or key
+             * @param next - next stylesheet config, that will be merged with previous
+             * @description Be carefull, it mutates the contents of the original config, but not its ref.
+             */
+            alter = (target: TStyleTarget, next: TStyleSheetConfig) => {
+                let key;
+                if (typeof target === 'string') key = target;
+                else key = this._collector.getKey(target);
+                if (key) {
+                    const config = this._collector.mutate(key, next);
+                    this._manager.replace(key, this.css(
+                        config,
+                        key
+                    ));
+                }
+                return this.resolve(key);
+            }
+
+            /**
              * Use public stylesheet configs
              * @param configs - stylesheet configs
              */

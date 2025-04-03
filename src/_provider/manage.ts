@@ -89,7 +89,7 @@ class Manager implements IStyleManager {
         return true;
     }
 
-    pack = (key: string, styles: string, save?: boolean) => {
+    pack = (key: string, styles: string) => {
         const styleSheet = new CSSStyleSheet();
         styleSheet.replaceSync(styles);
         if (!styleSheet.cssRules.length) {
@@ -97,6 +97,15 @@ class Manager implements IStyleManager {
             return;
         }
         return this.add(key, styleSheet);
+    }
+
+    replace = (key: string, styles: string) => {
+        const styleSheet = this._stylesheets[key];
+        if (styleSheet) {
+            styleSheet.replaceSync(styles);
+            this.notify();
+            return true;
+        }
     }
 
     apply = (root: TStyleConsumer) => {

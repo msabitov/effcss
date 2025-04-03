@@ -4,7 +4,7 @@
   </a>
 </p>
 
-<h1 align="center">Effcss</h1>
+<h1 align="center">EffCSS</h1>
 
 <div align="center">
 

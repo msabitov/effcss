@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { createCollector } from '../src/utils/common';
 
-const FIRST_CONFIG = {c: {}};
+const FIRST_CONFIG = {c: {_: {height: '100vh'}}};
 const SECOND_CONFIG = {c: {_: {width: '300px'}}};
 
 const PREFIX = 'pre';
@@ -34,5 +34,13 @@ describe('Collector:', () => {
 
     test('getKeys:', () => {
         expect(collector.getKeys()).toEqual([FIRST_KEY, SECOND_KEY]);
+    });
+
+    test('mutate:', () => {
+        const newConfig = collector.mutate(FIRST_KEY, SECOND_CONFIG);
+        expect(
+            newConfig === FIRST_CONFIG
+        ).toBeTruthy();
+        expect(JSON.stringify(collector.getConfigs()[FIRST_KEY])).toBe(JSON.stringify(SECOND_CONFIG));
     });
 });
