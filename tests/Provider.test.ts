@@ -14,6 +14,7 @@ import {
     SETTINGS_SCRIPT_ID, PROVIDER_TAG_NAME, STYLES_SCRIPT_CLS
 } from '../src/constants';
 
+const CUSTOME_EVENT_NAME = 'effcsschangecustom';
 const PROVIDER_ID = 'provider';
 const FIRST_ID = 'first';
 const SECOND_ID = 'second';
@@ -269,6 +270,7 @@ describe('Provider params:', () => {
     beforeEach(() => {
         const element = document.createElement(CUSTOM_NAME, {is: CUSTOM_NAME});
         element.dataset.testid = PROVIDER_ID;
+        element.setAttribute('eventname', CUSTOME_EVENT_NAME);
         document.body.append(element);
         return () => element.remove();
     });
@@ -304,5 +306,15 @@ describe('Provider params:', () => {
         expect([
             ...(provider.get()?.cssRules || [])
         ].find((rule) => rule?.selectorText.includes(':root'))?.cssText).toContain('--eff-myrem-s: 12rem; --eff-myrem-l: 24rem;');
+    });
+
+    test('eventname', () => {
+        let styles = [];
+        document.addEventListener(CUSTOME_EVENT_NAME, function(event) {
+            styles = event.detail.styles;
+        });
+        const provider = getProvider(document, CUSTOM_NAME);
+        provider.use({...FIRST_CONFIG});
+        expect(provider.getMany()).toEqual(styles);
     });
 });

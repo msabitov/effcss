@@ -113,6 +113,8 @@ class Manager implements IStyleManager {
     }
 
     registerNode = (node: TStyleConsumer) => {
+        const index = this._listeners.findIndex((listener) => listener.deref() === node);
+        if (index >= 0) return;
         this._listeners.push(new WeakRef(node));
         this.apply(node);
     }

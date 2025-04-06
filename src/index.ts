@@ -10,7 +10,8 @@ import {
     IStyleResolver,
     IStyleCollector,
     TStyleTarget,
-    TResolveAttr
+    TResolveAttr,
+    TStyleConsumer
 } from './types';
 // provider
 import { createProcessor } from './_provider/process';
@@ -20,6 +21,7 @@ import {
     PROVIDER_TAG_NAME, PREFIX,
     SETTINGS_SCRIPT_ID,
     STYLES_SCRIPT_CLS,
+    EVENT_NAME,
     keys as defaultKeys,
     sets as defaultSets,
     themes as defaultThemes,
@@ -119,6 +121,12 @@ export function defineProvider(props: {
              */
             get hydrate() {
                 return this.getAttribute('hydrate') !== null;
+            }
+            /**
+             * Prefix for keyframes and variables
+             */
+            get eventName() {
+                return this.getAttribute('eventname') || EVENT_NAME;
             }
             /**
              * Settings script selector
@@ -282,6 +290,18 @@ export function defineProvider(props: {
                 });
                 // prepare manager
                 this._manager = createManager();
+                const dispatchEvent = (styles: CSSStyleSheet[]) => this.dispatchEvent(
+                    new CustomEvent(this.eventName, {
+                        detail: { styles },
+                        bubbles: true
+                    })
+                );
+                // register notifier
+                this.subscribe({
+                    set adoptedStyleSheets(styles: CSSStyleSheet[]) {
+                        dispatchEvent(styles);
+                    }
+                });
                 // use main config
                 this.use(this._mainConfig);
                 // process init content
@@ -415,6 +435,18 @@ export function defineProvider(props: {
              * @param key - stylesheet key
              */
             resolve = (key?: string): ReturnType<TResolveAttr> => this._resolver.attr(key || this._collector.getKey(this._mainConfig));
+
+            /**
+             * Subscribe to style changes
+             * @param consumer - styles consumer
+             */
+            subscribe = (consumer: TStyleConsumer) => this._manager.registerNode(consumer);
+
+            /**
+             * Unsubscribe from styles changes
+             * @param consumer - styles consumer
+             */
+            unsubscribe = (consumer: TStyleConsumer) => this._manager.unregisterNode(consumer);
         });
         return true;
     }

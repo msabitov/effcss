@@ -2071,3 +2071,8 @@ export const STYLES_SCRIPT_CLS = 'effcss_init';
  * Name of the custom style provider element
  */
 export const PROVIDER_TAG_NAME = 'style-provider';
+
+/**
+ * Custom event name that fires when styles changes
+ */
+export const EVENT_NAME = 'effcsschanges';

@@ -407,6 +407,16 @@ export interface IStyleProvider {
      * @param target - target stylesheet configs and/or keys
      */
     getMany(targets?: TStyleTarget[]): (CSSStyleSheet | undefined)[];
+    /**
+     * Subscribe to style changes
+     * @param consumer - styles consumer
+     */
+    subscribe(consumer: TStyleConsumer): void;
+    /**
+     * Unsubscribe from styles changes
+     * @param consumer - styles consumer
+     */
+    unsubscribe(consumer: TStyleConsumer): void;
 }
 
 /**
@@ -531,6 +541,13 @@ export interface IStyleProviderParams {
      * Hydrate initial stylesheets
      */
     hydrate?: '' | null;
+    /**
+     * Custom event name that fires when styles changes
+     * @description
+     * Allows you to subscribe to a style change event in the DOM.
+     * If not specified, `effcsschanges` is used.
+     */
+    eventname?: string | null;
 };
 
 /**
