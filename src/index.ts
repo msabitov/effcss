@@ -95,6 +95,10 @@ export function defineProvider(props: {
              * Stylesheets collection
              */
             protected _collector: IStyleCollector;
+            /**
+             * Notifier
+             */
+            protected _notifier: TStyleConsumer;
 
             // computed
 
@@ -296,12 +300,13 @@ export function defineProvider(props: {
                         bubbles: true
                     })
                 );
-                // register notifier
-                this.subscribe({
+                this._notifier = {
                     set adoptedStyleSheets(styles: CSSStyleSheet[]) {
                         dispatchEvent(styles);
                     }
-                });
+                };
+                // register notifier
+                this.subscribe(this._notifier);
                 // use main config
                 this.use(this._mainConfig);
                 // process init content

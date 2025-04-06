@@ -167,7 +167,6 @@ export interface IStyleManager {
      * @description
      * Explicitly applies the current style sheets to the consumer.
      * You usually don't need to call this method, as the manager automatically updates the styles of registered consumers.
-     * @see {@link IStyleManager.registerNode}
      */
     apply(consumer: TStyleConsumer): void;
     /**
