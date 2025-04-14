@@ -155,12 +155,12 @@ export interface IStyleManager {
      * Switch stylesheet on
      * @param key - stylesheet key
      */
-    on(key?: string): boolean | undefined;
+    on(key?: string | (string | undefined)[]): boolean | undefined;
     /**
      * Switch stylesheet off
      * @param key - stylesheet key
      */
-    off(key?: string): boolean | undefined;
+    off(key?: string | (string | undefined)[]): boolean | undefined;
     /**
      * Apply stylesheets to style consumer
      * @param consumer - {@link TStyleConsumer | style consumer}
@@ -387,15 +387,15 @@ export interface IStyleProvider {
      */
     get(target?: TStyleTarget): CSSStyleSheet | undefined;
     /**
-     * Switch stylesheet on
+     * Switch stylesheet/stylesheets on
      * @param target - target stylesheet config or key
      */
-    on(target?: TStyleTarget): boolean | undefined;
+    on(target?: TStyleTarget | TStyleTarget[]): boolean | undefined;
     /**
-     * Switch stylesheet off
+     * Switch stylesheet/stylesheets off
      * @param target - target stylesheet config or key
      */
-    off(target?: TStyleTarget): boolean | undefined;
+    off(target?: TStyleTarget | TStyleTarget[]): boolean | undefined;
     /**
      * Check if stylesheet is on
      * @param target - target stylesheet config or key

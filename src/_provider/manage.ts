@@ -47,23 +47,33 @@ class Manager implements IStyleManager {
         return !!styleSheet && (this._styleSheetsArray.findIndex((item) => item === styleSheet) !== -1);
     }
 
-    on = (key: string) => {
-        const styleSheet = key && this._stylesheets[key];
-        if (styleSheet && !this.status(key)) {
-            this._styleSheetsArray.push(styleSheet);
-            this.notify();
-            return true;
-        }
+    on = (target: string | string[]) => {
+        const keys = Array.isArray(target) ? target : [target];
+        const result = keys.reduce((acc, key) => {
+            const styleSheet = key && this._stylesheets[key];
+            if (styleSheet && !this.status(key)) {
+                this._styleSheetsArray.push(styleSheet);
+                return acc;
+            }
+            return false;
+        }, true);
+        this.notify();
+        return result;
     }
 
-    off = (key: string) => {
-        const styleSheet = key && this._stylesheets[key];
-        if (styleSheet && this.status(key)) {
-            const index = this._styleSheetsArray.findIndex((item) => item === styleSheet);
-            this._styleSheetsArray.splice(index, 1);
-            this.notify();
-            return true;
-        }
+    off = (target: string | string[]) => {
+        const keys = Array.isArray(target) ? target : [target];
+        const result = keys.reduce((acc, key) => {
+            const styleSheet = key && this._stylesheets[key];
+            if (styleSheet && this.status(key)) {
+                const index = this._styleSheetsArray.findIndex((item) => item === styleSheet);
+                this._styleSheetsArray.splice(index, 1);
+                return acc;
+            }
+            return false;
+        }, true);
+        this.notify();
+        return result;
     }
 
     remove = (key: string) => {

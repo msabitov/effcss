@@ -74,6 +74,29 @@ describe('Manager:', () => {
         expect(document.adoptedStyleSheets).toContain(firstStylesheet);
     });
 
+    test('add & add & registerNode & off many', () => {
+        manager.add(firstId, firstStylesheet);
+        manager.add(secondId, secondStylesheet);
+        manager.registerNode(document);
+        manager.off([firstId, secondId]);
+        expect(
+            document.adoptedStyleSheets.findIndex((stylesheet) => stylesheet === firstStylesheet) === -1 &&
+            document.adoptedStyleSheets.findIndex((stylesheet) => stylesheet === secondStylesheet) === -1
+        ).toBeTruthy();
+    });
+
+    test('add & add & registerNode & off many & on many', () => {
+        manager.add(firstId, firstStylesheet);
+        manager.add(secondId, secondStylesheet);
+        manager.registerNode(document);
+        manager.off([firstId, secondId]);
+        manager.on([secondId, firstId]);
+        expect(
+            document.adoptedStyleSheets.findIndex((stylesheet) => stylesheet === firstStylesheet) !== -1 &&
+            document.adoptedStyleSheets.findIndex((stylesheet) => stylesheet === secondStylesheet) !== -1
+        ).toBeTruthy();
+    });
+
     test('add & registerNode & status & off & status', () => {
         manager.add(firstId, firstStylesheet);
         manager.registerNode(document);

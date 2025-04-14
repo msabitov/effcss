@@ -398,22 +398,26 @@ export function defineProvider(props: {
              * Switch stylesheet on
              * @param param - stylesheet config or key
              */
-            on = (param: TStyleTarget) => {
-                let source;
-                if (typeof param === 'string') source = param;
-                else source = this._collector.getKey(param);
-                return source ? this._manager.on(source) : undefined;
+            on = (params: TStyleTarget | TStyleTarget[]) => {
+                const targets = Array.isArray(params) ? params : [params];
+                const onTargets = targets.map((target) => {
+                    if (typeof target === 'string') return target;
+                    return this._collector.getKey(target);
+                });
+                return this._manager.on(onTargets);
             }
 
             /**
              * Switch stylesheet off
              * @param param - stylesheet config or key
              */
-            off = (param: TStyleTarget) => {
-                let source;
-                if (typeof param === 'string') source = param;
-                else source = this._collector.getKey(param);
-                return source ? this._manager.off(source) : undefined;
+            off = (params: TStyleTarget | TStyleTarget[]) => {
+                const targets = Array.isArray(params) ? params : [params];
+                const offTargets = targets.map((target) => {
+                    if (typeof target === 'string') return target;
+                    return this._collector.getKey(target);
+                });
+                return this._manager.off(offTargets);
             }
 
             /**
