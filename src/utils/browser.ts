@@ -11,7 +11,7 @@ import {
  * Use this function to get the first provider element found in the document
  * @see {@link IStyleProvider}
  */
-export const getProvider = (root = globalThis.document, tag = PROVIDER_TAG_NAME): IStyleProvider => root?.getElementsByTagName(tag)?.[0] as unknown as IStyleProvider;
+export const getProvider = (root = window.document, tag = window.__EFFCSS_PARAMS__?.name || PROVIDER_TAG_NAME): IStyleProvider => root?.getElementsByTagName(tag)?.[0] as unknown as IStyleProvider;
 
 /**
  * Use stylesheet
@@ -113,9 +113,9 @@ export const measureOne = (key: string, provider: IStyleProvider = getProvider()
  * @param provider - style provider
  * @see {@link IStyleProvider}
  */
-export const measureMany = (keys: string[], provider: IStyleProvider = getProvider()): number => {
-    return keys.reduce((acc, key) => acc + measureOne(key, provider), 0);
-}
+export const measureMany = (keys: string[], provider: IStyleProvider = getProvider()): number => keys.reduce((
+    acc, key
+) => acc + measureOne(key, provider), 0);
 
 interface IStyleDispatcherParams {
     root?: Document;

@@ -255,15 +255,17 @@ describe('Provider scripts:', () => {
     });
 })
 
+const PROVIDER_PARAMS = {
+    name: CUSTOM_NAME,
+    styles: STYLES,
+    settings: SETTINGS
+};
+
 describe('Provider params:', () => {
     let count;
     beforeAll(() => {
         count = 3;
-        defineProvider({
-            name: CUSTOM_NAME,
-            styles: STYLES,
-            settings: SETTINGS
-        });
+        defineProvider(PROVIDER_PARAMS);
         return () => count = 3;
     });
 
@@ -316,5 +318,9 @@ describe('Provider params:', () => {
         const provider = getProvider(document, CUSTOM_NAME);
         provider.use({...FIRST_CONFIG});
         expect(provider.getMany()).toEqual(styles);
+    });
+
+    test('provider params in window.__EFFCSS_PARAMS__', () => {
+        expect(window.__EFFCSS_PARAMS__).toEqual(PROVIDER_PARAMS);
     });
 });

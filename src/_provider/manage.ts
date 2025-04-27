@@ -1,5 +1,7 @@
 import { IStyleManager, TStyleConsumer } from '../types';
 
+const toArray = (target: string | string[]) => Array.isArray(target) ? target : [target];
+
 /**
  * Style manager
  */
@@ -21,17 +23,13 @@ class Manager implements IStyleManager {
      */
     protected _listeners: WeakRef<TStyleConsumer>[] = [];
 
-    get = (key: string) => {
-        return this._stylesheets[key];
-    }
+    getIndex = (styleSheet: CSSStyleSheet) => this._styleSheetsArray.findIndex((item) => item === styleSheet);
 
-    has = (key?: string) => {
-        return !!key && !!this.get(key);
-    }
+    get = (key: string) => this._stylesheets[key];
 
-    getAll = () => {
-        return this._stylesheets;
-    }
+    has = (key?: string) => !!key && !!this.get(key);
+
+    getAll = () => this._stylesheets;
 
     add = (key: string, stylesheet: CSSStyleSheet) => {
         if (!this._stylesheets[key]) {
@@ -43,14 +41,13 @@ class Manager implements IStyleManager {
     }
 
     status = (key: string) => {
-        const styleSheet = key && this._stylesheets[key];
-        return !!styleSheet && (this._styleSheetsArray.findIndex((item) => item === styleSheet) !== -1);
+        const styleSheet = this.get(key);
+        return !!styleSheet && (this.getIndex(styleSheet) !== -1);
     }
 
     on = (target: string | string[]) => {
-        const keys = Array.isArray(target) ? target : [target];
-        const result = keys.reduce((acc, key) => {
-            const styleSheet = key && this._stylesheets[key];
+        const result = toArray(target).reduce((acc, key) => {
+            const styleSheet = this.get(key);
             if (styleSheet && !this.status(key)) {
                 this._styleSheetsArray.push(styleSheet);
                 return acc;
@@ -62,11 +59,10 @@ class Manager implements IStyleManager {
     }
 
     off = (target: string | string[]) => {
-        const keys = Array.isArray(target) ? target : [target];
-        const result = keys.reduce((acc, key) => {
-            const styleSheet = key && this._stylesheets[key];
+        const result = toArray(target).reduce((acc, key) => {
+            const styleSheet = this.get(key);
             if (styleSheet && this.status(key)) {
-                const index = this._styleSheetsArray.findIndex((item) => item === styleSheet);
+                const index = this.getIndex(styleSheet);
                 this._styleSheetsArray.splice(index, 1);
                 return acc;
             }
@@ -81,7 +77,7 @@ class Manager implements IStyleManager {
         if (!current) {
             return;
         }
-        const index = this._styleSheetsArray.findIndex((sheet) => sheet === current);
+        const index = this.getIndex(current);
         if (index > -1) {
             this._styleSheetsArray.splice(index, 1);
             delete this._stylesheets[key];

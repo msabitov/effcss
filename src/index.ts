@@ -11,7 +11,8 @@ import {
     IStyleCollector,
     TStyleTarget,
     TResolveAttr,
-    TStyleConsumer
+    TStyleConsumer,
+    IDefineProviderProps
 } from './types';
 // provider
 import { createProcessor } from './_provider/process';
@@ -34,27 +35,12 @@ import { createCollector, createResolver } from './utils/common';
 
 const doc = globalThis.document;
 const isJSON = (script?: HTMLScriptElement & {effcss: object;}) => script?.getAttribute('type') === 'application/json'
+const toArray = (params: TStyleTarget | TStyleTarget[]) => Array.isArray(params) ? params : [params];
 
 /**
  * Define style provider custom element
  */
-export function defineProvider(props: {
-    /**
-     * Element name
-     * @defaultValue style-provider
-     */
-    name?: string;
-    /**
-     * Initial styles
-     */
-    styles?: TProviderInitContent;
-    /**
-     * Provider config
-     * @description
-     * Will be used for initial stylesheets generation
-     */
-    settings?: TProviderSettings;
-} = {}): boolean {
+export function defineProvider(props: IDefineProviderProps = {}): boolean {
     const {
         name = PROVIDER_TAG_NAME,
         styles = {},
@@ -179,10 +165,6 @@ export function defineProvider(props: {
                 return this._collector.getConfigs();
             }
 
-            constructor() {
-                super();
-            }
-
             protected _setState = () => {
                 const {
                     units, keys, sets,
@@ -273,6 +255,8 @@ export function defineProvider(props: {
                 };
             }
 
+            protected _resolveTargetKey = (param: TStyleTarget) => typeof param === 'string' ? param : this._collector.getKey(param);
+
             connectedCallback() {
                 // prepare resolver
                 this._resolver = createResolver({
@@ -338,9 +322,7 @@ export function defineProvider(props: {
              * @description Be carefull, it mutates the contents of the original config, but not its ref.
              */
             alter = (target: TStyleTarget, next: TStyleSheetConfig) => {
-                let key;
-                if (typeof target === 'string') key = target;
-                else key = this._collector.getKey(target);
+                const key = this._resolveTargetKey(target);
                 if (key) {
                     const config = this._collector.mutate(key, next);
                     this._manager.replace(key, this.css(
@@ -355,42 +337,32 @@ export function defineProvider(props: {
              * Use public stylesheet configs
              * @param configs - stylesheet configs
              */
-            usePublic: IStyleProvider['usePublic'] = (styles) => {
-                return Object.fromEntries(Object.entries(styles).map(([key, config]) => {
-                    return [key, this.use(config, key)];
-                }));
-            }
+            usePublic: IStyleProvider['usePublic'] = (styles) => Object.fromEntries(
+                Object.entries(styles).map(([key, config]) => ([key, this.use(config, key)]))
+            );
 
             /**
              * Use private stylesheet configs
              * @param configs - stylesheet configs
              */
-            usePrivate: IStyleProvider['usePrivate'] = (styles) => {
-                return styles.map((config) => {
-                    return this.use(config);
-                });
-            }
+            usePrivate: IStyleProvider['usePrivate'] = (styles) => styles.map((config) => this.use(config));
 
             /**
              * Prepare CSS from config
              * @param config - stylesheet config
              * @param key - stylesheet key
              */
-            css = (config: TStyleSheetConfig, key: string) => {
-                return this._processor?.compile(
-                    key,
-                    config
-                );
-            }
+            css = (config: TStyleSheetConfig, key: string) => this._processor?.compile(
+                key,
+                config
+            );
 
             /**
              * Check if stylesheet is on
-             * @param param - stylesheet config or key
+             * @param target - stylesheet config or key
              */
-            status = (param: TStyleTarget) => {
-                let source;
-                if (typeof param === 'string') source = param;
-                else source = this._collector.getKey(param);
+            status = (target: TStyleTarget) => {
+                const source = this._resolveTargetKey(target);
                 return !!source && this._manager.status(source);
             }
 
@@ -398,46 +370,25 @@ export function defineProvider(props: {
              * Switch stylesheet on
              * @param param - stylesheet config or key
              */
-            on = (params: TStyleTarget | TStyleTarget[]) => {
-                const targets = Array.isArray(params) ? params : [params];
-                const onTargets = targets.map((target) => {
-                    if (typeof target === 'string') return target;
-                    return this._collector.getKey(target);
-                });
-                return this._manager.on(onTargets);
-            }
+            on = (params: TStyleTarget | TStyleTarget[]) => this._manager.on(toArray(params).map(this._resolveTargetKey));
 
             /**
              * Switch stylesheet off
              * @param param - stylesheet config or key
              */
-            off = (params: TStyleTarget | TStyleTarget[]) => {
-                const targets = Array.isArray(params) ? params : [params];
-                const offTargets = targets.map((target) => {
-                    if (typeof target === 'string') return target;
-                    return this._collector.getKey(target);
-                });
-                return this._manager.off(offTargets);
-            }
+            off = (params: TStyleTarget | TStyleTarget[]) => this._manager.off(toArray(params).map(this._resolveTargetKey));
 
             /**
              * Get stylesheet
              * @param target - stylesheet config or key
              */
-            get = (target: TStyleTarget = this._mainConfig) => {
-                let resTarget;
-                if (typeof target === 'object') resTarget = this._collector.getKey(target);
-                else resTarget = target;
-                return this._manager.get(resTarget);
-            }
+            get = (target: TStyleTarget = this._mainConfig) => this._manager.get(this._resolveTargetKey(target));
 
             /**
              * Get stylesheets
              * @param targets - stylesheet configs or keys
              */
-            getMany = (targets: TStyleTarget[] = this._collector.getKeys()) => {
-                return targets.map((target) => this.get(target));
-            }
+            getMany = (targets: TStyleTarget[] = this._collector.getKeys()) => targets.map((target) => this.get(target));
 
             /**
              * Resolve styles
@@ -457,6 +408,11 @@ export function defineProvider(props: {
              */
             unsubscribe = (consumer: TStyleConsumer) => this._manager.unregisterNode(consumer);
         });
+        window.__EFFCSS_PARAMS__ = {
+            name,
+            styles,
+            settings
+        };
         return true;
     }
 }

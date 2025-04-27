@@ -1949,6 +1949,9 @@ export const keys: Record<string, string> = {
     $scr_no: AT_MEDIA + `(${SCRIPTING}: none)`,
     $scr_ini: AT_MEDIA + `(${SCRIPTING}: initial-only)`,
     $scr_en: AT_MEDIA + `(${SCRIPTING}: enabled)`,
+
+    $ss: '@starting-style',
+    $ns: '@namespace'
 };
 /**
 * Media breakpoints

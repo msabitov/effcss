@@ -88,13 +88,9 @@ class Collector implements IStyleCollector {
         return resKey;
     }
 
-    mutate = (key: string, nextConfig: TStyleSheetConfig) => {
-        return Object.assign(this.getConfigs()[key], nextConfig);
-    }
+    mutate = (key: string, nextConfig: TStyleSheetConfig) => Object.assign(this.getConfigs()[key], nextConfig);
 
-    getKey = (config: TStyleSheetConfig) => {
-        return this._configs.get(config);
-    }
+    getKey = (config: TStyleSheetConfig) => this._configs.get(config);
 
     getKeys = () => [...this._keys];
 
@@ -155,21 +151,17 @@ class PseudoDispatcher implements IStyleDispatcher{
      * Use public stylesheet configs
      * @param configs - stylesheet configs
      */
-    usePublic: IStyleDispatcher['usePublic'] = (styles) => {
-        return Object.fromEntries(Object.entries(styles).map(([key, config]) => {
-            return [key, this.use(config, key)];
-        }));
-    }
+    usePublic: IStyleDispatcher['usePublic'] = (styles) => Object.fromEntries(Object.entries(styles).map(([key, config]) => {
+        return [key, this.use(config, key)];
+    }));
 
     /**
      * Use private stylesheet configs
      * @param configs - stylesheet configs
      */
-    usePrivate: IStyleDispatcher['usePrivate'] = (styles) => {
-        return styles.map((config) => {
-            return this.use(config);
-        });
-    }
+    usePrivate: IStyleDispatcher['usePrivate'] = (styles) => styles.map((config) => {
+        return this.use(config);
+    });
 
     /**
      * Resolve styles

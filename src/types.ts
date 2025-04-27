@@ -101,6 +101,11 @@ export interface IStyleManager {
      */
     get(key?: string): CSSStyleSheet | undefined;
     /**
+     * Get index of stylesheet
+     * @param styleSheet - CSS stylesheet
+     */
+    getIndex(styleSheet: CSSStyleSheet): number;
+    /**
      * Get all stylesheets
      * @returns CSS stylesheet dicitonary
      */
@@ -555,3 +560,30 @@ export interface IStyleProviderParams {
  * It can be registered via {@link IStyleManager.registerNode | `StyleManager.registerNode`} method.
  */
 export type TStyleConsumer = { adoptedStyleSheets: CSSStyleSheet[] };
+
+/**
+ * Props to define style provider
+ */
+export interface IDefineProviderProps {
+    /**
+     * Element name
+     * @defaultValue style-provider
+     */
+    name?: string;
+    /**
+     * Initial styles
+     */
+    styles?: TProviderInitContent;
+    /**
+     * Provider config
+     * @description
+     * Will be used for initial stylesheets generation
+     */
+    settings?: TProviderSettings;
+}
+
+declare global {
+    interface Window {
+        __EFFCSS_PARAMS__: IDefineProviderProps;
+    }
+}
