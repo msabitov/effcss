@@ -1,3 +1,8 @@
+type TOptBool = boolean | undefined;
+type TOptSheet = CSSStyleSheet | undefined;
+type TStrDict = Record<string, string>;
+type TDict = Record<string, string | number>;
+type TMetaDict = Record<string, TDict>;
 
 /**
  * Stylesheet config
@@ -19,22 +24,22 @@ export type TStyleSheetConfig = {
      */
     kf?: Record<
         string,
-        Record<string, Record<string, string>>
+        TMetaDict
     >;
     /**
-     * Keys interpolation dictionary
+     * Keys dictionary
      * @description
      * Dictionary with primitive type values.
      * In interpolation expressions, these values will have an advantage over the global ones.
      */
-    k?: Record<string, string>;
+    k?: TStrDict;
     /**
-     * Values interpolation dictionary
+     * Values dictionary
      * @description
-     * Dictionary with object type values. Each object is a mini dictionary of grouped variant values.
+     * Dictionary with object values.
      * In interpolation expressions, these values will have an advantage over the global ones.
      */
-    v?: Record<string, Record<string, string | number>>;
+    v?: TMetaDict;
     /**
      * Stylesheet content
      * @description
@@ -45,9 +50,20 @@ export type TStyleSheetConfig = {
 };
 
 /**
+ * Dictionary of stylesheet configs
+ */
+export type TConfigDict = Record<string, TStyleSheetConfig>;
+/**
+ * Array of stylesheet configs
+ */
+export type TConfigArray = TStyleSheetConfig[];
+
+/**
  * Style target
  */
 export type TStyleTarget = string | TStyleSheetConfig;
+
+export type TOneOrManyTargets = TStyleTarget | TStyleTarget[];
 
 /**
  * Provider settings
@@ -64,29 +80,29 @@ export type TProviderSettings = {
     /**
      * Global params units
      */
-    units?: Record<string, string>;
+    units?: TStrDict;
     /**
      * Global keys
      */
-    keys?: Record<string, string>;
+    keys?: TStrDict;
     /**
      * Global sets of keys
      */
-    sets?: Record<string, Record<string, string | number>>;
+    sets?: TMetaDict;
     /**
      * Media queries breakpoints
      */
-    mediaBP?: Record<string, string>;
+    mediaBP?: TStrDict;
     /**
      * Container queries breakpoints
      */
-    containerBP?: Record<string, string>;
+    containerBP?: TStrDict;
 }
 
 /**
  * Provider initial content
  */
-export type TProviderInitContent = Record<string, TStyleSheetConfig>;
+export type TProviderInitContent = TConfigDict;
 
 /**
  * Style manager
@@ -97,39 +113,37 @@ export interface IStyleManager {
     /**
      * Get stylesheet by key
      * @param key - stylesheet key
-     * @returns CSS stylesheet if found with this key, otherwise `undefined`
      */
-    get(key?: string): CSSStyleSheet | undefined;
+    get(key?: string): TOptSheet;
     /**
      * Get index of stylesheet
      * @param styleSheet - CSS stylesheet
      */
     getIndex(styleSheet: CSSStyleSheet): number;
     /**
-     * Get all stylesheets
-     * @returns CSS stylesheet dicitonary
+     * Get all stylesheets dictionary
      */
     getAll(): Record<string, CSSStyleSheet>;
     /**
      * Add stylesheet
      * @param key - stylesheet key
      * @param stylesheet - {@link https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet | CSSStylesheet} instance
-     * @returns `true` if stylesheet is added, otherwise `undefined`
+     * @returns `true` if stylesheet is added
      */
-    add(key: string, stylesheet: CSSStyleSheet): true | void;
+    add(key: string, stylesheet: CSSStyleSheet): TOptBool;
     /**
      * Replace stylesheet content
      * @param key - stylesheet key
      * @param styles - stylesheet content string
-     * @returns `true` if stylesheet is replaced, otherwise `undefined`
+     * @returns `true` if stylesheet is replaced
      */
-    replace(key: string, styles: string): boolean | void;
+    replace(key: string, styles: string): TOptBool;
     /**
      * Remove stylesheet
      * @param key - stylesheet key
-     * @returns `true` if stylesheet is removed, otherwise `undefined`
+     * @returns `true` if stylesheet is removed
      */
-    remove(key: string): true | void;
+    remove(key: string): TOptBool;
     /**
      * Remove all stylesheets
      */
@@ -138,17 +152,16 @@ export interface IStyleManager {
      * Pack styles into CSSStyleSheet and add it into stylesheet dictionary
      * @param key - stylesheet key
      * @param styles - stylesheet content string
-     * @returns `true` if stylesheet is packed, otherwise `undefined`
+     * @returns `true` if stylesheet is packed
      * @example
      * ```ts
      * getProvider().manager.pack('card', '.card{width: auto;height:100%};.card__header{display:flex;height:5rem;}');
      * ```
      */
-    pack(key: string, styles: string): boolean | void;
+    pack(key: string, styles: string): TOptBool;
     /**
      * Check if stylesheet exist
      * @param key - stylesheet key
-     * @returns boolean flag
      */
     has(key?: string): boolean;
     /**
@@ -160,12 +173,12 @@ export interface IStyleManager {
      * Switch stylesheet on
      * @param key - stylesheet key
      */
-    on(key?: string | (string | undefined)[]): boolean | undefined;
+    on(key?: string | (string | undefined)[]): TOptBool;
     /**
      * Switch stylesheet off
      * @param key - stylesheet key
      */
-    off(key?: string | (string | undefined)[]): boolean | undefined;
+    off(key?: string | (string | undefined)[]): TOptBool;
     /**
      * Apply stylesheets to style consumer
      * @param consumer - {@link TStyleConsumer | style consumer}
@@ -179,7 +192,7 @@ export interface IStyleManager {
      * @param consumer - {@link TStyleConsumer | style consumer}
      * @description
      * A registered consumer will automatically receive up-to-date styles when they are added, modified, or deleted.
-     * If the style provider does not contain the `isolated` {@link IStyleProviderParams.isolated | attribute}, the current document will be automatically registered.
+     * If the style provider does not contain the `isolated`, the current document will be automatically registered.
      */
     registerNode(consumer: TStyleConsumer): void;
     /**
@@ -221,12 +234,6 @@ export type TResolveSelector = (params: {
      * {@link https://en.bem.info/methodology/key-concepts/#modifier | Modifier value}
      */
     mv?: string;
-    /**
-     * Modifier value condition
-     * @description
-     * Usually a pseudo state, a pseudo element or some query (`@container`, `@media`).
-     */
-    s?: string;
 }) => string;
 
 /**
@@ -246,12 +253,17 @@ export type TResolveAttr = (
      * {@link https://en.bem.info/methodology/key-concepts/#element | Element}
      */
     e?: E
-) => <M extends Record<string, Record<string, string | number | boolean | undefined | null>>>(
+) => <M extends Record<string, Record<string, string | number | TOptBool | null>>>(
     /**
      * {@link https://en.bem.info/methodology/key-concepts/#modifier | Modifiers}
      */
     m?: string | Partial<M[NoInfer<E>]>
-) => Record<string, string>;
+) => TStrDict;
+
+/**
+ * Resolved attributes object
+ */
+type TResolvedAttr = ReturnType<TResolveAttr>;
 
 /**
  * Style resolver
@@ -328,7 +340,7 @@ export interface IStyleCollector {
     /**
      * Get all collected configs
      */
-    getConfigs(): Record<string, TStyleSheetConfig>;
+    getConfigs(): TConfigDict;
 }
 
 /**
@@ -348,7 +360,7 @@ export interface IStyleProvider {
     /**
      * All collected stylesheet configs
      */
-    configs: Record<string, TStyleSheetConfig>;
+    configs: TConfigDict;
     /**
      * Use stylesheet
      * @param config - stylesheet config
@@ -357,29 +369,29 @@ export interface IStyleProvider {
      * The method allows to use stylesheet without having its key.
      * It returns {@link IStyleResolver.attr | attribute resolver}, that can create BEM selectors for config passed.
      */
-    use(config: TStyleSheetConfig, key?: string): ReturnType<TResolveAttr>;
+    use(config: TStyleSheetConfig, key?: string): TResolvedAttr;
     /**
      * Alter stylesheet with merged config
      * @param target - target stylesheet config or key
      * @param nextConfig - next stylesheet config, that will be merged with previous
      */
-    alter(target: TStyleTarget, nextConfig: TStyleSheetConfig): ReturnType<TResolveAttr>;
+    alter(target: TStyleTarget, nextConfig: TStyleSheetConfig): TResolvedAttr;
     /**
      * Use public stylesheet configs
      * @param configs - stylesheet configs
      */
-    usePublic(configs: Record<string, TStyleSheetConfig>): Record<string, ReturnType<TResolveAttr>>;
+    usePublic(configs: TConfigDict): Record<string, TResolvedAttr>;
     /**
      * Use private stylesheet configs
      * @param configs - stylesheet configs
      */
-    usePrivate(configs: TStyleSheetConfig[]): ReturnType<TResolveAttr>[];
+    usePrivate(configs: TConfigArray): TResolvedAttr[];
     /**
      * Resolve stylesheet
      * @param key - stylesheet key
      * @returns BEM attribute resolver for stylesheet
      */
-    resolve(key?: string): ReturnType<TResolveAttr>;
+    resolve(key?: string): TResolvedAttr;
     /**
      * Prepare CSS from config
      * @param config - stylesheet config
@@ -390,27 +402,27 @@ export interface IStyleProvider {
      * Get CSS stylesheet
      * @param target - target stylesheet config or key
      */
-    get(target?: TStyleTarget): CSSStyleSheet | undefined;
+    get(target?: TStyleTarget): TOptSheet;
     /**
      * Switch stylesheet/stylesheets on
      * @param target - target stylesheet config or key
      */
-    on(target?: TStyleTarget | TStyleTarget[]): boolean | undefined;
+    on(target?: TOneOrManyTargets): TOptBool;
     /**
      * Switch stylesheet/stylesheets off
      * @param target - target stylesheet config or key
      */
-    off(target?: TStyleTarget | TStyleTarget[]): boolean | undefined;
+    off(target?: TOneOrManyTargets): TOptBool;
     /**
      * Check if stylesheet is on
      * @param target - target stylesheet config or key
      */
-    status(target?: TStyleTarget): boolean | undefined;
+    status(target?: TStyleTarget): TOptBool;
     /**
      * Get many CSS stylesheets
      * @param target - target stylesheet configs and/or keys
      */
-    getMany(targets?: TStyleTarget[]): (CSSStyleSheet | undefined)[];
+    getMany(targets?: TStyleTarget[]): TOptSheet[];
     /**
      * Subscribe to style changes
      * @param consumer - styles consumer

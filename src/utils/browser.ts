@@ -1,6 +1,7 @@
 import { PROVIDER_TAG_NAME } from '../constants';
 import {
     IStyleDispatcher, IStyleProvider,
+    TConfigArray, TConfigDict,
     TStyleSheetConfig, TStyleTarget
 } from '../types';
 
@@ -11,7 +12,7 @@ import {
  * Use this function to get the first provider element found in the document
  * @see {@link IStyleProvider}
  */
-export const getProvider = (root = window.document, tag = window.__EFFCSS_PARAMS__?.name || PROVIDER_TAG_NAME): IStyleProvider => root?.getElementsByTagName(tag)?.[0] as unknown as IStyleProvider;
+export const getProvider = (root = window.document, tag = window.__EFFCSS_PARAMS__?.name): IStyleProvider => root?.getElementsByTagName(tag || PROVIDER_TAG_NAME)?.[0] as unknown as IStyleProvider;
 
 /**
  * Use stylesheet
@@ -28,7 +29,7 @@ export const useStyleSheet = (config: TStyleSheetConfig, key?: string, provider:
  * @see {@link IStyleProvider}
  */
 export const usePublicStyleSheets = (
-    styles: Parameters<IStyleProvider['usePublic']>[0],
+    styles: TConfigDict,
     provider: IStyleProvider = getProvider()
 ) => provider?.usePublic(styles);
 
@@ -39,7 +40,7 @@ export const usePublicStyleSheets = (
  * @see {@link IStyleProvider}
  */
 export const usePrivateStyleSheets = (
-    styles: Parameters<IStyleProvider['usePrivate']>[0],
+    styles: TConfigArray,
     provider: IStyleProvider = getProvider()
 ) => provider?.usePrivate(styles);
 
@@ -99,10 +100,9 @@ export const stringifyMany = (key?: TStyleTarget[], provider: IStyleProvider = g
 export const measureOne = (key: string, provider: IStyleProvider = getProvider()): number => {
     function getCount(cssRules?: CSSRuleList): number {
         if (!cssRules) return 0;
-        return cssRules.length + [...cssRules].reduce((acc, rule) => {
-            const rules = rule?.cssRules as (CSSRuleList | undefined);
-            return acc + getCount(rules);
-        }, 0);
+        return cssRules.length + [...cssRules].reduce((acc, rule) => acc + getCount(
+            rule?.cssRules
+        ), 0);
     }
     return getCount(getStyleSheet(key, provider)?.cssRules);
 }
@@ -129,11 +129,11 @@ class StyleDispatcher implements IStyleDispatcher {
     /**
      * Style provider
      */
-    protected _provider: IStyleProvider;
+    protected _p: IStyleProvider;
 
     constructor(params?: IStyleDispatcherParams) {
         const { root, tag } = (params || {});
-        this._provider = getProvider(root, tag);
+        this._p = getProvider(root, tag);
     }
 
     /**
@@ -141,28 +141,28 @@ class StyleDispatcher implements IStyleDispatcher {
      * @param config - stylesheet config
      * @see {@link IStyleProvider}
      */
-    use: IStyleProvider['use'] = (...args) => this._provider.use(...args);
+    use: IStyleProvider['use'] = (...args) => this._p.use(...args);
 
     /**
      * Use public stylesheet configs
      * @param styles - stylesheet configs
      * @see {@link IStyleProvider}
      */
-    usePublic: IStyleProvider['usePublic'] = (styles) => this._provider.usePublic(styles);
+    usePublic: IStyleProvider['usePublic'] = (styles) => this._p.usePublic(styles);
 
     /**
      * Use private stylesheet configs
      * @param styles - stylesheet configs
      * @see {@link IStyleProvider}
      */
-    usePrivate: IStyleProvider['usePrivate'] = (styles) => this._provider.usePrivate(styles);
+    usePrivate: IStyleProvider['usePrivate'] = (styles) => this._p.usePrivate(styles);
 
     /**
      * Resolve stylesheet
      * @param key - stylesheet key
      * @see {@link IStyleProvider}
      */
-    resolve: IStyleProvider['resolve'] = (target) => this._provider.resolve(target);
+    resolve: IStyleProvider['resolve'] = (target) => this._p.resolve(target);
 }
 
 /**

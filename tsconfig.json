@@ -17,5 +17,5 @@
         "lib": ["esnext", "DOM", "dom.iterable"],
         "types": ["@vitest/browser/matchers"]
     },
-    "exclude": ["node_modules", "dist", "tests"]
+    "exclude": ["node_modules", "dist", "tests", "vitest.config.ts"]
 }

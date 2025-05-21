@@ -1976,7 +1976,7 @@ export const containerBP =  {
 /**
  * Default root styles
  */
-export const rootStyle = {
+export const rootStyle: object = {
     $c: '{u.inh}',
     $fsz: '16px',
     $ff: '{ff.def}',
@@ -1990,7 +1990,7 @@ export const rootStyle = {
 /**
  * Default style params
  */
-export const themes = {
+export const themes: Record<'light' | 'dark', object> = {
     /**
      * Light mode
      */
@@ -2054,28 +2054,26 @@ export const units: Record<string, string> = {
 };
 
 /**
- * Prefix which will be used for private stylesheets
+ * Prefix for private stylesheets
  */
 export const PREFIX = 'eff';
 
 /**
- * Id for special script element,
- * which contains provider settings
+ * Id for special script element with provider settings
  */
 export const SETTINGS_SCRIPT_ID = 'effcss';
 
 /**
- * ClassName for special script elements,
- * which contain initial stylesheet configs
+ * ClassName for special script elements with initial stylesheet configs
  */
 export const STYLES_SCRIPT_CLS = 'effcss_init';
 
 /**
- * Name of the custom style provider element
+ * Style provider element tag
  */
 export const PROVIDER_TAG_NAME = 'style-provider';
 
 /**
- * Custom event name that fires when styles changes
+ * Style change event name
  */
 export const EVENT_NAME = 'effcsschanges';

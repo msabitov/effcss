@@ -9,32 +9,32 @@ class Manager implements IStyleManager {
     /**
      * Stylesheets dict
      */
-    protected _stylesheets: Record<string, CSSStyleSheet> = {} as Record<string, CSSStyleSheet>;
+    protected _s: Record<string, CSSStyleSheet> = {};
     /**
      * Rules dict
      */
-    protected _rules: Record<string, Record<string, CSSRule>> = {};
+    protected _r: Record<string, Record<string, CSSRule>> = {};
     /**
      * Stylesheets array
      */
-    protected _styleSheetsArray: CSSStyleSheet[] = [];
+    protected _a: CSSStyleSheet[] = [];
     /**
      * Dependent nodes
      */
-    protected _listeners: WeakRef<TStyleConsumer>[] = [];
+    protected _l: WeakRef<TStyleConsumer>[] = [];
 
-    getIndex = (styleSheet: CSSStyleSheet) => this._styleSheetsArray.findIndex((item) => item === styleSheet);
+    getIndex = (styleSheet: CSSStyleSheet) => this._a.findIndex((item) => item === styleSheet);
 
-    get = (key: string) => this._stylesheets[key];
+    get = (key: string) => this._s[key];
 
     has = (key?: string) => !!key && !!this.get(key);
 
-    getAll = () => this._stylesheets;
+    getAll = () => this._s;
 
     add = (key: string, stylesheet: CSSStyleSheet) => {
-        if (!this._stylesheets[key]) {
-            this._stylesheets[key] = stylesheet;
-            this._styleSheetsArray.push(stylesheet);
+        if (!this._s[key]) {
+            this._s[key] = stylesheet;
+            this._a.push(stylesheet);
             this.notify();
             return true;
         }
@@ -49,7 +49,7 @@ class Manager implements IStyleManager {
         const result = toArray(target).reduce((acc, key) => {
             const styleSheet = this.get(key);
             if (styleSheet && !this.status(key)) {
-                this._styleSheetsArray.push(styleSheet);
+                this._a.push(styleSheet);
                 return acc;
             }
             return false;
@@ -63,7 +63,7 @@ class Manager implements IStyleManager {
             const styleSheet = this.get(key);
             if (styleSheet && this.status(key)) {
                 const index = this.getIndex(styleSheet);
-                this._styleSheetsArray.splice(index, 1);
+                this._a.splice(index, 1);
                 return acc;
             }
             return false;
@@ -79,18 +79,18 @@ class Manager implements IStyleManager {
         }
         const index = this.getIndex(current);
         if (index > -1) {
-            this._styleSheetsArray.splice(index, 1);
-            delete this._stylesheets[key];
-            delete this._rules[key];
+            this._a.splice(index, 1);
+            delete this._s[key];
+            delete this._r[key];
         }
         this.notify();
         return true;
     }
 
     removeAll() {
-        this._styleSheetsArray.splice(0);
-        this._stylesheets = {} as Record<string, CSSStyleSheet>;
-        this._rules = {};
+        this._a.splice(0);
+        this._s = {};
+        this._r = {};
         this.notify();
         return true;
     }
@@ -106,7 +106,7 @@ class Manager implements IStyleManager {
     }
 
     replace = (key: string, styles: string) => {
-        const styleSheet = this._stylesheets[key];
+        const styleSheet = this._s[key];
         if (styleSheet) {
             styleSheet.replaceSync(styles);
             this.notify();
@@ -115,23 +115,23 @@ class Manager implements IStyleManager {
     }
 
     apply = (root: TStyleConsumer) => {
-        root.adoptedStyleSheets = this._styleSheetsArray;
+        root.adoptedStyleSheets = this._a;
     }
 
     registerNode = (node: TStyleConsumer) => {
-        const index = this._listeners.findIndex((listener) => listener.deref() === node);
+        const index = this._l.findIndex((listener) => listener.deref() === node);
         if (index >= 0) return;
-        this._listeners.push(new WeakRef(node));
+        this._l.push(new WeakRef(node));
         this.apply(node);
     }
 
     unregisterNode = (node: TStyleConsumer) => {
-        const index = this._listeners.findIndex((listener) => listener.deref() === node);
-        if (index >= 0) this._listeners.splice(index, 1);
+        const index = this._l.findIndex((listener) => listener.deref() === node);
+        if (index >= 0) this._l.splice(index, 1);
     }
 
     notify = () => {
-        this._listeners = this._listeners.reduce((acc, listener) => {
+        this._l = this._l.reduce((acc, listener) => {
             const ref = listener.deref();
             if (ref) {
                 this.apply(ref);

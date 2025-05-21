@@ -60,41 +60,45 @@ export const createResolver: TCreateResolver = (params) => {
 };
 
 class Collector implements IStyleCollector {
-    protected _prefix;
-    protected _counter = 0;
-    protected _keys: Set<string> = new Set();
-    protected _configs = new Map<TStyleSheetConfig, string>();
+    protected _p;
+    protected _c = 0;
+    protected _k: Set<string> = new Set();
+    protected _ = new Map<TStyleSheetConfig, string>();
 
-    constructor(params: {
+    constructor({
+        prefix,
+        initContent,
+        hydrate
+    }: {
         prefix?: string;
         initContent?: TProviderInitContent;
         hydrate?: boolean;
-    }) {
-        this._prefix = params?.prefix || 'eff';
-        if (params.initContent) {
-            Object.entries(params.initContent).forEach(([key, config]) => this.use(config, key));
+    } = {}) {
+        this._p = prefix || 'eff';
+        if (initContent) {
+            Object.entries(initContent).forEach(([key, config]) => this.use(config, key));
         }
         // force hydratation
-        if (params.hydrate) this._counter = 0;
+        if (hydrate) this._c = 0;
     }
     
     use = (config: TStyleSheetConfig, key?: string) => {
-        const existedKey = this._configs.get(config);
+        const existedKey = this._.get(config);
         if (existedKey) return existedKey;
-        const resKey = key || (this._prefix + this._counter.toString(36));
-        this._keys.add(resKey);
-        this._configs.set(config, resKey);
-        this._counter++;
+        const resKey = key || (this._p + this._c.toString(36));
+        this._k.add(resKey);
+        this._.set(config, resKey);
+        this._c++;
         return resKey;
     }
 
     mutate = (key: string, nextConfig: TStyleSheetConfig) => Object.assign(this.getConfigs()[key], nextConfig);
 
-    getKey = (config: TStyleSheetConfig) => this._configs.get(config);
+    getKey = (config: TStyleSheetConfig) => this._.get(config);
 
-    getKeys = () => [...this._keys];
+    getKeys = () => [...this._k];
 
-    getConfigs = () => Object.fromEntries(this._configs.entries().map(([s,k]) => [k,s]));
+    getConfigs = () => Object.fromEntries(this._.entries().map(([s,k]) => [k,s]));
 };
 
 /**
@@ -116,25 +120,25 @@ interface IPseudoDispatcherParams {
 }
 
 class PseudoDispatcher implements IStyleDispatcher{
-    protected _collector: IStyleCollector;
-    protected _resolver: IStyleResolver;
-    protected _initcls: string;
-    protected _mainConfig = {c: {}};
+    protected _c: IStyleCollector;
+    protected _r: IStyleResolver;
+    protected _i: string;
+    protected _m = {c: {}};
 
     get collector() {
-        return this._collector;
+        return this._c;
     }
 
     constructor(params?: IPseudoDispatcherParams) {
         const { prefix, mode, initcls = STYLES_SCRIPT_CLS } = (params || {});
-        this._initcls = initcls;
-        this._resolver = createResolver({
+        this._i = initcls;
+        this._r = createResolver({
             mode
         });
-        this._collector = createCollector({
+        this._c = createCollector({
             prefix
         });
-        this.use(this._mainConfig);
+        this.use(this._m);
     }
 
     /**
@@ -143,7 +147,7 @@ class PseudoDispatcher implements IStyleDispatcher{
      * @returns BEM resolver
      */
     use: IStyleDispatcher['use'] = (config, key) => {
-        let k = this._collector.use(config, key);
+        let k = this._c.use(config, key);
         return this.resolve(k);
     }
 
@@ -167,14 +171,14 @@ class PseudoDispatcher implements IStyleDispatcher{
      * Resolve styles
      * @param key - stylesheet key
      */
-    resolve = (key?: string) => this._resolver.attr(key || this._collector.getKey(this._mainConfig));
+    resolve = (key?: string) => this._r.attr(key || this._c.getKey(this._m));
 
     toString() {
-        const configs = this._collector.getConfigs();
-        const mainConfigKey = this._collector.getKey(this._mainConfig);
+        const configs = this._c.getConfigs();
+        const mainConfigKey = this._c.getKey(this._m);
         if (mainConfigKey) delete configs[mainConfigKey];
         return `<script class="${
-            this._initcls
+            this._i
         }" type="application/json">${
             JSON.stringify(configs)
         }</script>`;

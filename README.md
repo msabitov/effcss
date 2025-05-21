@@ -73,14 +73,12 @@ First you need to connect the `<style-provider>`:
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!--app-head-->
     <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
   </head>
   <body>
     <style-provider>
       <div id="root"></div>
     </style-provider>
-    <!--app-body-->
   </body>
 </html>
 ```
@@ -105,23 +103,22 @@ import { useRef } from 'react'
 
 const cardStyle = {
   c: {
-    // block
+    // BEM block
     _: {
-      display: 'flex',
-      justifyContent: 'center'
+      display: 'flex'
     },
-    // element
+    // BEM element
     __logo: {
       padding: '2em'
     },
-    // boolean element modifier
+    // BEM boolean element modifier
     __logo_c_: {
       color: '#888',
       ':hover': {
         color: 'black',
       }
     },
-    // element modifier with value
+    // BEM element modifier with value
     __logo_sz_lg: {
       width: '5rem'
     },
@@ -131,16 +128,12 @@ const cardStyle = {
       ':focus': {
         aspectRatio: '1/2'
       }
-    },
-    body: {
-      boxSizing: 'border-box'
     }
   }
 };
 
 export const App = (props) => {
   const { css } = props;
-
   const stylesRef = useRef();
   if (!stylesRef.current) {
     const cardCSS = css.use(cardStyle);
@@ -148,7 +141,7 @@ export const App = (props) => {
       // just block selector
       block: cardCSS()(),
       // element with modifiers
-      logoMod: cardCSS('logo')({
+      logo: cardCSS('logo')({
         c: '',
         sz: 'lg'
       }),
@@ -158,7 +151,7 @@ export const App = (props) => {
 
   // apply attributes to appropriate nodes
   return <div {...styles.block}>
-    <div {...styles.logoMod}>
+    <div {...styles.logo}>
       ...
     </div>
   </div>;

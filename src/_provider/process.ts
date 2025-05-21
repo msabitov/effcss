@@ -88,30 +88,30 @@ class Processor implements IStyleProcessor {
     /**
      * BEM selectors resolver
      */
-    protected _resolver: IStyleResolver;
+    protected _r: IStyleResolver;
     /**
      * Dictionary keys
      */
-    protected _outerKeys: Record<string, string | number> = {};
+    protected _k: Record<string, string | number> = {};
     /**
      * Dictionary sets
      */
-    protected _outerSets: Record<string, Record<string, string | number>> = {};
+    protected _s: Record<string, Record<string, string | number>> = {};
 
     constructor(config: IConstructorParams) {
         const {
             sets, keys, resolver
         } = config;
-        this._resolver = resolver;
-        if (keys) this._outerKeys = keys;
-        if (sets) this._outerSets = sets;
+        this._r = resolver;
+        if (keys) this._k = keys;
+        if (sets) this._s = sets;
     }
 
     /**
      * Parse string to find selector parts
      * @param key
      */
-    protected _parseSelector = (key: string) => {
+    protected _sel = (key: string) => {
         // clear selector
         let clear;
         // element
@@ -132,12 +132,12 @@ class Processor implements IStyleProcessor {
      * Prepare name of variable
      * @param parts
      */
-    protected _prepareVarName = (...parts: string[]) => this._resolver.varName(...parts);
+    protected _var = (...parts: string[]) => this._r.varName(...parts);
     /**
      * Prepare name of keyframes object
      * @param parts
      */
-    protected _prepareKeyframesName = (...parts: string[]) => this._resolver.kfName(...parts);
+    protected _kf = (...parts: string[]) => this._r.kfName(...parts);
 
     /**
      * Compile style config to CSS stylesheet text content
@@ -146,8 +146,8 @@ class Processor implements IStyleProcessor {
      */
     compile = (b: string, styleConfig: TStyleSheetConfig) => {
         const { _, kf, k = {}, v = {}, c} = styleConfig;
-        const prepareSelector = this._resolver.selector.bind(this);
-        const parseSelector = this._parseSelector;
+        const prepareSelector = this._r.selector.bind(this);
+        const parseSelector = this._sel;
         let config = merge({}, c) as Record<string, string | number | object | unknown>;
         let localKeys = merge({}, k);
         let localVariants = merge({_:{} as Record<string, string>}, v);
@@ -161,7 +161,7 @@ class Processor implements IStyleProcessor {
                         const colorVarNames: Record<string, string> = {};
                         colorPostfixes.forEach((key) => {
                             const compKey = varKey + key;
-                            const varName = this._prepareVarName(b, compKey);
+                            const varName = this._var(b, compKey);
                             colorVarNames[key] = varName;
                             localKeys['_' + compKey] = colorVarNames[key];
                             varStr += property(varName, varConfig);
@@ -175,14 +175,14 @@ class Processor implements IStyleProcessor {
                         });
                         // if all controls needed
                         if (varConfig.all) {
-                            config['_' + varKey + 'l'] = `&lig=>${this._prepareVarName(b, varKey + 'l')}:{1}`;
-                            config['_' + varKey + 'c'] = `&chr=>${this._prepareVarName(b, varKey + 'c')}:{1}`;
-                            config['_' + varKey + 'h'] = `&hue=>${this._prepareVarName(b, varKey + 'h')}:{1}`;
-                            config['_' + varKey + 'a'] = `&alp=>${this._prepareVarName(b, varKey + 'a')}:{1}`;
+                            config['_' + varKey + 'l'] = `&lig=>${this._var(b, varKey + 'l')}:{1}`;
+                            config['_' + varKey + 'c'] = `&chr=>${this._var(b, varKey + 'c')}:{1}`;
+                            config['_' + varKey + 'h'] = `&hue=>${this._var(b, varKey + 'h')}:{1}`;
+                            config['_' + varKey + 'a'] = `&alp=>${this._var(b, varKey + 'a')}:{1}`;
                         }
                         break;
                     default:
-                        const varName = this._prepareVarName(b, varKey);
+                        const varName = this._var(b, varKey);
                         localKeys['_' + varKey] = varName;
                         localVariants._[varKey] = varExp(varName);
                         varStr += property(varName, varConfig);
@@ -194,14 +194,14 @@ class Processor implements IStyleProcessor {
          * @param key
          */
         const getKey = (key: string): string | number => {
-            return localKeys[key] || this._outerKeys[key];
+            return localKeys[key] || this._k[key];
         };
         /**
          * Get variant from dictionary
          * @param key
          */
         const getVariant = (key: string): Record<string, string | number> | undefined => {
-            return localVariants[key] || this._outerSets[key] || this._outerSets?.root[key];
+            return localVariants[key] || this._s[key] || this._s?.root[key];
         };
         /**
          * Interpolate string from dictionary
@@ -210,12 +210,14 @@ class Processor implements IStyleProcessor {
         const interpolate = (str: string): string => {
             return str.replaceAll(/\{(.+?)\}/g, (match, content) => {
                 const [key, partKey] = content.split('.');
+                let res;
                 if (partKey) {
                     const variant = getVariant(key);
-                    return '' + (variant?.[partKey] || variant?.def || '');
+                    res = (variant?.[partKey] || variant?.def || '');
                 } else {
-                    return '' + (getKey(key) || '');
+                    res = (getKey(key) || '');
                 }
+                return '' + res;
             });
         }
         /**
@@ -335,7 +337,7 @@ class Processor implements IStyleProcessor {
         if (kf) {
             for (let kfKey in kf) {
                 const kfConfig = kf[kfKey];
-                const kfName = this._prepareKeyframesName(b, kfKey);
+                const kfName = this._kf(b, kfKey);
                 localKeys['kf_' + kfKey] = kfName;
                 kfStr += `@keyframes ${kfName} ` + curlyBraces(objectReduce(kfConfig, (acc, [frameKey, frameVal]) => {
                     const postfix = String(+frameKey) === frameKey ? '%' : '';

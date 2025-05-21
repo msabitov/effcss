@@ -12,7 +12,9 @@ import {
     TStyleTarget,
     TResolveAttr,
     TStyleConsumer,
-    IDefineProviderProps
+    IDefineProviderProps,
+    TConfigDict,
+    TOneOrManyTargets
 } from './types';
 // provider
 import { createProcessor } from './_provider/process';
@@ -33,9 +35,9 @@ import {
 } from './constants';
 import { createCollector, createResolver } from './utils/common';
 
-const doc = globalThis.document;
+const objectEntries = Object.entries;
 const isJSON = (script?: HTMLScriptElement & {effcss: object;}) => script?.getAttribute('type') === 'application/json'
-const toArray = (params: TStyleTarget | TStyleTarget[]) => Array.isArray(params) ? params : [params];
+const toArray = (params: TOneOrManyTargets) => Array.isArray(params) ? params : [params];
 
 /**
  * Define style provider custom element
@@ -46,8 +48,8 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
         styles = {},
         settings = {}
     } = props;
-
-    const custom = globalThis.customElements;
+    const doc = window.document;
+    const custom = window.customElements;
     if (custom?.get(name)) return false;
     else {
         custom.define(name, class extends HTMLElement implements IStyleProvider {
@@ -56,35 +58,34 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
             /**
              * Initial stylesheet config
              */
-            protected _mainConfig: TStyleSheetConfig;
+            protected _mc: TStyleSheetConfig;
             /**
-             * Theme variables
+             * Dictionary
              */
-            protected _themeVariables: Record<string, Record<string, string | number>>;
-            protected _dict: {
+            protected _d: {
                 sets: Record<string, Record<string, string | number>>;
                 keys: Record<string, string | number>;
             };
             /**
              * Style processor
              */
-            protected _processor: IStyleProcessor;
+            protected _p: IStyleProcessor;
             /**
              * Style manager
              */
-            protected _manager: IStyleManager;
+            protected _m: IStyleManager;
             /**
              * Selector resolver
              */
-            protected _resolver: IStyleResolver;
+            protected _r: IStyleResolver;
             /**
              * Stylesheets collection
              */
-            protected _collector: IStyleCollector;
+            protected _c: IStyleCollector;
             /**
              * Notifier
              */
-            protected _notifier: TStyleConsumer;
+            protected _n: TStyleConsumer;
 
             // computed
 
@@ -118,26 +119,14 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
             get eventName() {
                 return this.getAttribute('eventname') || EVENT_NAME;
             }
-            /**
-             * Settings script selector
-             */
-            get _settingsSelector() {
-                return '#' + (this.getAttribute('settingsid') || SETTINGS_SCRIPT_ID);
-            }
-            /**
-             * Initial style script selector
-             */
-            get _initSelector() {
-                return '.' + (this.getAttribute('initcls') || STYLES_SCRIPT_CLS);
-            }
 
             /**
              * Get component settings
              */
             get settingsContent(): TProviderSettings {
-                const script = doc?.querySelector(this._settingsSelector) as HTMLScriptElement & {effcss: TProviderSettings;};
+                const script = doc?.querySelector('#' + (this.getAttribute('settingsid') || SETTINGS_SCRIPT_ID)) as HTMLScriptElement & {effcss: TProviderSettings;};
                 let content;
-                if (isJSON(script)) content = script?.textContent && JSON.parse(script?.textContent);
+                if (isJSON(script)) content = JSON.parse(script?.textContent || '{}');
                 else if (script) content = script?.effcss;
                 else content = settings;
                 return content || {};
@@ -147,11 +136,11 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
              * Get init style configs
              */
             get initContent(): TProviderInitContent {
-                const initScripts = doc.querySelectorAll(this._initSelector) as NodeListOf<HTMLScriptElement & {effcss: Record<string, TStyleSheetConfig>;}>;
-                let content: Record<string, TStyleSheetConfig> = styles || {};
+                const initScripts = doc.querySelectorAll('.' + (this.getAttribute('initcls') || STYLES_SCRIPT_CLS)) as NodeListOf<HTMLScriptElement & {effcss: TConfigDict;}>;
+                let content: TConfigDict = styles || {};
                 initScripts.forEach((script) => {
-                    let scriptContent: Record<string, TStyleSheetConfig>;
-                    if (isJSON(script)) scriptContent = script?.textContent && JSON.parse(script?.textContent);
+                    let scriptContent: TConfigDict;
+                    if (isJSON(script)) scriptContent = JSON.parse(script?.textContent || '{}');
                     else scriptContent = script?.effcss;
                     content = {...content, ...(scriptContent || {})};
                 });
@@ -161,36 +150,36 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
             /**
              * Get collected style configs
              */
-            get configs(): ReturnType<IStyleCollector['getConfigs']> {
-                return this._collector.getConfigs();
+            get configs(): TConfigDict {
+                return this._c.getConfigs();
             }
 
             protected _setState = () => {
                 const {
-                    units, keys, sets,
+                    units = {}, keys = {}, sets,
                     mediaBP = defaultMediaBP, containerBP = defaultContainerBP,
                     rootStyle = defaultRootStyle, themes = defaultThemes
                 } = this.settingsContent;
 
                 // merged values
-                const settingsUnits = {...defaultUnits, ...(units || {})};
-                const settingsKeys = {...defaultKeys, ...(keys || {})};
+                const settingsUnits = {...defaultUnits, ...units};
+                const settingsKeys = {...defaultKeys, ...keys};
                 const settingsSets = {...defaultSets };
-                if (sets) Object.entries(sets).forEach(([setKey, setVal]) => settingsSets[setKey] = {...setVal});
-                const themeEntries = Object.entries(themes);
+                if (sets) objectEntries(sets).forEach(([setKey, setVal]) => settingsSets[setKey] = {...setVal});
+                const themeEntries = objectEntries(themes);
 
                 // apply units
                 if (settingsUnits) {
                     for (const itemKey in settingsUnits) {
                         settingsSets[itemKey] = settingsSets[itemKey] && Object.fromEntries(
-                            Object.entries(settingsSets[itemKey]).map(([k, v]) => [k, settingsUnits[itemKey].replace('{1}', '' + v)])
+                            objectEntries(settingsSets[itemKey]).map(([k, v]) => [k, settingsUnits[itemKey].replace('{1}', '' + v)])
                         );
                     }
                 }
 
                 // apply media breakpoints
                 if (mediaBP) {
-                    Object.entries(mediaBP).forEach(([key, val]) => {
+                    objectEntries(mediaBP).forEach(([key, val]) => {
                         settingsKeys[`min_${key}_`] = `@media (min-width:${val})`;
                         settingsKeys[`max_${key}_`] = `@media (max-width:${val})`;
                     });
@@ -198,7 +187,7 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
 
                 // apply container breakpoints
                 if (containerBP) {
-                    Object.entries(containerBP).forEach(([key, val]) => {
+                    objectEntries(containerBP).forEach(([key, val]) => {
                         settingsKeys[`cmin_${key}_`] = `@container (min-width:${val})`;
                         settingsKeys[`cmax_${key}_`] = `@container (max-width:${val})`;
                     });
@@ -211,13 +200,13 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
                 if (themes && settingsSets) {
                     themeEntries.forEach(([themeKey, themeVal]) => {
                         const themeSets: Record<string, string | number> = {};
-                        Object.entries(themeVal).forEach(([setKey, setVal]) => {
+                        objectEntries(themeVal).forEach(([setKey, setVal]) => {
                             // set value loop
-                            Object.entries(setVal).forEach(([variantKey, variantVal]) => {
+                            objectEntries(setVal).forEach(([variantKey, variantVal]) => {
                                 // global vars should have name prefix
-                                const varName = this._resolver.varName(this.prefix, setKey, variantKey);
+                                const varName = this._r.varName(this.prefix, setKey, variantKey);
                                 if (settingsUnits[setKey]) themeSets[varName] = settingsUnits[setKey].replace('{1}', '' + variantVal);
-                                else themeSets[varName] = variantVal;
+                                else themeSets[varName] = variantVal as string | number;
                                 // create root variables
                                 if (!rootVars[varName]) {
                                     rootVars[varName] = settingsSets[setKey]?.[variantKey] || 'unset';
@@ -232,11 +221,11 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
                 };
 
                 // save dictionaries
-                this._dict = {
+                this._d = {
                     sets: settingsSets, keys: settingsKeys
                 };
                 // save init stylesheet config
-                this._mainConfig = {
+                this._mc = {
                     c: {
                         [name]: {
                             display: 'contents'
@@ -255,11 +244,11 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
                 };
             }
 
-            protected _resolveTargetKey = (param: TStyleTarget) => typeof param === 'string' ? param : this._collector.getKey(param);
+            protected _res = (param: TStyleTarget) => typeof param === 'string' ? param : this._c.getKey(param);
 
             connectedCallback() {
                 // prepare resolver
-                this._resolver = createResolver({
+                this._r = createResolver({
                     mode: this.mode,
                 });
                 // init state
@@ -267,36 +256,36 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
                 const initContent = this.initContent;
                 const prefix = this.prefix;
                 // prepare collector
-                this._collector = createCollector({
+                this._c = createCollector({
                     hydrate: this.hydrate,
                     prefix,
                     initContent
                 });
                 // prepare processor
-                this._processor = createProcessor({
-                    sets: this._dict.sets, keys: this._dict.keys, resolver: this._resolver
+                this._p = createProcessor({
+                    sets: this._d.sets, keys: this._d.keys, resolver: this._r
                 });
                 // prepare manager
-                this._manager = createManager();
+                this._m = createManager();
                 const dispatchEvent = (styles: CSSStyleSheet[]) => this.dispatchEvent(
                     new CustomEvent(this.eventName, {
                         detail: { styles },
                         bubbles: true
                     })
                 );
-                this._notifier = {
+                this._n = {
                     set adoptedStyleSheets(styles: CSSStyleSheet[]) {
                         dispatchEvent(styles);
                     }
                 };
                 // register notifier
-                this.subscribe(this._notifier);
+                this.subscribe(this._n);
                 // use main config
-                this.use(this._mainConfig);
+                this.use(this._mc);
                 // process init content
                 this.usePublic(initContent);
                 // register document
-                if (doc && !this.isolated) this._manager.registerNode(doc);
+                if (doc && !this.isolated) this._m.registerNode(doc);
             }
 
             // public methods
@@ -307,8 +296,8 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
              * @returns BEM resolver
              */
             use = (config: TStyleSheetConfig, key?: string) => {
-                let k = this._collector.use(config, key);
-                if (this._manager && !this._manager.has(key)) this._manager.pack(k, this.css(
+                let k = this._c.use(config, key);
+                if (this._m && !this._m.has(key)) this._m.pack(k, this.css(
                     config,
                     k
                 ));
@@ -322,10 +311,10 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
              * @description Be carefull, it mutates the contents of the original config, but not its ref.
              */
             alter = (target: TStyleTarget, next: TStyleSheetConfig) => {
-                const key = this._resolveTargetKey(target);
+                const key = this._res(target);
                 if (key) {
-                    const config = this._collector.mutate(key, next);
-                    this._manager.replace(key, this.css(
+                    const config = this._c.mutate(key, next);
+                    this._m.replace(key, this.css(
                         config,
                         key
                     ));
@@ -338,7 +327,7 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
              * @param configs - stylesheet configs
              */
             usePublic: IStyleProvider['usePublic'] = (styles) => Object.fromEntries(
-                Object.entries(styles).map(([key, config]) => ([key, this.use(config, key)]))
+                objectEntries(styles).map(([key, config]) => ([key, this.use(config, key)]))
             );
 
             /**
@@ -352,7 +341,7 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
              * @param config - stylesheet config
              * @param key - stylesheet key
              */
-            css = (config: TStyleSheetConfig, key: string) => this._processor?.compile(
+            css = (config: TStyleSheetConfig, key: string) => this._p?.compile(
                 key,
                 config
             );
@@ -362,51 +351,51 @@ export function defineProvider(props: IDefineProviderProps = {}): boolean {
              * @param target - stylesheet config or key
              */
             status = (target: TStyleTarget) => {
-                const source = this._resolveTargetKey(target);
-                return !!source && this._manager.status(source);
+                const source = this._res(target);
+                return !!source && this._m.status(source);
             }
 
             /**
              * Switch stylesheet on
              * @param param - stylesheet config or key
              */
-            on = (params: TStyleTarget | TStyleTarget[]) => this._manager.on(toArray(params).map(this._resolveTargetKey));
+            on = (params: TOneOrManyTargets) => this._m.on(toArray(params).map(this._res));
 
             /**
              * Switch stylesheet off
              * @param param - stylesheet config or key
              */
-            off = (params: TStyleTarget | TStyleTarget[]) => this._manager.off(toArray(params).map(this._resolveTargetKey));
+            off = (params: TOneOrManyTargets) => this._m.off(toArray(params).map(this._res));
 
             /**
              * Get stylesheet
              * @param target - stylesheet config or key
              */
-            get = (target: TStyleTarget = this._mainConfig) => this._manager.get(this._resolveTargetKey(target));
+            get = (target: TStyleTarget = this._mc) => this._m.get(this._res(target));
 
             /**
              * Get stylesheets
              * @param targets - stylesheet configs or keys
              */
-            getMany = (targets: TStyleTarget[] = this._collector.getKeys()) => targets.map((target) => this.get(target));
+            getMany = (targets: TStyleTarget[] = this._c.getKeys()) => targets.map((target) => this.get(target));
 
             /**
              * Resolve styles
              * @param key - stylesheet key
              */
-            resolve = (key?: string): ReturnType<TResolveAttr> => this._resolver.attr(key || this._collector.getKey(this._mainConfig));
+            resolve = (key?: string): ReturnType<TResolveAttr> => this._r.attr(key || this._c.getKey(this._mc));
 
             /**
              * Subscribe to style changes
              * @param consumer - styles consumer
              */
-            subscribe = (consumer: TStyleConsumer) => this._manager.registerNode(consumer);
+            subscribe = (consumer: TStyleConsumer) => this._m.registerNode(consumer);
 
             /**
              * Unsubscribe from styles changes
              * @param consumer - styles consumer
              */
-            unsubscribe = (consumer: TStyleConsumer) => this._manager.unregisterNode(consumer);
+            unsubscribe = (consumer: TStyleConsumer) => this._m.unregisterNode(consumer);
         });
         window.__EFFCSS_PARAMS__ = {
             name,
