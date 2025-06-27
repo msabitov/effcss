@@ -1,181 +1,313 @@
 import { describe, expect, test } from 'vitest';
-import { createResolver } from '../src/utils/common';
+import { createScope } from '../src/common';
 
 type TCustomStyleSheet = {
-  '': {
-    /**
-     * Block modifier
-     */
-    w: 's' | 'l';
-    /**
-     * Block boolean modifier
-     */
-    sm: '';
-  };
-  elem: {
-    /**
-     * Element modifier
-     */
-    w: 's' | 'm' | 'l';
-    /**
-     * Element boolean modifier
-     */
-    lg: '';
-  };
-  elem2: {
-    /**
-     * Element modifier
-     */
-    h: 's' | 'm' | 'l';
-    /**
-     * Element boolean modifier
-     */
-    md: '';
-  };
+    block: {
+        /**
+         * Block modifiers
+         */
+        '': {
+            /**
+             * Width
+             */
+            w: 's' | 'l';
+            /**
+             * Small
+             */
+            sm: '';
+        };
+        elem: {
+            /**
+             * Width
+             */
+            w: 's' | 'm' | 'l';
+            /**
+             * Large
+             */
+            lg: '';
+        };
+        elem1: {
+            h: 's' | 'l';
+        };
+    };
 };
+const styleSheetKey = 'cust';
+const block = 'block';
+const elem = 'elem';
+const elem1 = 'elem1';
+const attrResolver = createScope({ mode: 'a' })(styleSheetKey);
+const clsResolver = createScope({ mode: 'c' })(styleSheetKey);
 
-const attrResolver = createResolver({mode: 'a'});
-const clsResolver = createResolver({mode: 'c'});
+describe('BEM object to data-attribute:', () => {
+    test('Block:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>({
+            [block]: {}
+        });
+        expect(styleAttr[`data-${styleSheetKey}-${block}`]).toBe('');
+    });
 
-describe('BEM data-attribute resolver:', () => {
-    test('Block:', () => {
-      const styleAttr = attrResolver.attr('cust')()();
-      expect(styleAttr['data-cust']).toBe('');
-    });
-  
     test('Block modifiers:', () => {
-      const styleAttr = attrResolver.attr('cust')()('w-z sm');
-      expect(styleAttr['data-cust']).toBe('w-z sm');
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                '': {
+                    w: 's',
+                    sm: ''
+                }
+            }
+        });
+        expect(styleAttr[`data-${styleSheetKey}-${block}`]).toBe('w_s sm');
     });
-  
-    test('Block object modifiers:', () => {
-      const styleAttr = attrResolver.attr('cust')()({
-        w: 's',
-        sm: ''
-      } as TCustomStyleSheet['']);
-      expect(styleAttr['data-cust']).toBe('w-s sm');
+
+    test('Block undefined modifiers:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                '': {
+                    w: 's',
+                    sm: undefined
+                }
+            }
+        });
+        expect(styleAttr[`data-${styleSheetKey}-${block}`]).toBe('w_s');
     });
-  
+
     test('Element:', () => {
-      const styleAttr = attrResolver.attr('cust')('elem')();
-      expect(styleAttr['data-cust-elem']).toBe('');
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                [elem]: {}
+            }
+        });
+        expect(styleAttr[`data-${styleSheetKey}-${block}__${elem}`]).toBe('');
     });
-  
+
     test('Element modifiers:', () => {
-      const styleAttr = attrResolver.attr('cust')('elem')('w-s sm');
-      expect(styleAttr['data-cust-elem']).toBe('w-s sm');
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                [elem]: {
+                    w: 's',
+                    lg: ''
+                }
+            }
+        });
+        expect(styleAttr[`data-${styleSheetKey}-${block}__${elem}`]).toBe('w_s lg');
     });
-  
-    test('Element object modifiers:', () => {
-      const styleAttr = attrResolver.attr('cust')('elem')({
-        w: 's',
-        lg: ''
-      } as TCustomStyleSheet['elem']);
-      expect(styleAttr['data-cust-elem']).toBe('w-s lg');
+
+    test('Element undefined modifiers:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                [elem]: {
+                    w: 's',
+                    lg: undefined
+                }
+            }
+        });
+        expect(Object.values(styleAttr).join('')).toBe('w_s');
     });
-  
-    test('Resolved `v`:', () => {
-      const styleAttr = attrResolver.attr('cust')('elem')({
-        w: 's',
-        lg: ''
-      } as TCustomStyleSheet['elem']);
-      expect(styleAttr.v).toBe('w-s lg');
+
+    test('Destruction of single element modifiers:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                [elem]: {
+                    w: 's',
+                    lg: ''
+                }
+            }
+        });
+        const dest = { ...styleAttr };
+        expect(Object.keys(dest).length).toBe(1);
     });
-  
-    test('Resolved `k`:', () => {
-      const styleAttr = attrResolver.attr('cust')('elem')({
-        w: 's',
-        lg: ''
-      } as TCustomStyleSheet['elem']);
-      expect(styleAttr.k).toBe('data-cust-elem');
+
+    test('Destruction of multiple element modifiers:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                [elem]: {
+                    w: 's',
+                    lg: ''
+                },
+                [elem1]: {
+                    h: 's'
+                }
+            }
+        });
+        const dest = { ...styleAttr };
+        expect(Object.keys(dest).length).toBe(2);
     });
-  
-    test('Resolved destruction:', () => {
-      const styleAttr = attrResolver.attr('cust')('elem')({
-        w: 's',
-        lg: ''
-      } as TCustomStyleSheet['elem']);
-      const dest = {...styleAttr};
-      expect(!('k' in dest) && !('v' in dest)).toBeTruthy();
-    });
-  
-    test('Undefined modifiers:', () => {
-      const styleAttr = attrResolver.attr('cust')('elem')({
-        w: 's',
-        lg: undefined
-      } as Partial<TCustomStyleSheet['elem']>);
-      expect(styleAttr.v).toBe('w-s');
-    });
-  });
-  
-  describe('BEM className resolver:', () => {
+});
+
+describe('BEM string to data-attribute:', () => {
     test('Block:', () => {
-      const styleAttr = clsResolver.attr('cust')()();
-      expect(styleAttr.class).toBe('cust');
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>(block);
+        expect(styleAttr[`data-${styleSheetKey}-${block}`]).toBe('');
     });
-  
+
     test('Block modifiers:', () => {
-      const styleAttr = clsResolver.attr('cust')()('w-s sm');
-      expect(styleAttr.class).toBe('cust cust_w_s cust_sm');
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>([`${block}..w.s`, `${block}..sm`]);
+        expect(styleAttr[`data-${styleSheetKey}-${block}`]).toBe('w_s sm');
     });
-  
-    test('Block object modifiers:', () => {
-      const styleAttr = clsResolver.attr('cust')()({
-        w: 's',
-        sm: ''
-      } as TCustomStyleSheet['']);
-      expect(styleAttr.class).toBe('cust cust_w_s cust_sm');
-    });
-  
+
     test('Element:', () => {
-      const styleAttr = clsResolver.attr('cust')('elem')();
-      expect(styleAttr.class).toBe('cust__elem');
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>(`${block}.${elem}`);
+        expect(styleAttr[`data-${styleSheetKey}-${block}__${elem}`]).toBe('');
     });
-  
+
     test('Element modifiers:', () => {
-      const styleAttr = clsResolver.attr('cust')('elem')('w-s lg');
-      expect(styleAttr.class).toBe('cust__elem cust__elem_w_s cust__elem_lg');
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>([`${block}.${elem}.w.s`, `${block}.${elem}.lg`]);
+        expect(styleAttr[`data-${styleSheetKey}-${block}__${elem}`]).toBe('w_s lg');
     });
-  
-    test('Element object modifiers:', () => {
-      const styleAttr = clsResolver.attr('cust')('elem')({
-        w: 's',
-        lg: ''
-      } as TCustomStyleSheet['elem']);
-      expect(styleAttr.class).toBe('cust__elem cust__elem_w_s cust__elem_lg');
+
+    test('Destruction of single element modifiers:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>([`${block}.${elem}.w.s`, `${block}.${elem}.lg`]);
+        const dest = { ...styleAttr };
+        expect(Object.keys(dest).length).toBe(1);
     });
-  
-    test('Resolved `v`:', () => {
-      const styleAttr = clsResolver.attr('cust')('elem')({
-        w: 's',
-        lg: ''
-      } as TCustomStyleSheet['elem']);
-      expect(styleAttr.v).toBe('cust__elem cust__elem_w_s cust__elem_lg');
+
+    test('Destruction of multiple element modifiers:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>([
+            `${block}.${elem}.w.s`,
+            `${block}.${elem}.lg`,
+            `${block}.${elem1}.h.s`
+        ]);
+        const dest = { ...styleAttr };
+        expect(Object.keys(dest).length).toBe(2);
     });
-  
-    test('Resolved `k`:', () => {
-      const styleAttr = clsResolver.attr('cust')('elem')({
-        w: 's',
-        lg: ''
-      } as TCustomStyleSheet['elem']);
-      expect(styleAttr.k).toBe('class');
+});
+
+describe('BEM object to class attribute:', () => {
+    test('Block:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>({
+            [block]: {}
+        });
+        expect(styleAttr.class).toBe(`${styleSheetKey}-${block}`);
     });
-  
-    test('Resolved destruction:', () => {
-      const styleAttr = clsResolver.attr('cust')('elem')({
-        w: 's',
-        lg: ''
-      } as TCustomStyleSheet['elem']);
-      const dest = {...styleAttr};
-      expect(!('k' in dest) && !('v' in dest)).toBeTruthy();
+
+    test('Block modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                '': {
+                    w: 's',
+                    sm: ''
+                }
+            }
+        });
+        expect(styleAttr.class).toBe(
+            `${styleSheetKey}-${block} ${styleSheetKey}-${block}_w_s ${styleSheetKey}-${block}_sm`
+        );
     });
-  
-    test('Undefined modifiers:', () => {
-      const styleAttr = clsResolver.attr('cust')('elem')({
-        w: 's',
-        lg: undefined
-      } as Partial<TCustomStyleSheet['elem']>);
-      expect(styleAttr.v).toBe('cust__elem cust__elem_w_s');
+
+    test('Block undefined modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                '': {
+                    w: 's',
+                    sm: undefined
+                }
+            }
+        });
+        expect(styleAttr.class).toBe(`${styleSheetKey}-${block} ${styleSheetKey}-${block}_w_s`);
     });
-  });
-  
+
+    test('Element:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                [elem]: {}
+            }
+        });
+        expect(styleAttr.class).toBe(`${styleSheetKey}-${block}__${elem}`);
+    });
+
+    test('Element modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                [elem]: {
+                    w: 's',
+                    lg: ''
+                }
+            }
+        });
+        expect(styleAttr.class).toBe(
+            `${styleSheetKey}-${block}__${elem} ${styleSheetKey}-${block}__${elem}_w_s ${styleSheetKey}-${block}__${elem}_lg`
+        );
+    });
+
+    test('Element undefined modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                [elem]: {
+                    w: 's',
+                    lg: undefined
+                }
+            }
+        });
+        expect(styleAttr.class).toBe(`${styleSheetKey}-${block}__${elem} ${styleSheetKey}-${block}__${elem}_w_s`);
+    });
+
+    test('Destruction of single element modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                [elem]: {
+                    w: 's',
+                    lg: ''
+                }
+            }
+        });
+        const dest = { ...styleAttr };
+        expect(Object.keys(dest).length).toBe(1);
+    });
+
+    test('Destruction of multiple element modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>({
+            [block]: {
+                [elem]: {
+                    w: 's',
+                    lg: ''
+                },
+                [elem1]: {
+                    h: 's'
+                }
+            }
+        });
+        const dest = { ...styleAttr };
+        expect(Object.keys(dest).length).toBe(1);
+    });
+});
+
+describe('BEM string to class attribute:', () => {
+    test('Block:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>(block);
+        expect(styleAttr.class).toBe(`${styleSheetKey}-${block}`);
+    });
+
+    test('Block modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>([`${block}..w.s`, `${block}..sm`]);
+        expect(styleAttr.class).toBe(
+            `${styleSheetKey}-${block} ${styleSheetKey}-${block}_w_s ${styleSheetKey}-${block}_sm`
+        );
+    });
+
+    test('Element:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>(`${block}.${elem}`);
+        expect(styleAttr.class).toBe(`${styleSheetKey}-${block}__${elem}`);
+    });
+
+    test('Element modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>([`${block}.${elem}.w.s`, `${block}.${elem}.lg`]);
+        expect(styleAttr.class).toBe(
+            `${styleSheetKey}-${block}__${elem} ${styleSheetKey}-${block}__${elem}_w_s ${styleSheetKey}-${block}__${elem}_lg`
+        );
+    });
+
+    test('Destruction of single element modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>([`${block}.${elem}.w.s`, `${block}.${elem}.lg`]);
+        const dest = { ...styleAttr };
+        expect(Object.keys(dest).length).toBe(1);
+    });
+
+    test('Destruction of multiple element modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>([
+            `${block}.${elem}.w.s`,
+            `${block}.${elem}.lg`,
+            `${block}.${elem1}.h.s`
+        ]);
+        const dest = { ...styleAttr };
+        expect(Object.keys(dest).length).toBe(1);
+    });
+});

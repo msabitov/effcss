@@ -10,30 +10,40 @@ const banner = `/*
 * @license ${json.license}
 */`;
 
+const output =  {
+    dir: 'dist',
+    banner,
+    format: 'es',
+    plugins: [
+        terser(),
+    ]
+};
+const tsPlugin = typescript({
+    tsconfig: 'tsconfig.json'
+});
+
 export default [
     {
         input: {
             index: 'src/index.ts',
-            constants: 'src/constants.ts',
-            'utils/common': 'src/utils/common.ts',
-            'utils/browser': 'src/utils/browser.ts'
         },
-        output: {
-            dir: 'dist',
-            format: 'es',
-            plugins: [
-                terser(),
-            ]
-        },
+        output,
         plugins: [
             cleaner({
                 targets: [
                   './dist/'
                 ]
             }),
-            typescript({
-                tsconfig: 'tsconfig.json'
-            }),
+            tsPlugin
+        ]
+    },
+    {
+        input: {
+            consumer: 'src/consumer.ts'
+        },
+        output,
+        plugins: [
+            tsPlugin
         ]
     },
     {

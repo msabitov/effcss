@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import { createCollector } from '../src/utils/common';
+import { createCollector } from '../src/common';
 
-const FIRST_CONFIG = {c: {_: {height: '100vh'}}};
-const SECOND_CONFIG = {c: {_: {width: '300px'}}};
+const FIRST_MAKER = { c: { _: { height: '100vh' } } };
+const SECOND_MAKER = { c: { _: { width: '300px' } } };
 
 const PREFIX = 'pre';
 const FIRST_KEY = 'first';
@@ -11,36 +11,26 @@ const SECOND_KEY = PREFIX + 1;
 describe('Collector:', () => {
     let collector;
     beforeEach(() => {
-        collector = createCollector({
-            prefix: PREFIX
-        });
-        collector.use(FIRST_CONFIG, FIRST_KEY);
-        collector.use(SECOND_CONFIG);
+        collector = createCollector();
+        collector.use(FIRST_MAKER, FIRST_KEY);
+        collector.use(SECOND_MAKER, SECOND_KEY);
         return () => {
             collector = undefined;
-        }
+        };
     });
 
-    test('getConfigs:', () => {
-        expect(collector.getConfigs()).toEqual({
-            [FIRST_KEY]: FIRST_CONFIG,
-            [SECOND_KEY]: SECOND_CONFIG
+    test('makers:', () => {
+        expect(collector.makers).toEqual({
+            [FIRST_KEY]: FIRST_MAKER,
+            [SECOND_KEY]: SECOND_MAKER
         });
     });
 
     test('getKey:', () => {
-        expect(collector.getKey(FIRST_CONFIG)).toBe(FIRST_KEY);
+        expect(collector.getKey(FIRST_MAKER)).toBe(FIRST_KEY);
     });
 
-    test('getKeys:', () => {
-        expect(collector.getKeys()).toEqual([FIRST_KEY, SECOND_KEY]);
-    });
-
-    test('mutate:', () => {
-        const newConfig = collector.mutate(FIRST_KEY, SECOND_CONFIG);
-        expect(
-            newConfig === FIRST_CONFIG
-        ).toBeTruthy();
-        expect(JSON.stringify(collector.getConfigs()[FIRST_KEY])).toBe(JSON.stringify(SECOND_CONFIG));
+    test('keys:', () => {
+        expect(collector.keys).toEqual([FIRST_KEY, SECOND_KEY]);
     });
 });

@@ -1,66 +1,55 @@
 {
-  "name": "effcss",
-  "version": "2.2.1",
-  "description": "Self-confident CSS-in-JS",
-  "type": "module",
-  "scripts": {
-    "build": "rollup -c",
-    "test": "vitest"
-  },
-  "keywords": [
-    "web components",
-    "ui",
-    "typescript",
-    "css",
-    "css-in-js"
-  ],
-  "author": "Marat Sabitov",
-  "license": "Apache 2.0",
-  "main": "dist/index.js",
-  "types": "dist/types/src/types.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/types/src/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+    "name": "effcss",
+    "version": "3.0.0",
+    "description": "Self-confident CSS-in-JS",
+    "type": "module",
+    "scripts": {
+        "build": "rollup -c",
+        "test": "vitest"
     },
-    "./constants": {
-      "types": "./dist/types/src/constants.d.ts",
-      "import": "./dist/constants.js"
+    "keywords": [
+        "web components",
+        "ui",
+        "typescript",
+        "css",
+        "css-in-js"
+    ],
+    "author": "Marat Sabitov",
+    "license": "Apache 2.0",
+    "main": "dist/index.js",
+    "types": "dist/types/src/types.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/types/src/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.js"
+        },
+        "./consumer": {
+            "types": "./dist/types/src/consumer.d.ts",
+            "import": "./dist/consumer.js",
+            "require": "./dist/consumer.js"
+        }
     },
-    "./utils/browser": {
-      "types": "./dist/types/src/utils/browser.d.ts",
-      "import": "./dist/utils/browser.js"
+    "devDependencies": {
+        "@rollup/plugin-terser": "^0.4.4",
+        "@rollup/plugin-typescript": "^11.1.6",
+        "@vitest/browser": "^2.1.9",
+        "playwright": "^1.50.1",
+        "rollup": "^4.30.1",
+        "rollup-plugin-cleaner": "^1.0.0",
+        "tslib": "^2.8.1",
+        "typescript": "^5.7.3",
+        "vitest": "^2.1.9"
     },
-    "./utils/common": {
-      "types": "./dist/types/src/utils/common.d.ts",
-      "import": "./dist/utils/common.js"
+    "files": [
+        "LICENSE",
+        "README.md",
+        "package.json",
+        "dist"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://gitverse.ru/msabitov/effcss"
     },
-    "./types": {
-      "types": "./dist/types/src/types.d.ts",
-      "import": "./dist/types/src/types.d.ts"
-    }
-  },
-  "devDependencies": {
-    "@rollup/plugin-terser": "^0.4.4",
-    "@rollup/plugin-typescript": "^11.1.6",
-    "@vitest/browser": "^2.1.9",
-    "playwright": "^1.50.1",
-    "rollup": "^4.30.1",
-    "rollup-plugin-cleaner": "^1.0.0",
-    "tslib": "^2.8.1",
-    "typescript": "^5.7.3",
-    "vitest": "^2.1.9"
-  },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "package.json",
-    "dist"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://gitverse.ru/msabitov/effcss"
-  },
-  "homepage": "https://effcss.surge.sh"
+    "homepage": "https://effcss.surge.sh"
 }

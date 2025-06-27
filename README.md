@@ -19,36 +19,41 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs.
 
 ## Some features
 
-- zero-dependency
-- framework agnostic
-- runtime stylesheets generation
-- built-in BEM support
-- server-side rendering compatible
+-   zero-dependency
+-   framework agnostic
+-   runtime stylesheets generation
+-   built-in BEM support
+-   server-side rendering compatible
+
+## EffCSS v3
+
+EffCSS v3 is already here! The new version simplifies the API - if you know JS and CSS, you are already know it.
+Docs and examples will be available soon.
 
 ## Links
 
-- [Docs](https://effcss.surge.sh)
-- [Repository](https://gitverse.ru/msabitov/effcss)
-- [Github mirror](https://github.com/msabitov/effcss)
+-   [Docs for EffCSS v2](https://effcss.surge.sh)
+-   [Repository](https://gitverse.ru/msabitov/effcss)
+-   [Github mirror](https://github.com/msabitov/effcss)
 
-## Use with
+## EffCSS v2 examples
 
-- [React](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
-- [React SSR](https://stackblitz.com/edit/vitejs-react-ssr-effcss?file=index.html)
-- [Svelte](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html)
-- [Svelte SSR](https://stackblitz.com/edit/vitejs-svelte-ssr-effcss?file=index.html)
-- [Vue](https://stackblitz.com/edit/vitejs-vue-effcss?file=index.html)
-- [Preact](https://stackblitz.com/edit/vitejs-preact-effcss?file=index.html)
-- [Qwik](https://stackblitz.com/edit/vitejs-qwik-effcss?file=index.html)
-- [Solid js](https://stackblitz.com/edit/vitejs-solid-effcss?file=index.html)
-- [Lit](https://stackblitz.com/edit/vitejs-lit-effcss?file=index.html)
-- [Angular](https://stackblitz.com/edit/angular-effcss?file=src%2Findex.html)
-- [HTML only](https://stackblitz.com/edit/static-effcss?file=index.html)
+-   [React](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
+-   [React SSR](https://stackblitz.com/edit/vitejs-react-ssr-effcss?file=index.html)
+-   [Svelte](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html)
+-   [Svelte SSR](https://stackblitz.com/edit/vitejs-svelte-ssr-effcss?file=index.html)
+-   [Vue](https://stackblitz.com/edit/vitejs-vue-effcss?file=index.html)
+-   [Preact](https://stackblitz.com/edit/vitejs-preact-effcss?file=index.html)
+-   [Qwik](https://stackblitz.com/edit/vitejs-qwik-effcss?file=index.html)
+-   [Solid js](https://stackblitz.com/edit/vitejs-solid-effcss?file=index.html)
+-   [Lit](https://stackblitz.com/edit/vitejs-lit-effcss?file=index.html)
+-   [Angular](https://stackblitz.com/edit/angular-effcss?file=src%2Findex.html)
+-   [HTML only](https://stackblitz.com/edit/static-effcss?file=index.html)
 
-## Try with
+## Try EffCSS v2 with
 
-- [Storybook](https://stackblitz.com/edit/storybook-react-effcss?file=src%2Findex.ts)
-- [Vitest benchmarking](https://stackblitz.com/edit/vitest-bench-effcss?file=tests%2FPublic.bench.ts)
+-   [Storybook](https://stackblitz.com/edit/storybook-react-effcss?file=src%2Findex.ts)
+-   [Vitest benchmarking](https://stackblitz.com/edit/vitest-bench-effcss?file=tests%2FPublic.bench.ts)
 
 ## Installation
 
@@ -67,95 +72,150 @@ yarn add effcss
 
 ## Quick start
 
-First you need to connect the `<style-provider>`:
+First, define and add `Style provider` to your HTML:
 
 ```html
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
-  </head>
-  <body>
-    <style-provider>
-      <div id="root"></div>
-    </style-provider>
-  </body>
+    <head>
+        <!-- the first script defines the style provider custom element -->
+        <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
+        <!-- the second script is the style provider itself -->
+        <script is="effcss-provider"></script>
+    </head>
+    <body>
+        <div id="root"></div>
+    </body>
 </html>
 ```
 
-Then you only need to create the necessary styles before rendering. The easiest way to do this is via the `Style Dispatcher`:
+Second, use `Style consumer` to operate styles in your JS:
 
 **main.js**
 
 ```jsx
-import { createDispatcher } from "effcss/utils/browser";
+import { createConsumer } from 'effcss/consumer';
 
-const styleDispatcher = createDispatcher();
+const consumer = createConsumer();
 
 const root = createRoot(document.getElementById('root'));
-root.render(<App css={styleDispatcher}/>);
+root.render(<App css={consumer} />);
 ```
+
+Each CSS stylesheet corresponds to a single `StyleSheet maker`. `Stylesheet maker` is a pure JS function that gets an object with utilities as arguments and should return object with style rules:
 
 **App.js**
 
 ```jsx
-import { useRef } from 'react'
+import { useRef } from 'react';
+import { TStyleSheetMaker } from 'effcss';
 
-const cardStyle = {
-  c: {
-    // BEM block
-    _: {
-      display: 'flex'
-    },
-    // BEM element
-    __logo: {
-      padding: '2em'
-    },
-    // BEM boolean element modifier
-    __logo_c_: {
-      color: '#888',
-      ':hover': {
-        color: 'black',
-      }
-    },
-    // BEM element modifier with value
-    __logo_sz_lg: {
-      width: '5rem'
-    },
-    // ordinary CSS
-    '.square': {
-      aspectRatio: 1,
-      ':focus': {
-        aspectRatio: '1/2'
-      }
-    }
-  }
+// describe your styles in BEM notation so that other people can use them
+
+export interface ICardMaker {
+    /**
+     * Card block
+     */
+    card: {
+        /**
+         * Block modifiers
+         */
+        '': {
+            /**
+             * Card border radius boolean modifier
+             */
+            rounded: '';
+            /**
+             * Card height modifier
+             */
+            h: 'full' | 'half';
+        };
+        /**
+         * Card footer element
+         */
+        footer: {
+            /**
+             * Footer visibility boolean modifier
+             */
+            visible: '';
+            /**
+             * Footer size modifier
+             */
+            sz: 's' | 'm' | 'l';
+        };
+    };
+}
+
+const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { kf }, merge }) = {
+    // creates unique keyframes identifier
+    const spin = kf();
+    // deeply merges objects
+    const cardLogoStyles = merge({
+        animation: `${spin.k} infinite 20s linear`,
+        [pseudo.h()]: {
+            filter: "drop-shadow(0 0 2em #61dafbaa)",
+        }
+    }, {
+        border: 'none',
+        aspectRatio: 1,
+        [pseudo.h()]: {
+            opacity: 0.5
+        }
+    });
+    return {
+        [spin.s]: {
+            from: {
+                transform: 'rotate(0deg)',
+            },
+            to: {
+                transform: 'rotate(360deg)',
+            },
+        },
+        '.card-logo': cardLogoStyles,
+        // block
+        [bem<ICardMaker>('card')]: { ... },
+        // block boolean attribute
+        [bem<ICardMaker>('card..rounded')]: { ... },
+        // block attribute with value
+        [bem<ICardMaker>('card..h.full')]: { ... },
+        // element
+        [bem<ICardMaker>('card.footer')]: { ... },
+        // element boolean attribute
+        [bem<ICardMaker>('card.footer.visible')]: { ... },
+        // element attribute with value
+        [bem<ICardMaker>('card.footer.sz.m')]: { ... },
+    };
 };
 
 export const App = (props) => {
-  const { css } = props;
-  const stylesRef = useRef();
-  if (!stylesRef.current) {
-    const cardCSS = css.use(cardStyle);
-    stylesRef.current = {
-      // just block selector
-      block: cardCSS()(),
-      // element with modifiers
-      logo: cardCSS('logo')({
-        c: '',
-        sz: 'lg'
-      }),
-    };
-  }
-  const styles = stylesRef.current;
+    const { css } = props;
+    const stylesRef = useRef();
+    if (!stylesRef.current) {
+        const bem = css.use(myStyleSheetMaker);
+        // thanks to the ICardMaker interface,
+        // you don't need to look at the implementation - just create the necessary attributes
+        stylesRef.current = {
+            card: bem<ICardMaker>('card..rounded'),
+            // element with modifiers
+            footer: bem<ICardMaker>({
+                card: {
+                    footer: {
+                        visible: '',
+                        size: 'm'
+                    }
+                }
+            })
+        };
+    }
+    const styles = stylesRef.current;
 
-  // apply attributes to appropriate nodes
-  return <div {...styles.block}>
-    <div {...styles.logo}>
-      ...
-    </div>
-  </div>;
-}
+    // just apply attributes to appropriate elements
+    return (
+        <div {...styles.card}>
+            <div {...styles.footer}>...</div>
+        </div>
+    );
+};
 ```
 
 That's all. Enjoy simplicity.
