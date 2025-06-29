@@ -7,8 +7,13 @@ const isArray = Array.isArray;
 
 const range = (size: number, handler: (k: number) => object): object =>
     Array.from(Array(size).entries()).reduce((acc, [k]) => assign(acc, handler(k + 1)), {});
-const each = <V>(rules: Record<string, V> | V[], handler: (k: string | number, v: V) => object): object =>
-    entries(rules).reduce((acc, [k, v]) => assign(acc, handler(k, v)), {});
+const each = <V extends Record<string | number, any>>(
+    rules: V,
+    handler: (
+        k: V extends ArrayLike<any> ? string : keyof V,
+        v: V extends ArrayLike<any> ? NoInfer<V[number]> : NoInfer<V[keyof V]>
+    ) => object
+): object => entries(rules).reduce((acc, [k, v]) => assign(acc, handler(k as V extends ArrayLike<any> ? string : keyof V, v)), {} as Record<string, object>);
 const when = (condition: boolean | undefined, rules: object, otherwise: object = {}) => (condition ? rules : otherwise);
 const merge = (target: Record<string, any>, ...sources: Record<string, any>[]) =>
     !sources.length

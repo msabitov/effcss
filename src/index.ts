@@ -72,7 +72,7 @@ export interface IStyleProvider {
     // makers handlers
 
     /**
-     * Use stylesheet
+     * Use stylesheet maker
      * @param maker - stylesheet maker
      * @returns {@link TResolveAttr | attribute resolver}
      */
@@ -104,7 +104,7 @@ export interface IStyleProvider {
 
     /**
      * Resolve target key
-     * @param param - style target
+     * @param target - style target
      */
     key(target: TStyleTarget): string | undefined;
     /**
@@ -113,13 +113,13 @@ export interface IStyleProvider {
      */
     status(key: TStyleTarget): boolean;
     /**
-     * Switch stylesheet/stylesheets on
-     * @param target - target stylesheet maker or key
+     * Switch stylesheets on
+     * @param targets - target stylesheet maker or key
      */
     on(...targets: TStyleTarget[]): boolean | undefined;
     /**
-     * Switch stylesheet/stylesheets off
-     * @param target - target stylesheet maker or key
+     * Switch stylesheets off
+     * @param targets - target stylesheet maker or key
      */
     off(...targets: TStyleTarget[]): boolean | undefined;
     /**
@@ -284,9 +284,8 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                             [mq(variants.light).s]: light
                         }),
                         each(otherThemeVars, (k, v) => ({
-                            // проверить!
                             [`:root:has(script[is=${TAG_NAME}][${THEME_ATTR}=${k}])`]: v,
-                            // мультитемизация
+                            // multiple themes
                             [bem<TBaseStyleSheet>(`..theme.${k}`)]: v
                         }))
                     );

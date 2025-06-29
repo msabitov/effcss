@@ -15,7 +15,7 @@
 
 </div>
 
-EffCSS is a self-confident CSS-in-JS library based only on the browser APIs.
+EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use the full power of JS & TS when creating styles!
 
 ## Some features
 
@@ -25,18 +25,21 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs.
 -   built-in BEM support
 -   server-side rendering compatible
 
-## EffCSS v3
-
-EffCSS v3 is already here! The new version simplifies the API - if you know JS and CSS, you are already know it.
-Docs and examples will be available soon.
-
 ## Links
 
--   [Docs for EffCSS v2](https://effcss.surge.sh)
+-   [Docs](https://effcss.surge.sh)
 -   [Repository](https://gitverse.ru/msabitov/effcss)
 -   [Github mirror](https://github.com/msabitov/effcss)
 
-## EffCSS v2 examples
+## V3 examples
+
+-   [Vanilla TS](https://stackblitz.com/edit/effcss-3-ts-vitejs?file=index.html)
+-   [React](https://stackblitz.com/edit/effcss-3-react-vitejs?file=index.html)
+-   [React SSR](https://stackblitz.com/edit/effcss-3-react-ssr-vitejs?file=index.html)
+-   [Svelte](https://stackblitz.com/edit/effcss-3-svelte-vitejs?file=index.html)
+-   [Svelte SSR](https://stackblitz.com/edit/effcss-3-svelte-ssr-vitejs?file=index.html)
+
+## V2 examples
 
 -   [React](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
 -   [React SSR](https://stackblitz.com/edit/vitejs-react-ssr-effcss?file=index.html)
@@ -49,9 +52,6 @@ Docs and examples will be available soon.
 -   [Lit](https://stackblitz.com/edit/vitejs-lit-effcss?file=index.html)
 -   [Angular](https://stackblitz.com/edit/angular-effcss?file=src%2Findex.html)
 -   [HTML only](https://stackblitz.com/edit/static-effcss?file=index.html)
-
-## Try EffCSS v2 with
-
 -   [Storybook](https://stackblitz.com/edit/storybook-react-effcss?file=src%2Findex.ts)
 -   [Vitest benchmarking](https://stackblitz.com/edit/vitest-bench-effcss?file=tests%2FPublic.bench.ts)
 
@@ -89,20 +89,20 @@ First, define and add `Style provider` to your HTML:
 </html>
 ```
 
-Second, use `Style consumer` to operate styles in your JS:
+Second, use `Style consumer` to operate styles in your code:
 
 **main.js**
 
 ```jsx
-import { createConsumer } from 'effcss/consumer';
+import { createConsumer } from "effcss/consumer";
 
 const consumer = createConsumer();
 
-const root = createRoot(document.getElementById('root'));
+const root = createRoot(document.getElementById("root"));
 root.render(<App css={consumer} />);
 ```
 
-Each CSS stylesheet corresponds to a single `StyleSheet maker`. `Stylesheet maker` is a pure JS function that gets an object with utilities as arguments and should return object with style rules:
+Each CSS stylesheet corresponds to a single `Stylesheet maker`. `Stylesheet maker` is a pure JS function that should return object with style rules:
 
 **App.js**
 
@@ -118,28 +118,32 @@ export interface ICardMaker {
      */
     card: {
         /**
-         * Block modifiers
+         * Card modifiers
          */
         '': {
             /**
-             * Card border radius boolean modifier
+             * Card border radius
              */
             rounded: '';
             /**
-             * Card height modifier
+             * Card height
              */
             h: 'full' | 'half';
         };
         /**
-         * Card footer element
+         * Card logo
+         */
+        logo: {},
+        /**
+         * Card footer
          */
         footer: {
             /**
-             * Footer visibility boolean modifier
+             * Footer visibility
              */
             visible: '';
             /**
-             * Footer size modifier
+             * Footer size
              */
             sz: 's' | 'm' | 'l';
         };
@@ -171,18 +175,12 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { kf }, merge })
                 transform: 'rotate(360deg)',
             },
         },
-        '.card-logo': cardLogoStyles,
-        // block
         [bem<ICardMaker>('card')]: { ... },
-        // block boolean attribute
+        [bem<ICardMaker>('card.logo')]: cardLogoStyles,
         [bem<ICardMaker>('card..rounded')]: { ... },
-        // block attribute with value
         [bem<ICardMaker>('card..h.full')]: { ... },
-        // element
         [bem<ICardMaker>('card.footer')]: { ... },
-        // element boolean attribute
         [bem<ICardMaker>('card.footer.visible')]: { ... },
-        // element attribute with value
         [bem<ICardMaker>('card.footer.sz.m')]: { ... },
     };
 };
