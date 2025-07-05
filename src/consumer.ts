@@ -1,8 +1,10 @@
 // constants
-import type { TProviderAttrs, TProviderSettings } from './common';
+import type { TProviderAttrs } from './common';
 import { createCollector, createKeyMaker, createScope, DEFAULT_ATTRS, TAG_NAME } from './common';
 // types
 import type { IStyleProvider } from './index';
+
+type TAttr = string | null;
 
 /**
  * Create style dispatcher
@@ -13,10 +15,10 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
         `script[is=${TAG_NAME}]`
     ) as IStyleProvider | null;
     if (provider) return provider;
-    let theme: string | null;
-    let prefix: string | null;
-    let mode: string | null;
-    let hydrate: string | null;
+    let theme: TAttr;
+    let prefix: TAttr;
+    let mode: TAttr;
+    let hydrate: TAttr;
     ({ prefix, mode, hydrate, theme } = Object.assign({}, DEFAULT_ATTRS, attrs));
     let vars: Record<string, object> | undefined;
     let bp: Record<string, number | string> | undefined;

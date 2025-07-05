@@ -7,7 +7,7 @@ const isArray = Array.isArray;
 
 const range = (size: number, handler: (k: number) => object): object =>
     Array.from(Array(size).entries()).reduce((acc, [k]) => assign(acc, handler(k + 1)), {});
-const each = <V extends Record<string | number, any>>(
+const each = <V extends Record<TStrOrNum, any>>(
     rules: V,
     handler: (
         k: V extends ArrayLike<any> ? string : keyof V,

@@ -81,7 +81,7 @@ type TStringBEM<T> = TBlocks<T> | TMods<T> | TElems<T>;
 type TBEM<T> = TDeepPartial<T> | TStringBEM<T> | TStringBEM<T>[];
 type TResolveSelector = <T extends object>(params: TBEM<T>) => string;
 type TResolveAttr = <T extends object>(params: TBEM<T>) => TStrDict;
-
+type TParts = (string | number)[];
 type TScope = {
     /**
      * BEM selector resolver
@@ -94,15 +94,15 @@ type TScope = {
     /**
      * Name resolver
      */
-    name: (...parts: (string | number)[] | string[]) => string;
+    name: (...parts: TParts) => string;
     /**
      * Var name
      */
-    varName: (...parts: (string | number)[] | string[]) => string;
+    varName: (...parts: TParts) => string;
     /**
      * Var expression
      */
-    varExp: (...parts: (string | number)[]) => string;
+    varExp: (...parts: TParts) => string;
 };
 
 /**

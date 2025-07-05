@@ -38,6 +38,8 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 -   [React SSR](https://stackblitz.com/edit/effcss-3-react-ssr-vitejs?file=index.html)
 -   [Svelte](https://stackblitz.com/edit/effcss-3-svelte-vitejs?file=index.html)
 -   [Svelte SSR](https://stackblitz.com/edit/effcss-3-svelte-ssr-vitejs?file=index.html)
+-   [Vue](https://stackblitz.com/edit/effcss-3-vue-vitejs?file=index.html)
+-   [Vue SSR](https://stackblitz.com/edit/effcss-3-vue-ssr-vitejs?file=index.html)
 
 ## V2 examples
 
