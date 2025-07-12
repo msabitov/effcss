@@ -33,6 +33,8 @@ const SIMPLE_PSEUDO = {
     m: ':modal',
     l: ':link',
     ph: ':placeholder',
+    ch: ':checked',
+    po: ':popover-open',
 
     // collections
 
@@ -127,6 +129,14 @@ type TPseudo = {
      * :placeholder
      */
     ph: TSimplePseudo;
+    /**
+     * :checked
+     */
+    ch: TSimplePseudo;
+    /**
+     * :popover-open
+     */
+    po: TSimplePseudo;
 
     // collections
 

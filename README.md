@@ -40,22 +40,8 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 -   [Svelte SSR](https://stackblitz.com/edit/effcss-3-svelte-ssr-vitejs?file=index.html)
 -   [Vue](https://stackblitz.com/edit/effcss-3-vue-vitejs?file=index.html)
 -   [Vue SSR](https://stackblitz.com/edit/effcss-3-vue-ssr-vitejs?file=index.html)
-
-## V2 examples
-
--   [React](https://stackblitz.com/edit/vitejs-react-effcss?file=index.html)
--   [React SSR](https://stackblitz.com/edit/vitejs-react-ssr-effcss?file=index.html)
--   [Svelte](https://stackblitz.com/edit/vitejs-svelte-effcss?file=index.html)
--   [Svelte SSR](https://stackblitz.com/edit/vitejs-svelte-ssr-effcss?file=index.html)
--   [Vue](https://stackblitz.com/edit/vitejs-vue-effcss?file=index.html)
--   [Preact](https://stackblitz.com/edit/vitejs-preact-effcss?file=index.html)
--   [Qwik](https://stackblitz.com/edit/vitejs-qwik-effcss?file=index.html)
--   [Solid js](https://stackblitz.com/edit/vitejs-solid-effcss?file=index.html)
--   [Lit](https://stackblitz.com/edit/vitejs-lit-effcss?file=index.html)
--   [Angular](https://stackblitz.com/edit/angular-effcss?file=src%2Findex.html)
--   [HTML only](https://stackblitz.com/edit/static-effcss?file=index.html)
--   [Storybook](https://stackblitz.com/edit/storybook-react-effcss?file=src%2Findex.ts)
--   [Vitest benchmarking](https://stackblitz.com/edit/vitest-bench-effcss?file=tests%2FPublic.bench.ts)
+-   [Qwik](https://stackblitz.com/edit/effcss-3-qwik-vitejs?file=index.html)
+-   [Lit](https://stackblitz.com/edit/effcss-3-lit-vitejs?file=index.html)
 
 ## Installation
 
