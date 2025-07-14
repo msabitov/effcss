@@ -31,7 +31,7 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 -   [Repository](https://gitverse.ru/msabitov/effcss)
 -   [Github mirror](https://github.com/msabitov/effcss)
 
-## V3 examples
+## Examples
 
 -   [Vanilla TS](https://stackblitz.com/edit/effcss-3-ts-vitejs?file=index.html)
 -   [React](https://stackblitz.com/edit/effcss-3-react-vitejs?file=index.html)
@@ -66,9 +66,9 @@ First, define and add `Style provider` to your HTML:
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <!-- the first script defines the style provider custom element -->
+        <!-- define the style provider custom element -->
         <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
-        <!-- the second script is the style provider itself -->
+        <!-- and create it -->
         <script is="effcss-provider"></script>
     </head>
     <body>
@@ -92,14 +92,13 @@ root.render(<App css={consumer} />);
 
 Each CSS stylesheet corresponds to a single `Stylesheet maker`. `Stylesheet maker` is a pure JS function that should return object with style rules:
 
-**App.js**
+**App.tsx**
 
-```jsx
+```tsx
 import { useRef } from 'react';
-import { TStyleSheetMaker } from 'effcss';
+import { IStyleProvider, TStyleSheetMaker } from 'effcss';
 
 // describe your styles in BEM notation so that other people can use them
-
 export interface ICardMaker {
     /**
      * Card block
@@ -173,7 +172,9 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { kf }, merge })
     };
 };
 
-export const App = (props) => {
+export const App = (props: {
+    css: IStyleProvider;
+}) => {
     const { css } = props;
     const stylesRef = useRef();
     if (!stylesRef.current) {
@@ -194,7 +195,6 @@ export const App = (props) => {
         };
     }
     const styles = stylesRef.current;
-
     // just apply attributes to appropriate elements
     return (
         <div {...styles.card}>

@@ -85,7 +85,7 @@ type TCreateProcessor = (params: {
     bp?: Record<string, string | number>;
 }) => {
     /**
-     * Compile style maker to CSS stylesheet text content
+     * Compile stylesheet maker to CSSStylesheet content
      * @param params - params
      */
     compile(params: { key: string; maker: (params: IMakerParams) => object }): string;

@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, onTestFinished, test } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from '@vitest/browser/context';
 import { defineProvider } from '../src/index';
 import { createConsumer } from '../src/consumer';

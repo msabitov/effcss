@@ -6,8 +6,6 @@ type TStyleRoot = { adoptedStyleSheets: CSSStyleSheet[] };
 
 /**
  * Style manager
- * @description
- * Manages CSS stylesheets.
  */
 interface IStyleManager {
     /**
@@ -17,7 +15,7 @@ interface IStyleManager {
     get(key?: string): CSSStyleSheet | undefined;
     /**
      * Get index of stylesheet
-     * @param styleSheet - CSS stylesheet
+     * @param styleSheet - CSSStylesheet
      */
     getIndex(styleSheet: CSSStyleSheet): number;
     /**
@@ -27,13 +25,13 @@ interface IStyleManager {
     /**
      * Add stylesheet
      * @param key - stylesheet key
-     * @param stylesheet - CSSStylesheet instance
+     * @param stylesheet - CSSStylesheet
      */
     add(key: string, stylesheet: CSSStyleSheet): TOptBool;
     /**
      * Replace stylesheet content
      * @param key - stylesheet key
-     * @param styles - stylesheet content string
+     * @param styles - stylesheet content
      */
     replace(key: string, styles: string): TOptBool;
     /**
@@ -49,7 +47,7 @@ interface IStyleManager {
     /**
      * Pack styles into CSSStyleSheet and add it into stylesheet dictionary
      * @param key - stylesheet key
-     * @param styles - stylesheet content string
+     * @param styles - stylesheet content
      */
     pack(key: string, styles: string): TOptBool;
     /**

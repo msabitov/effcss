@@ -1,12 +1,12 @@
 import { TCreateScope } from '../../common';
-
+type TStrOrNum = string | number;
 type TChangeStr = (val: string) => string;
 type TChangeColor = (color: string | object, val?: number | string) => string;
 type TPaletteState = {
-    l: string | number;
-    c: string | number;
-    h: string | number;
-    a: string | number;
+    l: TStrOrNum;
+    c: TStrOrNum;
+    h: TStrOrNum;
+    a: TStrOrNum;
 };
 
 const OKLCH = 'oklch';
@@ -19,7 +19,7 @@ const A = 'a';
 const DEF = 'def';
 
 const create = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']) => {
-    const resolveValue = (type: string, val: string | number) => (typeof val === 'string' ? varExp(type, val) : val);
+    const resolveValue = (type: string, val: TStrOrNum) => (typeof val === 'string' ? varExp(type, val) : val);
     class Palette {
         /**
          * Palette state
@@ -44,7 +44,7 @@ const create = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']) => {
         l = <Theme>(
             val: Theme extends { l: Record<string, number | string> }
                 ? Exclude<keyof Theme['l'], symbol>
-                : string | number
+                : TStrOrNum
         ) =>
             this.merge({
                 l: resolveValue(L, val)
@@ -56,7 +56,7 @@ const create = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']) => {
         c = <Theme>(
             val: Theme extends { c: Record<string, number | string> }
                 ? Exclude<keyof Theme['c'], symbol>
-                : string | number
+                : TStrOrNum
         ) =>
             this.merge({
                 c: resolveValue(C, val)
@@ -68,7 +68,7 @@ const create = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']) => {
         h = <Theme>(
             val: Theme extends { h: Record<string, number | string> }
                 ? Exclude<keyof Theme['h'], symbol>
-                : string | number
+                : TStrOrNum
         ) =>
             this.merge({
                 h: resolveValue(H, val)
@@ -80,7 +80,7 @@ const create = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']) => {
         a = <Theme>(
             val: Theme extends { a: Record<string, number | string> }
                 ? Exclude<keyof Theme['a'], symbol>
-                : string | number
+                : TStrOrNum
         ) =>
             this.merge({
                 a: resolveValue(A, val)

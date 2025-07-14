@@ -226,14 +226,14 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
         lay,
         /**
          * `@scope` selector
-         * @param r - scope root
-         * @param l - scope limit
+         * @param r - root
+         * @param l - limit
          */
         sc,
         /**
          * `@supports` selector
          * @param c - condition
-         * @param n - inverse condition
+         * @param n - invert condition
          */
         sup
     };
