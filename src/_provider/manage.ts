@@ -91,6 +91,8 @@ interface IStyleManager {
     notify(): void;
 }
 
+const PREFIX = 'effcss-';
+
 /**
  * Create {@link IStyleManager | style manager}
  * @param params - manager params
@@ -113,8 +115,14 @@ export function createManager(): IStyleManager {
      * Dependent nodes
      */
     let _l: WeakRef<TStyleRoot>[] = [];
-
-    const apply: IStyleManager['apply'] = (root) => (root.adoptedStyleSheets = _a);
+    const mark = (key: string, styleSheet: CSSStyleSheet): CSSStyleSheet => {
+        styleSheet.toString = () => 'effcss-' + key;
+        return styleSheet;
+    };
+    const apply: IStyleManager['apply'] = (root) => root.adoptedStyleSheets = [
+        ...(root.adoptedStyleSheets?.length ? [...root.adoptedStyleSheets].filter((s) => !(s + '').startsWith(PREFIX)) : []),
+        ..._a
+    ];
     const notify: IStyleManager['notify'] = () => {
         _l = _l.reduce((acc, listener) => {
             const ref = listener.deref();
@@ -131,8 +139,8 @@ export function createManager(): IStyleManager {
     const getAll: IStyleManager['getAll'] = () => _s;
     const add: IStyleManager['add'] = (key, stylesheet: CSSStyleSheet) => {
         if (!_s[key]) {
-            _s[key] = stylesheet;
-            _a.push(stylesheet);
+            _s[key] = mark(key, stylesheet);
+            _a.push(_s[key]);
             notify();
             return true;
         }
@@ -188,8 +196,9 @@ export function createManager(): IStyleManager {
         return true;
     };
     const pack: IStyleManager['pack'] = (key, styles) => {
-        const styleSheet = new CSSStyleSheet();
+        let styleSheet = new CSSStyleSheet();
         styleSheet.replaceSync(styles);
+        styleSheet = mark(key, styleSheet);
         return !!styleSheet.cssRules.length && add(key, styleSheet);
     };
     const replace: IStyleManager['replace'] = (key, styles) => {

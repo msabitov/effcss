@@ -48,7 +48,8 @@ describe('Manager:', () => {
     test('add & getAll', () => {
         manager.add(firstId, firstStylesheet);
         manager.add(secondId, firstStylesheet);
-        expect(manager.getAll()).toEqual(stylesheets);
+        const all = manager.getAll();
+        expect(!!all[firstId] && !!all[secondId]).toBeTruthy();
     });
 
     test('add & apply', () => {
@@ -147,5 +148,17 @@ describe('Manager:', () => {
         manager.unregister(document);
         manager.add(secondId, firstStylesheet);
         expect(document.adoptedStyleSheets).not.toContain(secondStylesheet);
+    });
+
+    test('use outer stylesheet & register & add & removeAll & unregister', () => {
+        const outer = new CSSStyleSheet();
+        outer.replaceSync('.outer {box-sizing: border-box;}');
+        document.adoptedStyleSheets = [outer];
+        manager.add(firstId, firstStylesheet);
+        manager.add(secondId, secondStylesheet);
+        manager.register(document);
+        manager.removeAll();
+        manager.unregister(document);
+        expect(document.adoptedStyleSheets).toContain(outer);
     });
 });
