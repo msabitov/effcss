@@ -203,6 +203,13 @@ export const DEFAULT_SETTINGS: Partial<TProviderSettings> = {
     bp: DEFAULT_BREAKPOINTS,
     vars: {
         '': {
+            /**
+             * Root time
+             */
+            rtime: '200ms',
+            /**
+             * Root em
+             */
             rem: 16,
             /**
              * Lightness

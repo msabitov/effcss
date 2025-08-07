@@ -3,6 +3,8 @@ export type TGetUnit = (val: number | string) => string;
 const px: TGetUnit = (val) => val + 'px';
 const vh: TGetUnit = (val) => val + 'vh';
 const vw: TGetUnit = (val) => val + 'vw';
+const vmin: TGetUnit = (val) => val + 'vmin';
+const vmax: TGetUnit = (val) => val + 'vmax'; 
 const rem: TGetUnit = (val) => val + 'rem';
 const deg: TGetUnit = (val) => val + 'deg';
 const ms: TGetUnit = (val) => val + 'ms';
@@ -18,6 +20,8 @@ export const resolveUnits = () => ({
     px,
     vh,
     vw,
+    vmin,
+    vmax,
     rem,
     deg,
     ms,

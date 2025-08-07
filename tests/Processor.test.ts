@@ -57,6 +57,20 @@ describe('Base:', () => {
         expect(styleString).toBe(`.cust{width:var(--f0-sz-m);}`);
     });
 
+    test('Time:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ time }) => {
+                return {
+                    [`.cust`]: {
+                        transitionDuration: time(2)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(`.cust{transition-duration:calc(2 * var(--f0-rtime));}`);
+    });
+
     test('Nested selector:', () => {
         const styleString = processor.compile({
             key: 'cust',
