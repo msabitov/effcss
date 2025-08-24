@@ -58,6 +58,27 @@ export interface IStyleProvider {
      */
     set theme(val: string);
 
+    // global var controls
+
+    /**
+     * Get root size value
+     */
+    get size(): number | null;
+    /**
+     * Set root size value
+     * @param val - rem value in px
+     */
+    set size(val: number | null);
+    /**
+     * Get root time value
+     */
+    get time(): number | null;
+    /**
+     * Set root time value
+     * @param val - rem value in ms
+     */
+    set time(val: number | null);
+
     // settings handlers
 
     /**
@@ -74,9 +95,11 @@ export interface IStyleProvider {
     /**
      * Use stylesheet maker
      * @param maker - stylesheet maker
+     * @param key - stylesheet key
+     * @param force - force generation
      * @returns {@link TResolveAttr | attribute resolver}
      */
-    use(maker: TStyleSheetMaker, key?: string): TResolveAttr;
+    use(maker: TStyleSheetMaker, key?: string, force?: boolean): TResolveAttr;
     /**
      * Use public stylesheet makers
      * @param makers - stylesheet makers
@@ -160,6 +183,10 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
     if (custom?.get(TAG_NAME)) return false;
     else {
         class Provider extends HTMLScriptElement implements IStyleProvider {
+            static get observedAttributes() {
+                return ['size', 'time'];
+            }
+
             /**
              * Collector
              */
@@ -241,6 +268,26 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                 return getAttr(this, THEME_ATTR) || '';
             }
 
+            set size(val: number | null) {
+                if (val === null) this.removeAttribute('size');
+                else this.setAttribute('size', val + '');
+            }
+
+            get size() {
+                const val = this.getAttribute('size');
+                return val !== null ? Number(val) : null;
+            }
+
+            set time(val) {
+                if (val === null) this.removeAttribute('time');
+                else this.setAttribute('time', val + '');
+            }
+
+            get time() {
+                const val = this.getAttribute('time');
+                return val !== null ? Number(val) : null;
+            }
+
             protected _cust = (nextVars: IStyleProvider['settings']['vars'] = {}) => {
                 const { varName } = this._s(this._k.base);
                 function parseParams(params: object, parents: string[]): Record<string, string | number | boolean> {
@@ -260,9 +307,12 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                 } = fromEntries(
                     entries(nextVars || {}).map(([themeKey, themeParams]) => [themeKey, parseParams(themeParams, [])])
                 );
+                // manual setted attributes
+                const size = this.getAttribute('size');
+                const time = this.getAttribute('time');
 
                 // create init stylesheet maker
-                this._ = ({ bem, each, when, vars, merge, at: { mq } }) => {
+                this._ = ({ bem, each, when, vars, merge, at: { mq }, units: {px, ms} }) => {
                     const PREFERS_COLOR_SCHEME = 'prefers-color-scheme';
                     const variants = {
                         light: `${PREFERS_COLOR_SCHEME}: light`,
@@ -287,12 +337,26 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                             [`:root:has(script[is=${TAG_NAME}][${THEME_ATTR}=${k}])`]: v,
                             // multiple themes
                             [bem<TBaseStyleSheet>(`..theme.${k}`)]: v
-                        }))
+                        })),
+                        when(!!size, {
+                            [`:root:has(script[is=${TAG_NAME}][size])`]: {
+                                [varName('', 'rem')]: px(size as string)
+                            }
+                        }),
+                        when(!!time, {
+                            [`:root:has(script[is=${TAG_NAME}][time])`]: {
+                                [varName('', 'rtime')]: ms(time as string)
+                            }
+                        })
                     );
                 };
                 // apply maker
-                this.use(this._, this._k.base);
+                this.use(this._, this._k.base, true);
             };
+
+            attributeChangedCallback() {
+                if (this._k as ReturnType<typeof createKeyMaker> | undefined) this._cust(this._settings?.vars);
+            }
 
             connectedCallback() {
                 this._k = createKeyMaker({ prefix: this.prefix });
@@ -321,10 +385,10 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
 
             // maker handlers
 
-            use: IStyleProvider['use'] = (maker, key) => {
+            use: IStyleProvider['use'] = (maker, key, force) => {
                 const styleSheetKey = key || this._k.current;
                 let k = this._c.use(maker, styleSheetKey);
-                if (this._m && !this._m.has(key)) this._m.pack(k, this.css(maker, k));
+                if (force || this._m && !this._m.has(key)) this._m.pack(k, this.css(maker, k));
                 if (!key) this._k.next();
                 return this.resolve(k);
             };

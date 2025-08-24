@@ -1,27 +1,38 @@
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from '@vitest/browser/context';
-import { defineProvider } from '../src/index';
+import { defineProvider, TStyleSheetMaker } from '../src/index';
 import { createConsumer } from '../src/consumer';
 import { TAG_NAME } from '../src/common';
 
 const PROVIDER_ID = 'provider';
 const FIRST_ID = 'first';
 const SECOND_ID = 'second';
+const THIRD_ID = 'third';
 const prefix = 'f';
-const FIRST_MAKER = ({ bem }) => {
+const FIRST_MAKER: TStyleSheetMaker = ({ bem, time }) => {
     return {
-        [bem('')]: {
+        [bem<{}>('')]: {
             width: '100%',
             'flex-shrink': 0
+        },
+        html: {
+            transitionDuration: time()
         }
     };
 };
-const SECOND_MAKER = ({ bem, units: { px, vh } }) => {
+const SECOND_MAKER: TStyleSheetMaker = ({ bem, units: { px, vh } }) => {
     return {
-        [bem('')]: {
+        [bem<{}>('')]: {
             height: vh(100),
             borderTopLeftRadius: px(14),
             flexGrow: 10
+        }
+    };
+};
+const THIRD_MAKER: TStyleSheetMaker = ({ time }) => {
+    return {
+        html: {
+            transitionDuration: time()
         }
     };
 };
@@ -29,7 +40,8 @@ const SECOND_MAKER = ({ bem, units: { px, vh } }) => {
 const PROVIDER_PARAMS = {
     vars: {
         '': {
-            rem: 16,
+            rem: '18px',
+            rtime: '150ms',
             l: {
                 def: 0.4
             },
@@ -102,6 +114,10 @@ describe('Provider utils:', () => {
         expect(consumer).toBe(provider);
     });
 
+    test('initial rem', () => {
+        expect(getComputedStyle(document.documentElement).fontSize).toBe(PROVIDER_PARAMS.vars[''].rem);
+    });
+
     test('get collected stylesheets', () => {
         const makers = { [FIRST_ID]: FIRST_MAKER, [SECOND_ID]: SECOND_MAKER };
         consumer.usePublic(makers);
@@ -136,5 +152,33 @@ describe('Provider utils:', () => {
 
     test('get provider settings', () => {
         expect(consumer.settings.vars).toMatchObject(PROVIDER_PARAMS.vars);
+    });
+
+    test('set size attribute', () => {
+        const rem = 24;
+        consumer.size = rem;
+        expect(getComputedStyle(document.documentElement).fontSize).toBe(rem + 'px');
+    });
+
+    test('set time attribute', () => {
+        consumer.use(THIRD_MAKER, THIRD_ID);
+        const time = 550;
+        consumer.time = time;
+        expect(getComputedStyle(document.documentElement).transitionDuration).toBe(time / 1000 + 's');
+    });
+
+    test('reset size attribute', () => {
+        const rem = 24;
+        consumer.size = rem;
+        consumer.size = null;
+        expect(getComputedStyle(document.documentElement).fontSize).toBe(PROVIDER_PARAMS.vars[''].rem);
+    });
+
+    test('reset time attribute', () => {
+        consumer.use(THIRD_MAKER, THIRD_ID);
+        const time = 550;
+        consumer.time = time;
+        consumer.time = null;
+        expect(getComputedStyle(document.documentElement).transitionDuration).toBe('0.15s');
     });
 });

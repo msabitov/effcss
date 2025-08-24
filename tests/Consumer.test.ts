@@ -63,8 +63,9 @@ describe('Consumer:', () => {
     test('toString:', () => {
         consumer.use(FIRST_MAKER, FIRST_KEY);
         consumer.use(SECOND_MAKER);
+        consumer.time = 200;
         expect('' + consumer).toEqual(
-            `<script is="${TAG_NAME}" prefix="pre" mode="a">document.currentScript.settings = {makers: {first: () => { return { div: { height: "300px" } }; },pre1: () => { return { body: { width: "300px" } }; }},}</script>`
+            `<script is="${TAG_NAME}" prefix="pre" mode="a" time="200">document.currentScript.settings = {makers: {first: () => { return { div: { height: "300px" } }; },pre1: () => { return { body: { width: "300px" } }; }},}</script>`
         );
     });
 });

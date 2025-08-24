@@ -25,6 +25,14 @@ export type TProviderAttrs = {
      * Theme
      */
     theme: string | null;
+    /**
+     * Root font size in px
+     */
+    size: string | null;
+    /**
+     * Root time in ms
+     */
+    time: string | null;
 };
 
 /**
@@ -180,7 +188,9 @@ export const DEFAULT_ATTRS: TProviderAttrs = {
     theme: null,
     hydrate: null,
     mode: 'a',
-    prefix: 'f'
+    prefix: 'f',
+    size: null,
+    time: null
 };
 
 export const DEFAULT_BREAKPOINTS = {
@@ -210,7 +220,7 @@ export const DEFAULT_SETTINGS: Partial<TProviderSettings> = {
             /**
              * Root em
              */
-            rem: 16,
+            rem: '16px',
             /**
              * Lightness
              */

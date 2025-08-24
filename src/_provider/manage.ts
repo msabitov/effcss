@@ -196,7 +196,7 @@ export function createManager(): IStyleManager {
         return true;
     };
     const pack: IStyleManager['pack'] = (key, styles) => {
-        let styleSheet = new CSSStyleSheet();
+        let styleSheet = _s[key] || new CSSStyleSheet();
         styleSheet.replaceSync(styles);
         styleSheet = mark(key, styleSheet);
         return !!styleSheet.cssRules.length && add(key, styleSheet);

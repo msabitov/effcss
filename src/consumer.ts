@@ -6,6 +6,8 @@ import type { IStyleProvider } from './index';
 
 type TAttr = string | null;
 
+const numOrNull = (val: string | number | null) => val === null || val === undefined ? null : Number(val);
+
 /**
  * Create style dispatcher
  * @param params - dispatcher params
@@ -19,7 +21,11 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
     let prefix: TAttr;
     let mode: TAttr;
     let hydrate: TAttr;
-    ({ prefix, mode, hydrate, theme } = Object.assign({}, DEFAULT_ATTRS, attrs));
+    let size: TAttr;
+    let time: TAttr;
+    ({ prefix, mode, hydrate, theme, size, time } = Object.assign({}, DEFAULT_ATTRS, attrs));
+    let _size: number | null = numOrNull(size);
+    let _time: number | null = numOrNull(time);
     let vars: Record<string, object> | undefined;
     let bp: Record<string, number | string> | undefined;
 
@@ -70,6 +76,18 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
         get theme() {
             return theme || '';
         },
+        get size() {
+            return _size;
+        },
+        set size(val) {
+            _size = val;
+        },
+        get time() {
+            return _time;
+        },
+        set time(val) {
+            _time = val;
+        },
         get settings() {
             return {
                 bp,
@@ -99,7 +117,9 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
                 prefix: getPrefix(),
                 mode: getMode(),
                 hydrate: getHydrate(),
-                theme
+                theme,
+                size: _size !== null && String(_size),
+                time: _time !== null && String(_time),
             })
                 .map(([name, value]) => (value ? `${name}="${value}"` : value === '' ? name : ''))
                 .filter(Boolean)

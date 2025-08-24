@@ -46,7 +46,7 @@ interface IMakerParams extends ReturnType<typeof getBaseHandlers> {
     /**
      * Scalable time value
      */
-    time: (coef: number) => string;
+    time: (coef?: number) => string;
     /**
      * Width limit queries
      */
@@ -108,7 +108,7 @@ export const createProcessor: TCreateProcessor = (params) => {
     const { scope, globalKey = '', bp = {} } = params;
     const globalScope = scope(globalKey);
     const vars = (val: string) => globalScope.varExp(...val.split('.'));
-    const time = (coef: number) => `calc(${coef} * ${vars('rtime')})`;
+    const time = (coef: number = 1) => `calc(${coef} * ${vars('rtime')})`;
     return {
         compile: ({ key, maker }) => {
             const localScope = scope(key);
