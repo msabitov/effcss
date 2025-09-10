@@ -89,6 +89,25 @@ const PROVIDER_PARAMS = {
                 l: 30
             }
         }
+    },
+    palette: {
+        h: {
+            sec: 220,
+        },
+        l: {
+            light: {
+                bg: {
+                    s: 0.785
+                }
+            }
+        },
+        c: {
+            light: {
+                fg: {
+                    rich: 0.145
+                }
+            }
+        }
     }
 };
 
@@ -180,5 +199,18 @@ describe('Provider utils:', () => {
         consumer.time = time;
         consumer.time = null;
         expect(getComputedStyle(document.documentElement).transitionDuration).toBe('0.15s');
+    });
+
+    test('custom palette values', () => {
+        const custom = {
+            sec: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-palette-h-sec'),
+            s: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-palette-l-bg-s'),
+            rich: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-palette-c-fg-rich')
+        };
+        expect(custom).toEqual({
+            sec: PROVIDER_PARAMS.palette.h.sec + '',
+            s: PROVIDER_PARAMS.palette.l.light.bg.s + '',
+            rich: PROVIDER_PARAMS.palette.c.light.fg.rich + '',
+        });
     });
 });

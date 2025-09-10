@@ -8,6 +8,7 @@ const objectReduce = <
 ) => Object.entries(obj).reduce(callback, acc);
 
 const kebabCase = (str: string): string => str.replace(/[A-Z]/g, (v) => '-' + v.toLowerCase());
+export const NO_PARSE_SYMBOL: symbol = Symbol('noParse');
 
 /**
  * Stringify maker result
@@ -18,7 +19,7 @@ const kebabCase = (str: string): string => str.replace(/[A-Z]/g, (v) => '-' + v.
 const stringify = (key: string, value: object | string | number | undefined | unknown, parent?: string): string => {
     let resKey = '' + key;
     if (value === null || value === undefined) return '';
-    else if (typeof value === 'object')
+    else if (typeof value === 'object' && !value.hasOwnProperty(NO_PARSE_SYMBOL))
         return (
             (!!parent && !parent.startsWith?.('@') && !resKey.startsWith?.('&') && !resKey.startsWith?.('@')
                 ? '&'

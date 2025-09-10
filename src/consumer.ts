@@ -1,6 +1,9 @@
 // constants
-import type { TProviderAttrs } from './common';
-import { createCollector, createKeyMaker, createScope, DEFAULT_ATTRS, TAG_NAME } from './common';
+import type { TProviderAttrs, TProviderSettings } from './common';
+import {
+    createCollector, createKeyMaker, createScope,
+    DEFAULT_ATTRS, TAG_NAME
+} from './common';
 // types
 import type { IStyleProvider } from './index';
 
@@ -26,6 +29,7 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
     ({ prefix, mode, hydrate, theme, size, time } = Object.assign({}, DEFAULT_ATTRS, attrs));
     let _size: number | null = numOrNull(size);
     let _time: number | null = numOrNull(time);
+    let palette: TProviderSettings['palette'] | undefined;
     let vars: Record<string, object> | undefined;
     let bp: Record<string, number | string> | undefined;
 
@@ -93,11 +97,12 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
                 bp,
                 vars,
                 off: [...statusOffSet],
-                makers: c.makers
+                makers: c.makers,
+                palette
             };
         },
         set settings(val) {
-            return;
+            ({bp, vars, palette} = val);
         },
         resolve,
         use,
@@ -130,7 +135,7 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
                           return acc + `${acc ? ',' : ''}${key}: ${func.toString().replaceAll(/\s+/g, ' ')}`;
                       }, '')
                     : ''
-            }},${vars ? ` vars: ${vars},` : ''}${bp ? ` bp: ${bp},` : ''}${
+            }},${vars ? ` vars: ${vars},` : ''}${bp ? ` bp: ${bp},` : ''}${palette ? ` palette: ${palette},` : ''}${
                 statusOffSet.size ? ` off: [${[...statusOffSet]}]` : ''
             }}`;
             return `<script ${attrs}>${textContent}</script>`;

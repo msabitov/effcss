@@ -137,7 +137,7 @@ export interface ICardMaker {
     };
 }
 
-const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { kf }, merge }) = {
+const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { kf }, merge, palette }) = {
     // creates unique keyframes identifier
     const spin = kf();
     // deeply merges objects
@@ -148,6 +148,7 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { kf }, merge })
         }
     }, {
         border: 'none',
+        background: palette.pale.xl.alpha(0.8),
         aspectRatio: 1,
         [pseudo.h()]: {
             opacity: 0.5

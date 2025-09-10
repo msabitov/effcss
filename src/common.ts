@@ -2,6 +2,35 @@
 type TOptStr = string | undefined;
 type TParsedBEM = [string, TOptStr, TOptStr, TOptStr][];
 
+type THueToken = 'pri' | 'sec' | 'suc' | 'inf' | 'war' | 'dan';
+type TLightnessToken = 'xs' | 's' | 'm' | 'l' | 'xl';
+type TChromaToken = 'pale' | 'base' | 'rich';
+type TPaletteDict <T extends string> = {
+    dark: {
+        bg: Record<T, number>;
+        fg: Record<T, number>;
+    };
+    light: {
+        bg: Record<T, number>;
+        fg: Record<T, number>;
+    };
+}
+type RecursivePartial<T> = {
+  [P in keyof T]?:
+    T[P] extends (infer U)[] ? RecursivePartial<U>[] :
+    T[P] extends object | undefined ? RecursivePartial<T[P]> :
+    T[P];
+};
+export type TPaletteHue = Record<THueToken, number>;
+export type TPaletteLightness = TPaletteDict<TLightnessToken>;
+export type TPaletteChroma = TPaletteDict<TChromaToken>;
+export type TPalette = {
+    l: TPaletteLightness;
+    c: TPaletteChroma;
+    h: TPaletteHue;
+};
+export type TPaletteConfig = RecursivePartial<TPalette>;
+
 /**
  * Provider attributes
  */
@@ -55,7 +84,12 @@ export type TProviderSettings = {
      * Switched off stylesheets
      */
     off: string[];
+    /**
+     * Palette
+     */
+    palette: TPalette;
 };
+export type TProviderSettingsPartial = RecursivePartial<TProviderSettings>;
 
 type TStrDict = Record<string, string>;
 type Paths<T> = T extends object
@@ -126,6 +160,7 @@ export type TCreateScope = (params?: { mode?: string | null }) => TScopeResolver
 // local utils
 const UND = undefined;
 const entries = Object.entries;
+const assign = Object.assign;
 const defineProperties = Object.defineProperties;
 const getDataBase = (base: string) => `data-${base}`;
 const isString = (val: any) => typeof val === 'string';
@@ -191,6 +226,104 @@ export const DEFAULT_ATTRS: TProviderAttrs = {
     prefix: 'f',
     size: null,
     time: null
+};
+
+const DEFAULT_PALETTE: TPalette = {
+    l: {
+        dark: {
+            bg: {
+                xl: 0.24,
+                l: 0.3,
+                m: 0.36,
+                s: 0.42,
+                xs: 0.48
+            },
+            fg: {
+                xl: 0.98,
+                l: 0.93,
+                m: 0.86,
+                s: 0.79,
+                xs: 0.72
+            }
+        },
+        light: {
+            bg: {
+                xl: 0.98,
+                l: 0.93,
+                m: 0.88,
+                s: 0.83,
+                xs: 0.78
+            },
+            fg: {
+                xl: 0,
+                l: 0.12,
+                m: 0.24,
+                s: 0.36,
+                xs: 0.48
+            }
+        }
+    },
+    c: {
+        dark: {
+            bg: {
+                pale: 0.02,
+                base: 0.06,
+                rich: 0.1
+            },
+            fg: {
+                pale: 0.06,
+                base: 0.10,
+                rich: 0.14
+            }
+        },
+        light: {
+            bg: {
+                pale: 0.01,
+                base: 0.04,
+                rich: 0.7
+            },
+            fg: {
+                pale: 0.07,
+                base: 0.11,
+                rich: 0.15
+            }
+        }
+    },
+    h: {
+        pri: 184,
+        sec: 290,
+        suc: Number((0.1 * 184 + 0.9 * 142).toFixed(2)),
+        inf: Number((0.1 * 184 + 0.9 * 264).toFixed(2)),
+        war: Number((0.1 * 184 + 0.9 * 109).toFixed(2)),
+        dan: Number((0.1 * 184 + 0.9 * 29).toFixed(2)),
+    }
+};
+
+export const mixPalette = (prev: TPalette, next?: TPaletteConfig): TPalette => {
+    if (!next) return prev;
+    return {
+        l: {
+            dark: {
+                bg: assign(prev.l.dark.bg, next?.l?.dark?.bg),
+                fg: assign(prev.l.dark.fg, next?.l?.dark?.fg)
+            },
+            light: {
+                bg: assign(prev.l.light.bg, next?.l?.light?.bg),
+                fg: assign(prev.l.light.fg, next?.l?.light?.fg)
+            }
+        },
+        c: {
+            dark: {
+                bg: assign(prev.c.dark.bg, next?.c?.dark?.bg),
+                fg: assign(prev.c.dark.fg, next?.c?.dark?.fg)
+            },
+            light: {
+                bg: assign(prev.c.light.bg, next?.c?.light?.bg),
+                fg: assign(prev.c.light.fg, next?.c?.light?.fg)
+            }
+        },
+        h: assign(prev.h, next?.h)
+    };
 };
 
 export const DEFAULT_BREAKPOINTS = {
@@ -343,7 +476,8 @@ export const DEFAULT_SETTINGS: Partial<TProviderSettings> = {
                 c: 0.95
             }
         }
-    }
+    },
+    palette: DEFAULT_PALETTE
 };
 
 /**

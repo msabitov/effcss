@@ -405,6 +405,122 @@ describe('Units:', () => {
     });
 });
 
+describe('Palette:', () => {
+    test('hue:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ palette, each }) => {
+                return each(palette.hue, (k, v) => ({
+                    ['.color-' + k]: {
+                        color: v
+                    }
+                }));
+            }
+        });
+        expect(styleString).toBe(
+            '.color-pri{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
+            '.color-sec{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-sec) / 1);}' +
+            '.color-suc{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-suc) / 1);}' +
+            '.color-inf{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-inf) / 1);}' +
+            '.color-war{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-war) / 1);}' +
+            '.color-dan{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-dan) / 1);}'
+        );
+    });
+
+    test('chroma:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ palette, each }) => {
+                return each(palette.chroma, (k, v) => ({
+                    ['.color-' + k]: {
+                        color: v
+                    }
+                }));
+            }
+        });
+        expect(styleString).toBe(
+            '.color-gray{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-gray) var(--f0-palette-h-pri) / 1);}' +
+            '.color-pale{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-pale) var(--f0-palette-h-pri) / 1);}' + 
+            '.color-base{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
+            '.color-rich{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-rich) var(--f0-palette-h-pri) / 1);}'
+        );
+    });
+
+    test('lightness:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ palette, each }) => {
+                return each(palette.lightness, (k, v) => ({
+                    ['.color-' + k]: {
+                        color: v
+                    }
+                }));
+            }
+        });
+        expect(styleString).toBe(
+            '.color-xs{color:oklch(var(--f0-palette-l-bg-xs) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
+            '.color-s{color:oklch(var(--f0-palette-l-bg-s) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
+            '.color-m{color:oklch(var(--f0-palette-l-bg-m) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
+            '.color-l{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
+            '.color-xl{color:oklch(var(--f0-palette-l-bg-xl) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}'
+        );
+    });
+
+    test('alpha:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ palette }) => {
+                return {
+                    '.color-half': {
+                        color: palette.alpha(0.5)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.color-half{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 0.5);}'
+        );
+    });
+
+    test('bg/fg:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ palette }) => {
+                return {
+                    '.color-half': {
+                        color: palette.fg,
+                        backgroundColor: palette.bg
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.color-half{color:oklch(var(--f0-palette-l-fg-l) var(--f0-palette-c-fg-base) var(--f0-palette-h-pri) / 1);' +
+            'background-color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}'
+        );
+    });
+
+    test('complex:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ palette }) => {
+                return {
+                    '.palette-complex': {
+                        color: palette.fg.gray.inf.l,
+                        backgroundColor: palette.bg.pale.sec.xl,
+                        borderColor: palette.fg.rich.xs.suc.alpha(0.75)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.palette-complex{color:oklch(var(--f0-palette-l-fg-l) var(--f0-palette-c-fg-gray) var(--f0-palette-h-inf) / 1);' +
+            'background-color:oklch(var(--f0-palette-l-bg-xl) var(--f0-palette-c-bg-pale) var(--f0-palette-h-sec) / 1);' +
+            'border-color:oklch(var(--f0-palette-l-fg-xs) var(--f0-palette-c-fg-rich) var(--f0-palette-h-suc) / 0.75);}'
+        );
+    });
+});
+
 describe('Color:', () => {
     test('create:', () => {
         const styleString = processor.compile({

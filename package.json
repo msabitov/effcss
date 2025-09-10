@@ -1,6 +1,6 @@
 {
     "name": "effcss",
-    "version": "3.3.0",
+    "version": "3.4.0",
     "description": "Self-confident CSS-in-JS",
     "type": "module",
     "scripts": {

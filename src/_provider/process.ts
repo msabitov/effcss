@@ -5,6 +5,7 @@ import { resolveAtRules } from './_process/atrules';
 import { resolveUnits } from './_process/units';
 import { resolvePseudo } from './_process/pseudo';
 import { resolveColor } from './_process/color';
+import { resolvePalette } from './_process/palette';
 import { getBaseHandlers } from './_process/base';
 import { parseStyles } from './_process/utils';
 
@@ -39,6 +40,10 @@ interface IMakerParams extends ReturnType<typeof getBaseHandlers> {
      * Colors
      */
     color: ReturnType<typeof resolveColor>;
+    /**
+     * Color palette
+     */
+    palette: ReturnType<typeof resolvePalette>;
     /**
      * Global vars
      */
@@ -144,6 +149,8 @@ export const createProcessor: TCreateProcessor = (params) => {
                         pseudo: resolvePseudo(),
                         // color handlers
                         color: resolveColor(globalScope.varExp),
+                        // palette handlers
+                        palette: resolvePalette(globalScope.varExp),
                         // css units
                         units: resolveUnits(),
                         // css at-rules

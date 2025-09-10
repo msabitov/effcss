@@ -3,12 +3,16 @@ import { createProcessor } from './_provider/process';
 // manager
 import { createManager } from './_provider/manage';
 // common
-import type { TProviderSettings } from './common';
-import { createCollector, createKeyMaker, createScope, DEFAULT_ATTRS, DEFAULT_SETTINGS, TAG_NAME } from './common';
+import type { TProviderSettings, TProviderSettingsPartial } from './common';
+import {
+    createCollector, createKeyMaker, createScope, mixPalette,
+    DEFAULT_ATTRS, DEFAULT_SETTINGS, TAG_NAME
+} from './common';
 
 // constants
 const THEME_ATTR = 'theme';
 const EVENT_NAME = 'effcsschanges';
+const PALETTE = 'palette';
 
 // aliases
 const assign = Object.assign;
@@ -88,7 +92,7 @@ export interface IStyleProvider {
     /**
      * Set provider settings
      */
-    set settings(val: Partial<TProviderSettings>);
+    set settings(val: TProviderSettingsPartial);
 
     // makers handlers
 
@@ -177,7 +181,7 @@ export type TBaseStyleSheet = {
 /**
  * Define style provider custom element
  */
-export function defineProvider(settings: Partial<TProviderSettings> = {}): boolean {
+export function defineProvider(settings: TProviderSettingsPartial = {}): boolean {
     const doc = window.document;
     const custom = window.customElements;
     if (custom?.get(TAG_NAME)) return false;
@@ -220,7 +224,7 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
             /**
              * Inner settings
              */
-            protected _settings: IStyleProvider['settings'];
+            protected _settings: IStyleProvider['settings'] = DEFAULT_SETTINGS;
 
             // computed
 
@@ -240,16 +244,17 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                 return this._settings;
             }
 
-            set settings(val: IStyleProvider['settings']) {
-                const nextSettings = assign({}, this._settings, val);
-                const { makers, vars, bp, off } = nextSettings;
-                if (bp && this._settings?.bp !== bp)
+            set settings(val: TProviderSettingsPartial) {
+                const nextSettings = assign({}, this._settings, val, {
+                    palette: mixPalette(this._settings.palette as TProviderSettings['palette'], val?.palette)
+                });
+                const { makers, vars, bp, off, palette } = nextSettings;
+                if (bp && this._settings?.bp !== bp || !this._p)
                     this._p = createProcessor({
                         scope: this._s,
                         globalKey: this._k.base,
                         bp
                     });
-                if (vars && this._settings?.vars !== vars) this._cust(vars);
                 if (makers && this._settings?.makers !== makers) {
                     this._c.useMany(makers);
                     this.usePublic(makers as Record<string, TStyleSheetMaker>);
@@ -257,6 +262,11 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                     if (this.hydrate) this._k.reset();
                 }
                 this._settings = nextSettings;
+                if (
+                    !this._m?.has(this._k.base) ||
+                    vars && this._settings?.vars !== vars ||
+                    palette && this._settings?.palette !== palette
+                ) this._cust();
             }
 
             // theme methods
@@ -288,7 +298,8 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                 return val !== null ? Number(val) : null;
             }
 
-            protected _cust = (nextVars: IStyleProvider['settings']['vars'] = {}) => {
+            protected _cust = () => {
+                const nextVars: IStyleProvider['settings']['vars'] = this._settings?.vars;
                 const { varName } = this._s(this._k.base);
                 function parseParams(params: object, parents: string[]): Record<string, string | number | boolean> {
                     return entries(params).reduce((acc, [key, val]) => {
@@ -299,20 +310,23 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                         }
                     }, {} as Record<string, string | number | boolean>);
                 }
+                const themeVars = fromEntries(
+                    entries(nextVars || {}).map(([themeKey, themeParams]) => [themeKey, parseParams(themeParams, [])])
+                );
                 const {
                     '': rootThemeVars = {},
                     dark,
                     light,
                     ...otherThemeVars
-                } = fromEntries(
-                    entries(nextVars || {}).map(([themeKey, themeParams]) => [themeKey, parseParams(themeParams, [])])
-                );
+                } = themeVars;
                 // manual setted attributes
-                const size = this.getAttribute('size');
-                const time = this.getAttribute('time');
-
+                const size = this.size;
+                const time = this.time;
+                const {l, c, h} = this._settings.palette as TProviderSettings['palette'];
+                const tokens = ['xs', 's', 'm', 'l', 'xl'] as const;
+                const ctokens = ['pale', 'base', 'rich'] as const;
                 // create init stylesheet maker
-                this._ = ({ bem, each, when, vars, merge, at: { mq }, units: {px, ms} }) => {
+                this._ = ({ bem, each, when, vars, merge, at: { mq }, units: {px, ms, pc} }) => {
                     const PREFERS_COLOR_SCHEME = 'prefers-color-scheme';
                     const variants = {
                         light: `${PREFERS_COLOR_SCHEME}: light`,
@@ -322,17 +336,31 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                         {
                             [`:root:has(script[is=${TAG_NAME}])`]: merge(
                                 {
-                                    fontSize: vars<{ rem: string }>('rem')
+                                    fontSize: vars<{ rem: string }>('rem'),
                                 },
-                                rootThemeVars
+                                rootThemeVars,
+                                // palette
+                                each(h, (k, v) => ({
+                                    [varName(PALETTE, 'h', k)]: v
+                                })),
+                                {
+                                    [varName(PALETTE, 'c', 'bg', 'gray')]: 0,
+                                    [varName(PALETTE, 'c', 'fg', 'gray')]: 0
+                                },
+                                each(variants, (mediaKey, mediaCond) => ({
+                                    [mq(mediaCond).s]: merge(
+                                        themeVars[mediaKey] || {},
+                                        each(tokens, (k, v) => ({
+                                            [varName(PALETTE, 'l', 'bg', v)]: l[mediaKey].bg[v],
+                                            [varName(PALETTE, 'l', 'fg', v)]: l[mediaKey].fg[v],
+                                        })),
+                                        each(ctokens, (k, v) => ({
+                                            [varName(PALETTE, 'c', 'bg', v)]: c[mediaKey].bg[v],
+                                            [varName(PALETTE, 'c', 'fg', v)]: c[mediaKey].fg[v],
+                                        }))
+                                )}))
                             )
                         },
-                        when(!!dark, {
-                            [mq(variants.dark).s]: dark
-                        }),
-                        when(!!light, {
-                            [mq(variants.light).s]: light
-                        }),
                         each(otherThemeVars, (k, v) => ({
                             [`:root:has(script[is=${TAG_NAME}][${THEME_ATTR}=${k}])`]: v,
                             // multiple themes
@@ -340,12 +368,12 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                         })),
                         when(!!size, {
                             [`:root:has(script[is=${TAG_NAME}][size])`]: {
-                                [varName('', 'rem')]: px(size as string)
+                                [varName('', 'rem')]: px(size as number)
                             }
                         }),
                         when(!!time, {
                             [`:root:has(script[is=${TAG_NAME}][time])`]: {
-                                [varName('', 'rtime')]: ms(time as string)
+                                [varName('', 'rtime')]: ms(time as number)
                             }
                         })
                     );
@@ -355,7 +383,7 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
             };
 
             attributeChangedCallback() {
-                if (this._k as ReturnType<typeof createKeyMaker> | undefined) this._cust(this._settings?.vars);
+                if (this._k as ReturnType<typeof createKeyMaker> | undefined) this._cust();
             }
 
             connectedCallback() {
@@ -380,7 +408,7 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                 // register document
                 this._m.register(doc);
                 // apply settings
-                this.settings = assign({}, DEFAULT_SETTINGS, settings);
+                this.settings = settings;
             }
 
             // maker handlers
