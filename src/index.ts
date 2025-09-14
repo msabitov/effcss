@@ -11,6 +11,9 @@ import {
 
 // constants
 const THEME_ATTR = 'theme';
+const SIZE_ATTR = 'size';
+const TIME_ATTR = 'time';
+const ANGLE_ATTR = 'angle';
 const EVENT_NAME = 'effcsschanges';
 const PALETTE = 'palette';
 
@@ -19,7 +22,23 @@ const assign = Object.assign;
 const entries = Object.entries;
 const fromEntries = Object.fromEntries;
 const getAttr = (self: Element, name: keyof typeof DEFAULT_ATTRS) => self.getAttribute(name) || DEFAULT_ATTRS[name];
-
+const getNumAttr = (self: Element, name: keyof typeof DEFAULT_ATTRS) => {
+    const val = getAttr(self, name);
+    return val !== null ? Number(val) : null;
+};
+const setAttr = (self: HTMLScriptElement, name: string, val: string | number | null) => val === null ? self.removeAttribute(name) : self.setAttribute(name, val + '');
+const getAttrSelector = (attr?: string) => `:root:has(script[is=${TAG_NAME}]${attr ? `[${attr}]` : ''})`;
+const getOrderedRange = (range: Record<string, number>) => [
+    range.xxs,
+    range.xs,
+    range.s,
+    range.m,
+    range.l,
+    range.xl,
+    range.xxl
+];
+const tokens = ['xs', 's', 'm', 'l', 'xl'] as const;
+const ctokens = ['pale', 'base', 'rich'] as const;
 type TResolveAttr = ReturnType<ReturnType<typeof createScope>>['attr'];
 /**
  * StyleSheet maker
@@ -79,9 +98,18 @@ export interface IStyleProvider {
     get time(): number | null;
     /**
      * Set root time value
-     * @param val - rem value in ms
+     * @param val - time value in ms
      */
     set time(val: number | null);
+    /**
+     * Get root angle value
+     */
+    get angle(): number | null;
+    /**
+     * Set root angle value
+     * @param val - angle value in ms
+     */
+    set angle(val: number | null);
 
     // settings handlers
 
@@ -188,7 +216,7 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
     else {
         class Provider extends HTMLScriptElement implements IStyleProvider {
             static get observedAttributes() {
-                return ['size', 'time'];
+                return [SIZE_ATTR, TIME_ATTR, ANGLE_ATTR];
             }
 
             /**
@@ -264,43 +292,49 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
                 this._settings = nextSettings;
                 if (
                     !this._m?.has(this._k.base) ||
-                    vars && this._settings?.vars !== vars ||
-                    palette && this._settings?.palette !== palette
+                    val.vars ||
+                    val.palette ||
+                    val.coef
                 ) this._cust();
             }
 
             // theme methods
 
             set theme(val: string) {
-                !val ? this.removeAttribute(THEME_ATTR) : this.setAttribute(THEME_ATTR, val);
+                setAttr(this, THEME_ATTR, val);
             }
             get theme() {
                 return getAttr(this, THEME_ATTR) || '';
             }
 
             set size(val: number | null) {
-                if (val === null) this.removeAttribute('size');
-                else this.setAttribute('size', val + '');
+                setAttr(this, SIZE_ATTR, val);
             }
 
             get size() {
-                const val = this.getAttribute('size');
-                return val !== null ? Number(val) : null;
+                return getNumAttr(this, SIZE_ATTR);
             }
 
             set time(val) {
-                if (val === null) this.removeAttribute('time');
-                else this.setAttribute('time', val + '');
+                setAttr(this, 'time', val);
             }
 
             get time() {
-                const val = this.getAttribute('time');
-                return val !== null ? Number(val) : null;
+                return getNumAttr(this, TIME_ATTR);
+            }
+
+            set angle(val) {
+                setAttr(this, 'angle', val);
+            }
+
+            get angle() {
+                return getNumAttr(this, ANGLE_ATTR);
             }
 
             protected _cust = () => {
                 const nextVars: IStyleProvider['settings']['vars'] = this._settings?.vars;
                 const { varName } = this._s(this._k.base);
+                const rootVar = (name: string) => varName('', name);
                 function parseParams(params: object, parents: string[]): Record<string, string | number | boolean> {
                     return entries(params).reduce((acc, [key, val]) => {
                         if (val && typeof val === 'object') return assign(acc, parseParams(val, [...parents, key]));
@@ -322,11 +356,21 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
                 // manual setted attributes
                 const size = this.size;
                 const time = this.time;
+                const angle = this.angle;
                 const {l, c, h} = this._settings.palette as TProviderSettings['palette'];
-                const tokens = ['xs', 's', 'm', 'l', 'xl'] as const;
-                const ctokens = ['pale', 'base', 'rich'] as const;
+                const coef = this._settings.coef as TProviderSettings['coef'];
+                const coefArray = [
+                    0,
+                    ...getOrderedRange(coef.$0_),
+                    1,
+                    ...getOrderedRange(coef.$1_),
+                    2,
+                    ...getOrderedRange(coef.$2_),
+                    16,
+                    ...getOrderedRange(coef.$16_),
+                ];
                 // create init stylesheet maker
-                this._ = ({ bem, each, when, vars, merge, at: { mq }, units: {px, ms, pc} }) => {
+                this._ = ({ bem, each, when, vars, merge, at: { mq }, units: {px, ms, deg} }) => {
                     const PREFERS_COLOR_SCHEME = 'prefers-color-scheme';
                     const variants = {
                         light: `${PREFERS_COLOR_SCHEME}: light`,
@@ -334,11 +378,15 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
                     };
                     return merge(
                         {
-                            [`:root:has(script[is=${TAG_NAME}])`]: merge(
+                            [getAttrSelector()]: merge(
                                 {
                                     fontSize: vars<{ rem: string }>('rem'),
                                 },
                                 rootThemeVars,
+                                // coef
+                                each(coefArray, (k, v) => ({
+                                    [varName('coef', k)]: v
+                                })),
                                 // palette
                                 each(h, (k, v) => ({
                                     [varName(PALETTE, 'h', k)]: v
@@ -362,18 +410,23 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
                             )
                         },
                         each(otherThemeVars, (k, v) => ({
-                            [`:root:has(script[is=${TAG_NAME}][${THEME_ATTR}=${k}])`]: v,
+                            [getAttrSelector(`${THEME_ATTR}=${k}`)]: v,
                             // multiple themes
                             [bem<TBaseStyleSheet>(`..theme.${k}`)]: v
                         })),
                         when(!!size, {
-                            [`:root:has(script[is=${TAG_NAME}][size])`]: {
-                                [varName('', 'rem')]: px(size as number)
+                            [getAttrSelector(SIZE_ATTR)]: {
+                                [rootVar('rem')]: px(size as number)
                             }
                         }),
                         when(!!time, {
-                            [`:root:has(script[is=${TAG_NAME}][time])`]: {
-                                [varName('', 'rtime')]: ms(time as number)
+                            [getAttrSelector(TIME_ATTR)]: {
+                                [rootVar('rtime')]: ms(time as number)
+                            }
+                        }),
+                        when(!!angle, {
+                            [getAttrSelector(ANGLE_ATTR)]: {
+                                [rootVar('rangle')]: deg(angle as number)
                             }
                         })
                     );

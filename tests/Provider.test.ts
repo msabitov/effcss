@@ -29,10 +29,11 @@ const SECOND_MAKER: TStyleSheetMaker = ({ bem, units: { px, vh } }) => {
         }
     };
 };
-const THIRD_MAKER: TStyleSheetMaker = ({ time }) => {
+const THIRD_MAKER: TStyleSheetMaker = ({ time, angle }) => {
     return {
         html: {
-            transitionDuration: time()
+            transitionDuration: time(),
+            transform: `skew(${angle()})`
         }
     };
 };
@@ -42,6 +43,7 @@ const PROVIDER_PARAMS = {
         '': {
             rem: '18px',
             rtime: '150ms',
+            rangle: '15deg',
             l: {
                 def: 0.4
             },
@@ -112,7 +114,7 @@ const PROVIDER_PARAMS = {
 };
 
 describe('Provider utils:', () => {
-    let consumer;
+    let consumer: ReturnType<typeof createConsumer>;
     beforeAll(() => {
         defineProvider(PROVIDER_PARAMS);
     });
@@ -179,18 +181,18 @@ describe('Provider utils:', () => {
         expect(getComputedStyle(document.documentElement).fontSize).toBe(rem + 'px');
     });
 
-    test('set time attribute', () => {
-        consumer.use(THIRD_MAKER, THIRD_ID);
-        const time = 550;
-        consumer.time = time;
-        expect(getComputedStyle(document.documentElement).transitionDuration).toBe(time / 1000 + 's');
-    });
-
     test('reset size attribute', () => {
         const rem = 24;
         consumer.size = rem;
         consumer.size = null;
         expect(getComputedStyle(document.documentElement).fontSize).toBe(PROVIDER_PARAMS.vars[''].rem);
+    });
+
+    test('set time attribute', () => {
+        consumer.use(THIRD_MAKER, THIRD_ID);
+        const time = 550;
+        consumer.time = time;
+        expect(getComputedStyle(document.documentElement).transitionDuration).toBe(time / 1000 + 's');
     });
 
     test('reset time attribute', () => {
@@ -199,6 +201,19 @@ describe('Provider utils:', () => {
         consumer.time = time;
         consumer.time = null;
         expect(getComputedStyle(document.documentElement).transitionDuration).toBe('0.15s');
+    });
+
+    test('set angle attribute', () => {
+        const angle = 60;
+        consumer.angle = angle;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--f0-rangle') + '').toBe(angle + 'deg');
+    });
+
+    test('reset angle attribute', () => {
+        const angle = 35;
+        consumer.angle = angle;
+        consumer.angle = null;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--f0-rangle') + '').toBe(PROVIDER_PARAMS.vars[''].rangle)
     });
 
     test('custom palette values', () => {

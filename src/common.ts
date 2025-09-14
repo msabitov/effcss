@@ -30,7 +30,19 @@ export type TPalette = {
     h: TPaletteHue;
 };
 export type TPaletteConfig = RecursivePartial<TPalette>;
-
+export type TCoefShortRange = 's' | 'm' | 'l';
+export type TCoefBaseRange = 'xs' | TCoefShortRange | 'xl';
+export type TCoefLongRange = 'xxs' | TCoefBaseRange | 'xxl';
+export type TCoefFullRange = 'min' | TCoefLongRange | 'max';
+export type TCoefSparseRange = 'min' | 'xs' | 'm' | 'xl' | 'max';
+export type TCoefRangeConfig = Record<'xxs' | 'xs' | 's' | 'm' | 'l' | 'xl' | 'xxl' | 'xxl', number>;
+export type TCoef = {
+    $0_: TCoefRangeConfig;
+    $1_: TCoefRangeConfig;
+    $2_: TCoefRangeConfig;
+    $16_: TCoefRangeConfig;
+    max: number;
+};
 /**
  * Provider attributes
  */
@@ -62,6 +74,10 @@ export type TProviderAttrs = {
      * Root time in ms
      */
     time: string | null;
+    /**
+     * Root angle in deg
+     */
+    angle: string | null;
 };
 
 /**
@@ -88,6 +104,10 @@ export type TProviderSettings = {
      * Palette
      */
     palette: TPalette;
+    /**
+     * Coefficients
+     */
+    coef: TCoef;
 };
 export type TProviderSettingsPartial = RecursivePartial<TProviderSettings>;
 
@@ -225,7 +245,8 @@ export const DEFAULT_ATTRS: TProviderAttrs = {
     mode: 'a',
     prefix: 'f',
     size: null,
-    time: null
+    time: null,
+    angle: null
 };
 
 const DEFAULT_PALETTE: TPalette = {
@@ -299,6 +320,46 @@ const DEFAULT_PALETTE: TPalette = {
     }
 };
 
+const DEFAULT_COEF: TCoef = {
+    $0_: {
+        xxs: 0.0625,
+        xs: 0.125,
+        s: 0.25,
+        m: 0.5,
+        l: 0.75,
+        xl: 0.875,
+        xxl: 0.9375
+    },
+    $1_: {
+        xxs: 1.0625,
+        xs: 1.125,
+        s: 1.25,
+        m: 1.5,
+        l: 1.75,
+        xl: 1.875,
+        xxl: 1.9375
+    },
+    $2_: {
+        xxs: 2.5,
+        xs: 4,
+        s: 5,
+        m: 7.5,
+        l: 10,
+        xl: 12,
+        xxl: 15
+    },
+    $16_: {
+        xxs: 20,
+        xs: 28,
+        s: 36,
+        m: 48,
+        l: 64,
+        xl: 80,
+        xxl: 120
+    },
+    max: 150
+};
+
 export const mixPalette = (prev: TPalette, next?: TPaletteConfig): TPalette => {
     if (!next) return prev;
     return {
@@ -354,6 +415,10 @@ export const DEFAULT_SETTINGS: Partial<TProviderSettings> = {
              * Root em
              */
             rem: '16px',
+            /**
+             * Root angle
+             */
+            rangle: '30deg',
             /**
              * Lightness
              */
@@ -477,7 +542,8 @@ export const DEFAULT_SETTINGS: Partial<TProviderSettings> = {
             }
         }
     },
-    palette: DEFAULT_PALETTE
+    palette: DEFAULT_PALETTE,
+    coef: DEFAULT_COEF
 };
 
 /**

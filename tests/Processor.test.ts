@@ -71,6 +71,34 @@ describe('Base:', () => {
         expect(styleString).toBe(`.cust{transition-duration:calc(2 * var(--f0-rtime));}`);
     });
 
+    test('Size:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ size }) => {
+                return {
+                    [`.cust`]: {
+                        width: size(2)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(`.cust{width:calc(2 * 1rem);}`);
+    });
+
+    test('Angle:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ angle }) => {
+                return {
+                    [`.cust`]: {
+                        transform: `skew(${angle(1.5)})`
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(`.cust{transform:skew(calc(1.5 * var(--f0-rangle)));}`);
+    });
+
     test('Nested selector:', () => {
         const styleString = processor.compile({
             key: 'cust',
@@ -517,6 +545,224 @@ describe('Palette:', () => {
             '.palette-complex{color:oklch(var(--f0-palette-l-fg-l) var(--f0-palette-c-fg-gray) var(--f0-palette-h-inf) / 1);' +
             'background-color:oklch(var(--f0-palette-l-bg-xl) var(--f0-palette-c-bg-pale) var(--f0-palette-h-sec) / 1);' +
             'border-color:oklch(var(--f0-palette-l-fg-xs) var(--f0-palette-c-fg-rich) var(--f0-palette-h-suc) / 0.75);}'
+        );
+    });
+});
+
+describe('Coefficient:', () => {
+    test('short range:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ each, coef, size }) => {
+                return each(coef.short, (k, v) => ({
+                    [`.size-` + k]: {
+                        width: size(v)
+                    }
+                }));
+            }
+        });
+        expect(styleString).toBe(
+            '.size-s{width:calc(var(--f0-coef-7) * 1rem);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
+            '.size-l{width:calc(var(--f0-coef-9) * 1rem);}'
+        );
+    });
+
+    test('base range:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ each, coef, size }) => {
+                return each(coef.base, (k, v) => ({
+                    [`.size-` + k]: {
+                        width: size(v)
+                    }
+                }));
+            }
+        });
+        expect(styleString).toBe(
+            '.size-xs{width:calc(var(--f0-coef-6) * 1rem);}' +
+            '.size-s{width:calc(var(--f0-coef-7) * 1rem);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
+            '.size-l{width:calc(var(--f0-coef-9) * 1rem);}' +
+            '.size-xl{width:calc(var(--f0-coef-10) * 1rem);}'
+        );
+    });
+
+    test('long range:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ each, coef, size }) => {
+                return each(coef.long, (k, v) => ({
+                    [`.size-` + k]: {
+                        width: size(v)
+                    }
+                }));
+            }
+        });
+        expect(styleString).toBe(
+            '.size-xxs{width:calc(var(--f0-coef-5) * 1rem);}' +
+            '.size-xs{width:calc(var(--f0-coef-6) * 1rem);}' +
+            '.size-s{width:calc(var(--f0-coef-7) * 1rem);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
+            '.size-l{width:calc(var(--f0-coef-9) * 1rem);}' +
+            '.size-xl{width:calc(var(--f0-coef-10) * 1rem);}' +
+            '.size-xxl{width:calc(var(--f0-coef-11) * 1rem);}'
+        );
+    });
+
+    test('full range:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ each, coef, size }) => {
+                return each(coef.full, (k, v) => ({
+                    [`.size-` + k]: {
+                        width: size(v)
+                    }
+                }));
+            }
+        });
+        expect(styleString).toBe(
+            '.size-min{width:calc(var(--f0-coef-4) * 1rem);}' +
+            '.size-xxs{width:calc(var(--f0-coef-5) * 1rem);}' +
+            '.size-xs{width:calc(var(--f0-coef-6) * 1rem);}' +
+            '.size-s{width:calc(var(--f0-coef-7) * 1rem);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
+            '.size-l{width:calc(var(--f0-coef-9) * 1rem);}' +
+            '.size-xl{width:calc(var(--f0-coef-10) * 1rem);}' +
+            '.size-xxl{width:calc(var(--f0-coef-11) * 1rem);}' +
+            '.size-max{width:calc(var(--f0-coef-12) * 1rem);}'
+        );
+    });
+
+    test('sparse range:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ each, coef, size }) => {
+                return each(coef.sparse, (k, v) => ({
+                    [`.size-` + k]: {
+                        width: size(v)
+                    }
+                }));
+            }
+        });
+        expect(styleString).toBe(
+            '.size-min{width:calc(var(--f0-coef-4) * 1rem);}' +
+            '.size-xs{width:calc(var(--f0-coef-6) * 1rem);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
+            '.size-xl{width:calc(var(--f0-coef-10) * 1rem);}' +
+            '.size-max{width:calc(var(--f0-coef-12) * 1rem);}'
+        );
+    });
+
+    test('`0-1` range center:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ coef, size }) => {
+                return {
+                    [`.size`]: {
+                        width: size(coef.$0_.m)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.size{width:calc(var(--f0-coef-4) * 1rem);}'
+        );
+    });
+
+    test('`1` range center:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ coef, size }) => {
+                return {
+                    [`.size`]: {
+                        width: size(coef.$1.m)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.size{width:calc(var(--f0-coef-8) * 1rem);}'
+        );
+    });
+
+    test('`1-2` range center:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ coef, size }) => {
+                return {
+                    [`.size`]: {
+                        width: size(coef.$1_.m)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.size{width:calc(var(--f0-coef-12) * 1rem);}'
+        );
+    });
+
+    test('`2` range center:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ coef, size }) => {
+                return {
+                    [`.size`]: {
+                        width: size(coef.$2.m)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.size{width:calc(var(--f0-coef-16) * 1rem);}'
+        );
+    });
+
+    test('`2-16` range center:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ coef, size }) => {
+                return {
+                    [`.size`]: {
+                        width: size(coef.$2_.m)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.size{width:calc(var(--f0-coef-20) * 1rem);}'
+        );
+    });
+
+    test('`16` range center:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ coef, size }) => {
+                return {
+                    [`.size`]: {
+                        width: size(coef.$16.m)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.size{width:calc(var(--f0-coef-24) * 1rem);}'
+        );
+    });
+
+    test('`16-inf` range center:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ coef, size }) => {
+                return {
+                    [`.size`]: {
+                        width: size(coef.$16_.m)
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.size{width:calc(var(--f0-coef-28) * 1rem);}'
         );
     });
 });

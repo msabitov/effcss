@@ -26,9 +26,11 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
     let hydrate: TAttr;
     let size: TAttr;
     let time: TAttr;
-    ({ prefix, mode, hydrate, theme, size, time } = Object.assign({}, DEFAULT_ATTRS, attrs));
+    let angle: TAttr;
+    ({ prefix, mode, hydrate, theme, size, time, angle } = Object.assign({}, DEFAULT_ATTRS, attrs));
     let _size: number | null = numOrNull(size);
     let _time: number | null = numOrNull(time);
+    let _angle: number | null = numOrNull(angle);
     let palette: TProviderSettings['palette'] | undefined;
     let vars: Record<string, object> | undefined;
     let bp: Record<string, number | string> | undefined;
@@ -92,6 +94,12 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
         set time(val) {
             _time = val;
         },
+        get angle() {
+            return _angle;
+        },
+        set angle(val) {
+            _angle = val;
+        },
         get settings() {
             return {
                 bp,
@@ -125,6 +133,7 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
                 theme,
                 size: _size !== null && String(_size),
                 time: _time !== null && String(_time),
+                angle: _angle !== null && String(_angle)
             })
                 .map(([name, value]) => (value ? `${name}="${value}"` : value === '' ? name : ''))
                 .filter(Boolean)

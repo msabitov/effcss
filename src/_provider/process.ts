@@ -6,6 +6,7 @@ import { resolveUnits } from './_process/units';
 import { resolvePseudo } from './_process/pseudo';
 import { resolveColor } from './_process/color';
 import { resolvePalette } from './_process/palette';
+import { resolveCoef } from './_process/coef';
 import { getBaseHandlers } from './_process/base';
 import { parseStyles } from './_process/utils';
 
@@ -45,13 +46,25 @@ interface IMakerParams extends ReturnType<typeof getBaseHandlers> {
      */
     palette: ReturnType<typeof resolvePalette>;
     /**
+     * Coefficient
+     */
+    coef: ReturnType<typeof resolveCoef>;
+    /**
      * Global vars
      */
     vars: <G>(val: Leaves<G>) => string;
     /**
+     * Scalable size value
+     */
+    size: (coef?: number | string) => string;
+    /**
      * Scalable time value
      */
-    time: (coef?: number) => string;
+    time: (coef?: number | string) => string;
+    /**
+     * Scalable angle value
+     */
+    angle: (coef?: number | string) => string;
     /**
      * Width limit queries
      */
@@ -112,8 +125,11 @@ const _AND_ = ') and (';
 export const createProcessor: TCreateProcessor = (params) => {
     const { scope, globalKey = '', bp = {} } = params;
     const globalScope = scope(globalKey);
-    const vars = (val: string) => globalScope.varExp(...val.split('.'));
-    const time = (coef: number = 1) => `calc(${coef} * ${vars('rtime')})`;
+    const globalVarExp = globalScope.varExp;
+    const vars = (val: string) => globalVarExp(...val.split('.'));
+    const time = (coef: string | number = 1) => `calc(${coef} * ${vars('rtime')})`;
+    const angle = (coef: string | number = 1) => `calc(${coef} * ${vars('rangle')})`;
+    const size = (coef: string | number = 1) => `calc(${coef} * 1rem)`;
     return {
         compile: ({ key, maker }) => {
             const localScope = scope(key);
@@ -141,16 +157,22 @@ export const createProcessor: TCreateProcessor = (params) => {
                         key,
                         // global vars
                         vars,
+                        // size
+                        size,
                         // time
                         time,
+                        // angle
+                        angle,
                         // BEM selectors
                         bem: localScope.selector,
                         // pseudo selectors
                         pseudo: resolvePseudo(),
                         // color handlers
-                        color: resolveColor(globalScope.varExp),
+                        color: resolveColor(globalVarExp),
                         // palette handlers
-                        palette: resolvePalette(globalScope.varExp),
+                        palette: resolvePalette(globalVarExp),
+                        // coefficient handlers
+                        coef: resolveCoef(globalVarExp),
                         // css units
                         units: resolveUnits(),
                         // css at-rules
