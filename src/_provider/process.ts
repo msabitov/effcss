@@ -1,5 +1,6 @@
 // types
 import type { TDeafultBreakpoints, TCreateScope } from '../common';
+import { merge } from '../common';
 // process utils
 import { resolveAtRules } from './_process/atrules';
 import { resolveUnits } from './_process/units';
@@ -99,6 +100,10 @@ interface IMakerParams extends ReturnType<typeof getBaseHandlers> {
          */
         only: <T = TDeafultBreakpoints>(val: Exclude<keyof T, Symbol> | number, scope?: string) => string;
     };
+    /**
+     * Merge
+     */
+    merge: typeof merge;
 }
 
 type TCreateProcessor = (params: {
@@ -178,7 +183,9 @@ export const createProcessor: TCreateProcessor = (params) => {
                         // css at-rules
                         at,
                         // limits
-                        limit
+                        limit,
+                        // merge
+                        merge
                     })
                 )
             );

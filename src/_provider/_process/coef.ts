@@ -186,6 +186,17 @@ export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp
         }
 
         /**
+         * Main range dictionary
+         */
+        get main() {
+            return {
+                min: this.min,
+                m: this.m,
+                max: this.max
+            };
+        }
+
+        /**
          * Sparse range dictionary
          */
         get sparse() {

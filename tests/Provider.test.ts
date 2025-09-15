@@ -110,6 +110,15 @@ const PROVIDER_PARAMS = {
                 }
             }
         }
+    },
+    coef: {
+        $0_: {
+            xxs: 0.05
+        },
+        max: 220,
+        $1_: {
+            xxl: 1.9
+        }
     }
 };
 
@@ -226,6 +235,19 @@ describe('Provider utils:', () => {
             sec: PROVIDER_PARAMS.palette.h.sec + '',
             s: PROVIDER_PARAMS.palette.l.light.bg.s + '',
             rich: PROVIDER_PARAMS.palette.c.light.fg.rich + '',
+        });
+    });
+
+    test('custom coef values', () => {
+        const custom = {
+            1: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-coef-1'),
+            15: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-coef-15'),
+            max: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-coef-32'),
+        };
+        expect(custom).toEqual({
+            1: PROVIDER_PARAMS.coef.$0_.xxs + '',
+            15: PROVIDER_PARAMS.coef.$1_.xxl + '',
+            max: PROVIDER_PARAMS.coef.max + '',
         });
     });
 });

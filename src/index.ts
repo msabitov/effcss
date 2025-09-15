@@ -5,7 +5,7 @@ import { createManager } from './_provider/manage';
 // common
 import type { TProviderSettings, TProviderSettingsPartial } from './common';
 import {
-    createCollector, createKeyMaker, createScope, mixPalette,
+    createCollector, createKeyMaker, createScope, merge,
     DEFAULT_ATTRS, DEFAULT_SETTINGS, TAG_NAME
 } from './common';
 
@@ -273,10 +273,8 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
             }
 
             set settings(val: TProviderSettingsPartial) {
-                const nextSettings = assign({}, this._settings, val, {
-                    palette: mixPalette(this._settings.palette as TProviderSettings['palette'], val?.palette)
-                });
-                const { makers, vars, bp, off, palette } = nextSettings;
+                const nextSettings = merge({}, this._settings, val);
+                const { makers, bp, off } = nextSettings;
                 if (bp && this._settings?.bp !== bp || !this._p)
                     this._p = createProcessor({
                         scope: this._s,
@@ -368,6 +366,7 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
                     ...getOrderedRange(coef.$2_),
                     16,
                     ...getOrderedRange(coef.$16_),
+                    coef.max
                 ];
                 // create init stylesheet maker
                 this._ = ({ bem, each, when, vars, merge, at: { mq }, units: {px, ms, deg} }) => {

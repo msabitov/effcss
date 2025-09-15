@@ -31,6 +31,7 @@ export type TPalette = {
 };
 export type TPaletteConfig = RecursivePartial<TPalette>;
 export type TCoefShortRange = 's' | 'm' | 'l';
+export type TCoefMainRange = 'min' | 'm' | 'max';
 export type TCoefBaseRange = 'xs' | TCoefShortRange | 'xl';
 export type TCoefLongRange = 'xxs' | TCoefBaseRange | 'xxl';
 export type TCoefFullRange = 'min' | TCoefLongRange | 'max';
@@ -180,7 +181,7 @@ export type TCreateScope = (params?: { mode?: string | null }) => TScopeResolver
 // local utils
 const UND = undefined;
 const entries = Object.entries;
-const assign = Object.assign;
+const isArray = Array.isArray;
 const defineProperties = Object.defineProperties;
 const getDataBase = (base: string) => `data-${base}`;
 const isString = (val: any) => typeof val === 'string';
@@ -222,7 +223,19 @@ const makeClsVal = (b: string, e?: string, m?: string, v?: string) =>
 const makeCls = (b: string, e?: string, m?: string, v?: string) => '.' + makeClsVal(b, e, m, v);
 const makeAttr = (b: string, e?: string, m?: string, v?: string) =>
     `[${getDataBase(getBase(b, e))}${m && v ? `~="${m}_${v}"` : m ? `~="${m}"` : ''}]`;
-
+export const merge = (target: Record<string, any>, ...sources: Record<string, any>[]) =>
+    !sources.length
+        ? target
+        : sources.reduce((acc, source) => {
+              entries(source).forEach(([k, v]) => {
+                  if (v && typeof v === 'object') {
+                      if (!acc[k]) acc[k] = v;
+                      else if (isArray(acc[k]) && isArray(v)) acc[k] = [...acc[k], ...v];
+                      else merge(acc[k], v || {});
+                  } else acc[k] = v;
+              });
+              return acc;
+          }, target as Record<string, any>);
 const LIGHTNESS_DEFAULT = {
     def: 0.75,
     // contrast
@@ -358,33 +371,6 @@ const DEFAULT_COEF: TCoef = {
         xxl: 120
     },
     max: 150
-};
-
-export const mixPalette = (prev: TPalette, next?: TPaletteConfig): TPalette => {
-    if (!next) return prev;
-    return {
-        l: {
-            dark: {
-                bg: assign(prev.l.dark.bg, next?.l?.dark?.bg),
-                fg: assign(prev.l.dark.fg, next?.l?.dark?.fg)
-            },
-            light: {
-                bg: assign(prev.l.light.bg, next?.l?.light?.bg),
-                fg: assign(prev.l.light.fg, next?.l?.light?.fg)
-            }
-        },
-        c: {
-            dark: {
-                bg: assign(prev.c.dark.bg, next?.c?.dark?.bg),
-                fg: assign(prev.c.dark.fg, next?.c?.dark?.fg)
-            },
-            light: {
-                bg: assign(prev.c.light.bg, next?.c?.light?.bg),
-                fg: assign(prev.c.light.fg, next?.c?.light?.fg)
-            }
-        },
-        h: assign(prev.h, next?.h)
-    };
 };
 
 export const DEFAULT_BREAKPOINTS = {

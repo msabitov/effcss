@@ -654,6 +654,24 @@ describe('Coefficient:', () => {
         );
     });
 
+    test('main range:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ each, coef, size }) => {
+                return each(coef.main, (k, v) => ({
+                    [`.size-` + k]: {
+                        width: size(v)
+                    }
+                }));
+            }
+        });
+        expect(styleString).toBe(
+            '.size-min{width:calc(var(--f0-coef-4) * 1rem);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
+            '.size-max{width:calc(var(--f0-coef-12) * 1rem);}'
+        );
+    });
+
     test('`0-1` range center:', () => {
         const styleString = processor.compile({
             key: 'cust',
