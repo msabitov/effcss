@@ -1,90 +1,63 @@
-import { TCreateScope } from '../../common';
+import { TCreateScope, IPalette } from '../../common';
 import { NO_PARSE_SYMBOL } from './utils';
 
 const PALETTE = 'palette';
 
-export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']) => {
-    const hue = {
-        pri: varExp(PALETTE, 'h', 'pri'),
-        sec: varExp(PALETTE, 'h', 'sec'),
-        ter: varExp(PALETTE, 'h', 'ter'),
-        suc: varExp(PALETTE, 'h', 'suc'),
-        inf: varExp(PALETTE, 'h', 'inf'),
-        war: varExp(PALETTE, 'h', 'war'),
-        dan: varExp(PALETTE, 'h', 'dan'),
-    };
-    /**
-     * Palette generator
-     * @description
-     * Allows to create palette colors 
-     */
-    class Palette {
+export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']): IPalette => {
+    class Palette implements IPalette {
         /**
          * Palette state
          */
-        state = {
+        state: IPalette['state'] = {
             l: 'l',
             c: 'base',
-            h: hue.pri,
+            h: 'pri',
             a: 1,
             m: 'bg'
         };
 
-        constructor(params = {}) {
+        constructor(params: Partial<IPalette['state']> = {}) {
             Object.assign(this, {[NO_PARSE_SYMBOL]: true});
             this.state = Object.assign(this.state, params);
         }
 
         // lightness
 
-        /**
-         * Returns `xs` lightness color
-         */
-        get xs() {
+        get xs(): Palette {
             return new Palette({
                 ...this.state,
                 l: 'xs'
             });
         }
-        /**
-         * Returns `s` lightness color
-         */
-        get s() {
+
+        get s(): Palette {
             return new Palette({
                 ...this.state,
                 l: 's'
             });
         }
-        /**
-         * Returns `m` lightness color
-         */
-        get m() {
+
+        get m(): Palette {
             return new Palette({
                 ...this.state,
                 l: 'm'
             });
         }
-        /**
-         * Returns `l` lightness color
-         */
+
         get l() {
             return new Palette({
                 ...this.state,
                 l: 'l'
             });
         }
-        /**
-         * Returns `xl` lightness color
-         */
+
         get xl() {
             return new Palette({
                 ...this.state,
                 l: 'xl'
             });
         }
-        /**
-         * Returns lightness color dictionary
-         */
+
         get lightness() {
             return {
                 xs: this.xs,
@@ -97,45 +70,33 @@ export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['var
 
         // chroma
 
-        /**
-         * Returns zero chroma color
-         */
         get gray() {
             return new Palette({
                 ...this.state,
                 c: 'gray'
             });
         }
-        /**
-         * Returns pale chroma color
-         */
         get pale() {
             return new Palette({
                 ...this.state,
                 c: 'pale'
             });
         }
-        /**
-         * Returns base chroma color
-         */
+
         get base() {
             return new Palette({
                 ...this.state,
                 c: 'base'
             });
         }
-        /**
-         * Returns rich chroma color
-         */
+
         get rich() {
             return new Palette({
                 ...this.state,
                 c: 'rich'
             });
         }
-        /**
-         * Returns chroma color dictionary
-         */
+
         get chroma() {
             return {
                 gray: this.gray,
@@ -147,63 +108,48 @@ export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['var
 
         // hue
 
-        /**
-         * Returns primary hue color
-         */
         get pri() {
             return new Palette({
                 ...this.state,
-                h: hue.pri
+                h: 'pri'
             });
         }
-        /**
-         * Returns secondary hue color
-         */
+
         get sec() {
             return new Palette({
                 ...this.state,
-                h: hue.sec
+                h: 'sec'
             });
         }
-        /**
-         * Returns success hue color
-         */
+
         get suc() {
             return new Palette({
                 ...this.state,
-                h: hue.suc
+                h: 'suc'
             });
         }
-        /**
-         * Returns info hue color
-         */
+
         get inf() {
             return new Palette({
                 ...this.state,
-                h: hue.inf
+                h: 'inf'
             });
         }
-        /**
-         * Returns warning hue color
-         */
+
         get war() {
             return new Palette({
                 ...this.state,
-                h: hue.war
+                h: 'war'
             });
         }
-        /**
-         * Returns danger hue color
-         */
+
         get dan() {
             return new Palette({
                 ...this.state,
-                h: hue.dan
+                h: 'dan'
             });
         }
-        /**
-         * Returns hue color dictionary
-         */
+
         get hue() {
             return {
                 pri: this.pri,
@@ -217,9 +163,6 @@ export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['var
 
         // alpha
 
-        /**
-         * Returns specified alpha color
-         */
         alpha(a = 1) {
             return new Palette({
                 ...this.state,
@@ -229,18 +172,13 @@ export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['var
 
         // mode
 
-        /**
-         * Returns background color
-         */
         get bg() {
             return new Palette({
                 ...this.state,
                 m: 'bg'
             });
         }
-        /**
-         * Returns foreground color
-         */
+
         get fg() {
             return new Palette({
                 ...this.state,
@@ -250,7 +188,7 @@ export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['var
 
         toString() {
             const { l, c, h, a, m } = this.state;
-            return `oklch(${varExp(PALETTE, 'l', m, l)} ${varExp(PALETTE, 'c', m, c)} ${h} / ${a})`;
+            return `oklch(${varExp(PALETTE, 'l', m, l)} ${varExp(PALETTE, 'c', m, c)} ${varExp(PALETTE, 'h', h)} / ${a})`;
         }
     }
     return new Palette();

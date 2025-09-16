@@ -1,111 +1,80 @@
-import { TCreateScope } from '../../common';
+import { TCreateScope, ICoef } from '../../common';
 
 const COEF = 'coef';
 
-export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']) => {
+export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']): ICoef => {
     /**
      * Coefficient generator
      * @description
      * Allows to create coefficient ranges 
      */
-    class Coefficient {
-        /**
-         * Coefficient state
-         */
+    class Coefficient implements ICoef {
         state = {
             center: 8
         };
 
-        constructor(params = {}) {
+        constructor(params: Partial<ICoef['state']> = {}) {
             this.state = Object.assign(this.state, params);
         }
 
         // values
 
-        /**
-         * Returns `xxs` coefficient
-         */
         get min() {
             return varExp(COEF, this.state.center - 4);
         }
-        /**
-         * Returns `xxs` coefficient
-         */
+
         get xxs() {
             return varExp(COEF, this.state.center - 3);
         }
-        /**
-         * Returns `xs` coefficient
-         */
+
         get xs() {
             return varExp(COEF, this.state.center - 2);
         }
-        /**
-         * Returns `s` coefficient
-         */
+
         get s() {
             return varExp(COEF, this.state.center - 1);
         }
-        /**
-         * Returns `m` coefficient
-         */
+
         get m() {
             return varExp(COEF, this.state.center);
         }
-        /**
-         * Returns `l` coefficient
-         */
+
         get l() {
             return varExp(COEF, this.state.center + 1);
         }
-        /**
-         * Returns `xl` coefficient
-         */
+
         get xl() {
             return varExp(COEF, this.state.center + 2);
         }
-        /**
-         * Returns `xxl` coefficient
-         */
+
         get xxl() {
             return varExp(COEF, this.state.center + 3);
         }
-        /**
-         * Returns `xxl` coefficient
-         */
+
         get max() {
             return varExp(COEF, this.state.center + 4);
         }
 
         // range from
 
-        /**
-         * Range from 0 to 1
-         */
         get $0_() {
             return new Coefficient({
                 center: 4
             });
         }
-        /**
-         * Range from 1 to 2
-         */
+
         get $1_() {
             return new Coefficient({
                 center: 12
             });
         }
-        /**
-         * Range from 2 to 16
-         */
+
         get $2_() {
             return new Coefficient({
                 center: 20
             });
         }
-        /**
-         * Range from 16 to the end
-         */
+
         get $16_() {
             return new Coefficient({
                 center: 28
@@ -114,25 +83,18 @@ export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp
 
         // range around
 
-        /**
-         * Range around 1
-         */
         get $1() {
             return new Coefficient({
                 center: 8
             });
         }
-        /**
-         * Range around 2
-         */
+
         get $2() {
             return new Coefficient({
                 center: 16
             });
         }
-        /**
-         * Range around 16
-         */
+
         get $16() {
             return new Coefficient({
                 center: 24
@@ -141,9 +103,6 @@ export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp
 
         // range dictionary
 
-        /**
-         * Short range dictionary
-         */
         get short() {
             return {
                 s: this.s,
@@ -152,9 +111,6 @@ export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp
             };
         }
 
-        /**
-         * Base range dictionary
-         */
         get base() {
             return {
                 xs: this.xs,
@@ -163,9 +119,6 @@ export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp
             };
         }
 
-        /**
-         * Long range dictionary
-         */
         get long() {
             return {
                 xxs: this.xxs,
@@ -174,9 +127,6 @@ export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp
             };
         }
 
-        /**
-         * Full range dictionary
-         */
         get full() {
             return {
                 min: this.min,
@@ -185,9 +135,6 @@ export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp
             };
         }
 
-        /**
-         * Main range dictionary
-         */
         get main() {
             return {
                 min: this.min,
@@ -196,9 +143,6 @@ export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp
             };
         }
 
-        /**
-         * Sparse range dictionary
-         */
         get sparse() {
             return {
                 min: this.min,

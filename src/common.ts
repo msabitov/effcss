@@ -2,9 +2,114 @@
 type TOptStr = string | undefined;
 type TParsedBEM = [string, TOptStr, TOptStr, TOptStr][];
 
-type THueToken = 'pri' | 'sec' | 'suc' | 'inf' | 'war' | 'dan';
-type TLightnessToken = 'xs' | 's' | 'm' | 'l' | 'xl';
-type TChromaToken = 'pale' | 'base' | 'rich';
+type THue = 'pri' | 'sec' | 'suc' | 'inf' | 'war' | 'dan';
+type TLightness = 'xs' | 's' | 'm' | 'l' | 'xl';
+type TChroma = 'pale' | 'base' | 'rich';
+type TMode = 'bg' | 'fg';
+/**
+ * Palette generator
+ * @description
+ * Allows to create palette colors 
+ */
+export interface IPalette {
+    state: {
+        l: TLightness;
+        c: TChroma | 'gray';
+        h: THue;
+        a: number;
+        m: TMode;
+    }
+    /**
+     * Returns `xs` lightness color
+     */
+    get xs(): IPalette;
+    /**
+     * Returns `s` lightness color
+     */
+    get s(): IPalette;
+    /**
+     * Returns `m` lightness color
+     */
+    get m(): IPalette;
+    /**
+     * Returns `l` lightness color
+     */
+    get l(): IPalette;
+    /**
+     * Returns `xl` lightness color
+     */
+    get xl(): IPalette;
+    /**
+     * Returns lightness color dictionary
+     */
+    get lightness(): Record<TLightness, IPalette>;
+    /**
+     * Returns zero chroma color
+     */
+    get gray(): IPalette;
+    /**
+     * Returns pale chroma color
+     */
+    get pale(): IPalette;
+    /**
+     * Returns base chroma color
+     */
+    get base(): IPalette;
+    /**
+     * Returns rich chroma color
+     */
+    get rich(): IPalette;
+    /**
+     * Returns chroma color dictionary
+     */
+    get chroma(): Record<TChroma, IPalette>;
+    /**
+     * Returns primary hue color
+     */
+    get pri(): IPalette;
+    /**
+     * Returns secondary hue color
+     */
+    get sec(): IPalette;
+    /**
+     * Returns success hue color
+     */
+    get suc(): IPalette;
+    /**
+     * Returns info hue color
+     */
+    get inf(): IPalette;
+    /**
+     * Returns warning hue color
+     */
+    get war(): IPalette;
+    /**
+     * Returns danger hue color
+     */
+    get dan(): IPalette;
+    /**
+     * Returns hue color dictionary
+     */
+    get hue(): Record<THue, IPalette>;
+    /**
+     * Returns specified alpha color
+     */
+    alpha(a?: number): IPalette;
+    /**
+     * Returns background color
+     */
+    get bg(): IPalette;
+    /**
+     * Returns foreground color
+     */
+    get fg(): IPalette;
+}
+type RecursivePartial<T> = {
+  [P in keyof T]?:
+    T[P] extends (infer U)[] ? RecursivePartial<U>[] :
+    T[P] extends object | undefined ? RecursivePartial<T[P]> :
+    T[P];
+};
 type TPaletteDict <T extends string> = {
     dark: {
         bg: Record<T, number>;
@@ -14,36 +119,130 @@ type TPaletteDict <T extends string> = {
         bg: Record<T, number>;
         fg: Record<T, number>;
     };
-}
-type RecursivePartial<T> = {
-  [P in keyof T]?:
-    T[P] extends (infer U)[] ? RecursivePartial<U>[] :
-    T[P] extends object | undefined ? RecursivePartial<T[P]> :
-    T[P];
 };
-export type TPaletteHue = Record<THueToken, number>;
-export type TPaletteLightness = TPaletteDict<TLightnessToken>;
-export type TPaletteChroma = TPaletteDict<TChromaToken>;
-export type TPalette = {
+export type TPaletteHue = Record<THue, number>;
+export type TPaletteLightness = TPaletteDict<TLightness>;
+export type TPaletteChroma = TPaletteDict<TChroma>;
+export type TPaletteConfig = {
     l: TPaletteLightness;
     c: TPaletteChroma;
     h: TPaletteHue;
 };
-export type TPaletteConfig = RecursivePartial<TPalette>;
-export type TCoefShortRange = 's' | 'm' | 'l';
-export type TCoefMainRange = 'min' | 'm' | 'max';
-export type TCoefBaseRange = 'xs' | TCoefShortRange | 'xl';
-export type TCoefLongRange = 'xxs' | TCoefBaseRange | 'xxl';
-export type TCoefFullRange = 'min' | TCoefLongRange | 'max';
-export type TCoefSparseRange = 'min' | 'xs' | 'm' | 'xl' | 'max';
-export type TCoefRangeConfig = Record<'xxs' | 'xs' | 's' | 'm' | 'l' | 'xl' | 'xxl' | 'xxl', number>;
-export type TCoef = {
-    $0_: TCoefRangeConfig;
-    $1_: TCoefRangeConfig;
-    $2_: TCoefRangeConfig;
-    $16_: TCoefRangeConfig;
+export type TShortRange = 's' | 'm' | 'l';
+export type TMainRange = 'min' | 'm' | 'max';
+export type TBaseRange = 'xs' | TShortRange | 'xl';
+export type TLongRange = 'xxs' | TBaseRange | 'xxl';
+export type TFullRange = 'min' | TLongRange | 'max';
+export type TSparseRange = 'min' | 'xs' | 'm' | 'xl' | 'max';
+export type TRangeConfig = Record<'xxs' | 'xs' | 's' | 'm' | 'l' | 'xl' | 'xxl' | 'xxl', number>;
+export type TCoefConfig = {
+    $0_: TRangeConfig;
+    $1_: TRangeConfig;
+    $2_: TRangeConfig;
+    $16_: TRangeConfig;
     max: number;
 };
+/**
+ * Coefficient generator
+ * @description
+ * Allows to create coefficient ranges 
+ */
+export interface ICoef {
+    /**
+     * Coefficient state
+     */
+    state: {
+        center: number;
+    };
+    /**
+     * Returns `xxs` coefficient
+     */
+    get min(): string;
+    /**
+     * Returns `xxs` coefficient
+     */
+    get xxs(): string;
+    /**
+     * Returns `xs` coefficient
+     */
+    get xs(): string;
+    /**
+     * Returns `s` coefficient
+     */
+    get s(): string;
+    /**
+     * Returns `m` coefficient
+     */
+    get m(): string;
+    /**
+     * Returns `l` coefficient
+     */
+    get l(): string;
+    /**
+     * Returns `xl` coefficient
+     */
+    get xl(): string;
+    /**
+     * Returns `xxl` coefficient
+     */
+    get xxl(): string;
+    /**
+     * Returns `xxl` coefficient
+     */
+    get max(): string;
+    /**
+     * Range from 0 to 1
+     */
+    get $0_(): ICoef;
+    /**
+     * Range around 1
+     */
+    get $1(): ICoef;
+    /**
+     * Range from 1 to 2
+     */
+    get $1_(): ICoef;
+    /**
+     * Range around 2
+     */
+    get $2(): ICoef;
+    /**
+     * Range from 2 to 16
+     */
+    get $2_(): ICoef;
+    /**
+     * Range around 16
+     */
+    get $16(): ICoef;
+    /**
+     * Range from 16 to the end
+     */
+    get $16_(): ICoef;
+    /**
+     * Short range dictionary
+     */
+    get short(): Record<TShortRange, string>;
+    /**
+     * Base range dictionary
+     */
+    get base(): Record<TBaseRange, string>;
+    /**
+     * Long range dictionary
+     */
+    get long(): Record<TLongRange, string>;
+    /**
+     * Full range dictionary
+     */
+    get full(): Record<TFullRange, string>;
+    /**
+     * Main range dictionary
+     */
+    get main(): Record<TMainRange, string>;
+    /**
+     * Sparse range dictionary
+     */
+    get sparse(): Record<TSparseRange, string>;
+}
 /**
  * Provider attributes
  */
@@ -104,11 +303,11 @@ export type TProviderSettings = {
     /**
      * Palette
      */
-    palette: TPalette;
+    palette: TPaletteConfig;
     /**
      * Coefficients
      */
-    coef: TCoef;
+    coef: TCoefConfig;
 };
 export type TProviderSettingsPartial = RecursivePartial<TProviderSettings>;
 
@@ -143,7 +342,7 @@ type TMods<T> = T extends object
 type TStringBEM<T> = TBlocks<T> | TMods<T> | TElems<T>;
 type TBEM<T> = TDeepPartial<T> | TStringBEM<T> | TStringBEM<T>[];
 type TResolveSelector = <T extends object>(params: TBEM<T>) => string;
-type TResolveAttr = <T extends object>(params: TBEM<T>) => TStrDict;
+type TResolveAttr = <T extends object>(params: TBEM<T>, scope?: TBlocks<T> | TElems<T>) => TStrDict;
 type TParts = (string | number)[];
 type TScope = {
     /**
@@ -262,7 +461,7 @@ export const DEFAULT_ATTRS: TProviderAttrs = {
     angle: null
 };
 
-const DEFAULT_PALETTE: TPalette = {
+const DEFAULT_PALETTE: TPaletteConfig = {
     l: {
         dark: {
             bg: {
@@ -333,7 +532,7 @@ const DEFAULT_PALETTE: TPalette = {
     }
 };
 
-const DEFAULT_COEF: TCoef = {
+const DEFAULT_COEF: TCoefConfig = {
     $0_: {
         xxs: 0.0625,
         xs: 0.125,

@@ -30,4 +30,4 @@ const stringify = (key: string, value: object | string | number | undefined | un
     else return `${kebabCase(resKey)}:${'' + value};`;
 };
 
-export const parseStyles = (styles: object) => objectReduce(styles, (acc, item) => acc + stringify(...item), '');
+export const parseStyles = (styles: object): string => objectReduce(styles, (acc, item) => acc + stringify(...item), '');

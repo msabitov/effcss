@@ -45,6 +45,10 @@ type TResolveAttr = ReturnType<ReturnType<typeof createScope>>['attr'];
  */
 export type TStyleSheetMaker = Parameters<ReturnType<typeof createProcessor>['compile']>[0]['maker'];
 /**
+ * StyleSheet maker utils
+ */
+export type TStyleSheetUtils = Parameters<TStyleSheetMaker>[0];
+/**
  * Style target
  */
 type TStyleTarget = string | TStyleSheetMaker;
