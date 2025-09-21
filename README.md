@@ -138,6 +138,8 @@ export interface ICardMaker {
 }
 
 const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { kf }, merge, palette, coef, size }) = {
+    // specify selector variants via generic
+    const selector = bem<ICardMaker>;
     // creates unique keyframes identifier
     const spin = kf();
     // deeply merges objects
@@ -163,14 +165,14 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { kf }, merge, p
                 transform: 'rotate(360deg)',
             },
         },
-        [bem<ICardMaker>('card')]: { ... },
-        [bem<ICardMaker>('card.logo')]: cardLogoStyles,
-        [bem<ICardMaker>('card..rounded')]: { ... },
-        [bem<ICardMaker>('card..h.full')]: { ... },
-        [bem<ICardMaker>('card.footer')]: { ... },
-        [bem<ICardMaker>('card.footer.visible')]: { ... },
+        [selector('card')]: { ... },
+        [selector('card.logo')]: cardLogoStyles,
+        [selector('card..rounded')]: { ... },
+        [selector('card..h.full')]: { ... },
+        [selector('card.footer')]: { ... },
+        [selector('card.footer.visible')]: { ... },
         ...each(coef.short, (k, v) => ({
-            [bem<ICardMaker>(`card.footer.sz.${k}`)]: {
+            [selector(`card.footer.sz.${k}`)]: {
                 height: size(v)
             }
         }))
@@ -183,13 +185,13 @@ export const App = (props: {
     const { css } = props;
     const stylesRef = useRef();
     if (!stylesRef.current) {
-        const bem = css.use(myStyleSheetMaker);
+        const bem = css.use(myStyleSheetMaker)<ICardMaker>;
         // thanks to the ICardMaker interface,
         // you don't need to look at the implementation - just create the necessary attributes
         stylesRef.current = {
-            card: bem<ICardMaker>('card..rounded'),
+            card: bem('card..rounded'),
             // element with modifiers
-            footer: bem<ICardMaker>({
+            footer: bem({
                 card: {
                     footer: {
                         visible: '',

@@ -165,24 +165,25 @@ describe('Base:', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ bem }) => {
-                const selector0 = bem<TStyleSheet>({
+                const select = bem<TStyleSheet>;
+                const selector0 = select({
                     block: {}
                 });
-                const selector1 = bem<TStyleSheet>({
+                const selector1 = select({
                     block: {
                         '': {
                             hidden: ''
                         }
                     }
                 });
-                const selector2 = bem<TStyleSheet>({
+                const selector2 = select({
                     block: {
                         elem: {
                             sz: 'm'
                         }
                     }
                 });
-                const selector3 = bem<TStyleSheet>('block.elem.sz.s');
+                const selector3 = select('block.elem.sz.s');
                 return {
                     [selector0]: {
                         overflow: 'hidden'

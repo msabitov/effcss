@@ -131,6 +131,39 @@ describe('BEM object to data-attribute:', () => {
         const dest = { ...styleAttr };
         expect(Object.keys(dest).length).toBe(2);
     });
+
+    test('Resolve string:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>(`${block}.${elem}.w.s`);
+        expect(JSON.stringify(styleAttr)).toBe('{"data-cust-block__elem":"w_s"}');
+    });
+
+    test('Resolve string array (single element):', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>([`${block}.${elem}.w.s`, `${block}.${elem}.lg`]);
+        expect(JSON.stringify(styleAttr)).toBe('{"data-cust-block__elem":"w_s lg"}');
+    });
+
+    test('Resolve string array (multiple elements):', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>([`${block}.${elem}.w.s`, `${block}.${elem1}`]);
+        expect(JSON.stringify(styleAttr)).toBe('{"data-cust-block__elem":"w_s","data-cust-block__elem1":""}');
+    });
+
+    test('Resolve mono block:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>().b(block).$;
+        expect(JSON.stringify(styleAttr)).toBe('{"data-cust-block":""}');
+    });
+
+    test('Resolve mono element:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>().b(block).e(elem).$;
+        expect(JSON.stringify(styleAttr)).toBe('{"data-cust-block__elem":""}');
+    });
+
+    test('Resolve mono modifiers:', () => {
+        const styleAttr = attrResolver.attr<TCustomStyleSheet>().b(block).e(elem).m({
+            w: 's',
+            lg: ''
+        }).$;
+        expect(JSON.stringify(styleAttr)).toBe('{"data-cust-block__elem":"w_s lg"}');
+    });
 });
 
 describe('BEM string to data-attribute:', () => {
@@ -309,5 +342,38 @@ describe('BEM string to class attribute:', () => {
         ]);
         const dest = { ...styleAttr };
         expect(Object.keys(dest).length).toBe(1);
+    });
+
+    test('Resolve string:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>(`${block}.${elem}.w.s`);
+        expect(JSON.stringify(styleAttr)).toBe('{"class":"cust-block__elem_w_s"}');
+    });
+
+    test('Resolve string array (single element):', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>([`${block}.${elem}.w.s`, `${block}.${elem}.lg`]);
+        expect(JSON.stringify(styleAttr)).toBe('{"class":"cust-block__elem cust-block__elem_w_s cust-block__elem_lg"}');
+    });
+
+    test('Resolve string array (multiple elements):', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>([`${block}.${elem}.w.s`, `${block}.${elem1}`]);
+        expect(JSON.stringify(styleAttr)).toBe('{"class":"cust-block__elem cust-block__elem_w_s cust-block__elem1"}');
+    });
+
+    test('Resolve mono block:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>().b(block).$;
+        expect(JSON.stringify(styleAttr)).toBe('{"class":"cust-block"}');
+    });
+
+    test('Resolve mono element:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>().b(block).e(elem).$;
+        expect(JSON.stringify(styleAttr)).toBe('{"class":"cust-block__elem"}');
+    });
+
+    test('Resolve mono modifiers:', () => {
+        const styleAttr = clsResolver.attr<TCustomStyleSheet>().b(block).e(elem).m({
+            w: 's',
+            lg: ''
+        }).$;
+        expect(JSON.stringify(styleAttr)).toBe('{"class":"cust-block__elem cust-block__elem_w_s cust-block__elem_lg"}');
     });
 });

@@ -341,8 +341,39 @@ type TMods<T> = T extends object
     : never;
 type TStringBEM<T> = TBlocks<T> | TMods<T> | TElems<T>;
 type TBEM<T> = TDeepPartial<T> | TStringBEM<T> | TStringBEM<T>[];
-type TResolveSelector = <T extends object>(params: TBEM<T>) => string;
-type TResolveAttr = <T extends object>(params: TBEM<T>, scope?: TBlocks<T> | TElems<T>) => TStrDict;
+type TStyleSheet = Record<
+    string, Record<string, Record<string, string | number>>
+>;
+export type TMonoResolver<T extends TStyleSheet,
+    B extends keyof T, E extends keyof T[B]
+> = {
+    /**
+     * Specify block
+     * @param val - block name
+     */
+    b<BL extends Exclude<keyof T, Symbol | number>>(val: BL): TMonoResolver<T, BL, ''>;
+    /**
+     * Specify element
+     * @param val - element name
+     */
+    e<EL extends Exclude<keyof T[B], Symbol | number>>(val: EL): TMonoResolver<T, B, EL>;
+    /**
+     * Specify modifiers
+     * @param val - modifiers object
+     */
+    m(val?: Partial<T[B][E]>): TMonoResolver<T, B, E>;
+    /**
+     * Result style attributes
+     */
+    get $(): {
+        [key in string]: string;
+    };
+}
+type TResolveSelector = <T extends TStyleSheet>(params: TBEM<T>) => string;
+type TResolveAttr = {
+    <T extends TStyleSheet>(params: TBEM<T>): Record<string, string>;
+    <T extends TStyleSheet>(): TMonoResolver<T, "", "">;
+};
 type TParts = (string | number)[];
 type TScope = {
     /**
@@ -730,6 +761,49 @@ export const DEFAULT_SETTINGS: Partial<TProviderSettings> = {
     palette: DEFAULT_PALETTE,
     coef: DEFAULT_COEF
 };
+function resolveMono<T extends Record<
+    string, Record<string, Record<string, string | number>>>
+>(resolve: (p: object) => object): TMonoResolver<T, '', ''> {
+    const get = <
+        T,
+        B extends Exclude<keyof T, Symbol | number>,
+        E extends Exclude<keyof T[B], Symbol | number>
+    >({
+        b, e, m
+    }: {
+        b: B,
+        e: E,
+        m: Partial<T[B][E]>,
+    }) => ({
+        b<BL extends Exclude<keyof T, Symbol | number>>(b: BL) {
+            return get<T, BL, Exclude<keyof T[BL], number | Symbol>>({
+                b, e: '' as Exclude<keyof T[BL], number | Symbol>, m: {} as T[BL][Exclude<keyof T[BL], number | Symbol>]
+            });
+        },
+        e<EL extends Exclude<keyof T[typeof b], Symbol | number>>(e: EL) {
+            return get<T, B, EL>({
+                b, e, m: {} as T[B][EL]
+            });
+        },
+        m(m: Partial<T[B][E]> = {} as Partial<T[B][E]>) {
+            return get({
+                b, e, m
+            });
+        },
+        get $() {
+            return resolve({
+                [b]: {
+                    [e]: m
+                }
+            });
+        }
+    })
+    return get<T, Exclude<keyof T, number | Symbol>, Exclude<keyof T[Exclude<keyof T, Symbol | number>], Symbol | number>>({
+        b: '' as Exclude<keyof T, Symbol | number>,
+        e: '' as Exclude<keyof T[Exclude<keyof T, Symbol | number>], Symbol | number>,
+        m: {} as T[Exclude<keyof T, Symbol | number>][Exclude<keyof T[Exclude<keyof T, Symbol | number>], Symbol | number>]
+    }) as unknown as TMonoResolver<T, '', ''>;
+}
 
 /**
  * Create BEM resolver
@@ -759,7 +833,8 @@ export const createScope: TCreateScope = (params = {}) => {
                     );
                 }
             };
-            attr = (params) => {
+            attr = (<T extends TStyleSheet>(params?: TBEM<T>) => {
+                if (params === undefined) return resolveMono<T>(attr);
                 let b, e, m, v;
                 const k = 'class';
                 let val = '';
@@ -792,7 +867,7 @@ export const createScope: TCreateScope = (params = {}) => {
                         }
                     }
                 );
-            };
+            }) as TResolveAttr;
         } else {
             selector = (params) => {
                 let b, e, m, v;
@@ -808,7 +883,8 @@ export const createScope: TCreateScope = (params = {}) => {
                     );
                 }
             };
-            attr = (params) => {
+            attr = (<T extends TStyleSheet>(params?: TBEM<T>) => {
+                if (params === undefined) return resolveMono<T>(attr);
                 let b, e, m, v;
                 let k: string;
                 let val: string = '';
@@ -822,7 +898,7 @@ export const createScope: TCreateScope = (params = {}) => {
                         if (acc[k] && val) acc[k] = acc[k] + ' ' + val;
                         else acc[k] = val;
                         return acc;
-                    }, {});
+                    }, {} as Record<string, string>);
                 else if (isString(params)) {
                     [b, e, m, v] = parseStr(params);
                     const base = getBase(name(b), e);
@@ -851,7 +927,7 @@ export const createScope: TCreateScope = (params = {}) => {
                     }
                 });
                 return result;
-            };
+            }) as TResolveAttr;
         }
         return {
             selector,
