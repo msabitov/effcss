@@ -137,14 +137,21 @@ export interface ICardMaker {
     };
 }
 
-const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { kf }, merge, palette, coef, size }) = {
+const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { keyframes }, merge, palette, coef, size }) = {
     // specify selector variants via generic
     const selector = bem<ICardMaker>;
     // creates unique keyframes identifier
-    const spin = kf();
+    const spin = keyframes({
+        from: {
+            transform: 'rotate(0deg)',
+        },
+        to: {
+            transform: 'rotate(360deg)',
+        },
+    });
     // deeply merges objects
     const cardLogoStyles = merge({
-        animation: `${spin.k} infinite 20s linear`,
+        animation: `20s linear infinite ${spin}`,
         [pseudo.h()]: {
             filter: "drop-shadow(0 0 2em #61dafbaa)",
         }
@@ -157,14 +164,7 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { kf }, merge, p
         }
     });
     return {
-        [spin.s]: {
-            from: {
-                transform: 'rotate(0deg)',
-            },
-            to: {
-                transform: 'rotate(360deg)',
-            },
-        },
+        ...spin,
         [selector('card')]: { ... },
         [selector('card.logo')]: cardLogoStyles,
         [selector('card..rounded')]: { ... },

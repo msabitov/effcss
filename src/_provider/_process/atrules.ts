@@ -1,4 +1,5 @@
 import { TCreateScope } from '../../common';
+import { NO_PARSE_SYMBOL } from './utils';
 
 const AT_MEDIA = '@media';
 const AT_CONTAINER = '@container';
@@ -7,6 +8,42 @@ const AT_KEYFRAMES = '@keyframes';
 const AT_LAYER = '@layer';
 const AT_SCOPE = '@scope';
 const AT_SUPPORTS = '@supports';
+
+type TProperty = {
+    (val: string | number | boolean): object;
+};
+type TKeyframes = {
+    (config?: Partial<{
+        /**
+         * Duration
+         */
+        dur: string;
+        /**
+         * Delay
+         */
+        del: string;
+        /**
+         * Iteration-count
+         */
+        ic: string;
+        /**
+         * Direction
+         */
+        dir: string;
+        /**
+         * Timing-function
+         */
+        tf: string;
+        /**
+         * Play-state
+         */
+        ps: string;
+        /**
+         * Fill-mode
+         */
+        fm: string;
+    }>): object;
+}
 
 const mq = (q: string, t?: string) => {
     const s = AT_MEDIA + ` ${t || ''}${(t || '') && ' and '}(${q})`;
@@ -103,6 +140,50 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
         };
     };
     pr.toString = () => AT_PROPERTY;
+    const property = (config: {
+        /**
+         * Syntax
+         */
+        syn?: string;
+        /**
+         * Inherits
+         */
+        inh?: boolean;
+        /**
+         * Initial value
+         */
+        ini?: string | number | boolean;
+        /**
+         * Default value
+         */
+        def?: string | number | boolean;
+    } = {}): TProperty => {
+        const {syn = '"*"', inh = true, ini, def} = config;
+        const name = '--' + scope.name('cp', counters.cp++);
+        const value = `var(${name}${def !== undefined ? ',' + def : ''})`;
+        const ruleKey = AT_PROPERTY + ' ' + name;
+        const use: TProperty = (val: string | number | boolean) => {
+            return {
+                [name]: val
+            };
+        };
+        return Object.defineProperties(use, {
+            [ruleKey]: {
+                value: {
+                    syntax: syn,
+                    inherits: inh,
+                    initialValue: ini
+                },
+                enumerable: true
+            },
+            toString: {
+                value: () => value
+            },
+            [NO_PARSE_SYMBOL]: {
+                value: true
+            }
+        });
+    };
     const kf = (
         name?: string
     ): {
@@ -125,6 +206,31 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
         };
     };
     kf.toString = () => AT_KEYFRAMES;
+    const keyframes = (config: Record<string, object>): TKeyframes => {
+        const name = scope.name('kf', counters.kf++);
+        const ruleKey = AT_KEYFRAMES + ' ' + name;
+        const use: TKeyframes = (config) => {
+            if (!config) return {
+                animationName: name
+            };
+            const {dur, tf, del, ic, dir, ps, fm} = config;
+            return {
+                animation: [dur, tf, del, ic, dir, ps, fm, name].filter(Boolean).join(' ')
+            };
+        };
+        return Object.defineProperties(use, {
+            [ruleKey]: {
+                value: config,
+                enumerable: true
+            },
+            toString: {
+                value: () => name
+            },
+            [NO_PARSE_SYMBOL]: {
+                value: true
+            }
+        });
+    };
     const lay = (
         name?: string
     ): {
@@ -235,6 +341,16 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
          * @param c - condition
          * @param n - invert condition
          */
-        sup
+        sup,
+        /**
+         * Scoped `@keyframes` rule maker
+         * @param config - keyframes
+         */
+        keyframes,
+        /**
+         * Scoped `@property` rule maker
+         * @param config - property params
+         */
+        property
     };
 };

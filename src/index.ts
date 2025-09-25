@@ -72,6 +72,10 @@ export interface IStyleProvider {
      * Get hydrate
      */
     get hydrate(): boolean | null;
+    /**
+     * Get stylesheet makers
+     */
+    get makers(): ReturnType<typeof createCollector>['makers']
 
     // theme handlers
 
@@ -186,7 +190,6 @@ export interface IStyleProvider {
      * @param targets - target stylesheet makers and/or keys
      */
     stylesheets(targets?: TStyleTarget[]): (CSSStyleSheet | undefined)[];
-
     /**
      * String representation that allows save or send current state
      */
@@ -298,6 +301,10 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
                     val.palette ||
                     val.coef
                 ) this._cust();
+            }
+
+            get makers(): IStyleProvider['makers'] {
+                return this._c.makers;
             }
 
             // theme methods

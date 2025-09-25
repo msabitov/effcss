@@ -67,6 +67,9 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
     const usePrivate: IStyleProvider['usePrivate'] = (styles) => styles.map((maker) => use(maker));
     const stylesheets: IStyleProvider['stylesheets'] = () => [];
     return {
+        get makers() {
+            return c.makers;
+        },
         get prefix() {
             return getPrefix();
         },

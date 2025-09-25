@@ -184,6 +184,11 @@ describe('Provider utils:', () => {
         expect(consumer.settings.vars).toMatchObject(PROVIDER_PARAMS.vars);
     });
 
+    test('get provider makers', () => {
+        consumer.use(FIRST_MAKER, FIRST_ID);
+        expect(consumer.makers[FIRST_ID]).toBe(FIRST_MAKER);
+    });
+
     test('set size attribute', () => {
         const rem = 24;
         consumer.size = rem;

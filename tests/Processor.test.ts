@@ -1278,3 +1278,80 @@ describe('at-rules', () => {
         expect(styleString).toBe(`@supports not (text-align-last:justify){div{text-align-last:justify;}}`);
     });
 });
+
+describe('scoped at-rules', () => {
+    test('@keyframes:', () => {
+        const key = 'cust';
+        const styleString = processor.compile({
+            key,
+            maker: ({ at: { keyframes } }) => {
+                const widthKf = keyframes({
+                    from: { width: '10px' },
+                    to: { width: '20px' }
+                });
+                const heightKf = keyframes({
+                    from: { height: '10px' },
+                    to: { height: '20px' }
+                });
+                return {
+                    ...widthKf,
+                    ...heightKf,
+                    '.cls1': {
+                        ...widthKf()
+                    },
+                    '.cls2': {
+                        animation: `3s linear 1s ${heightKf}`
+                    },
+                    '.cls3': heightKf({
+                        dur: '300ms',
+                        tf: 'ease'
+                    })
+                };
+            }
+        });
+        expect(styleString).toBe(
+            `@keyframes cust-kf-1{from{width:10px;}to{width:20px;}}` +
+            `@keyframes cust-kf-2{from{height:10px;}to{height:20px;}}` +
+            `.cls1{animation-name:cust-kf-1;}` +
+            `.cls2{animation:3s linear 1s cust-kf-2;}` +
+            `.cls3{animation:300ms ease cust-kf-2;}`
+        );
+    });
+
+    test('@property:', () => {
+        const key = 'cust';
+        const styleString = processor.compile({
+            key,
+            maker: ({ at: { property } }) => {
+                const firstProperty = property();
+                const secondProperty = property({
+                    ini: '25px',
+                    inh: false,
+                    def: '10px'
+                });
+                const thirdProperty = property();
+                return {
+                    ...firstProperty,
+                    ...secondProperty,
+                    '.mod': firstProperty('150px'),
+                    '.full': {
+                        ...secondProperty('100px'),
+                        ...thirdProperty('red'),
+                        aspectRatio: 1
+                    },
+                    '.cls': {
+                        width: firstProperty,
+                        height: `calc(2 * ${secondProperty})`
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            `@property --cust-cp-1{syntax:"*";inherits:true;}` +
+            `@property --cust-cp-2{syntax:"*";inherits:false;initial-value:25px;}` +
+            `.mod{--cust-cp-1:150px;}` +
+            `.full{--cust-cp-2:100px;--cust-cp-3:red;aspect-ratio:1;}` +
+            `.cls{width:var(--cust-cp-1);height:calc(2 * var(--cust-cp-2,10px));}`
+        );
+    });
+});
