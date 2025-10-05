@@ -1,6 +1,6 @@
 <p align="center">
-  <a href="https://effcss.surge.sh">
-    <img alt="effcss" src="https://effcss.surge.sh/logo.svg" height="256px" />
+  <a href="https://effnd.tech/css/">
+    <img alt="effcss" src="https://effnd.tech/effcss_logo.svg" height="256px" />
   </a>
 </p>
 
@@ -27,7 +27,7 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 
 ## Links
 
--   [Docs](https://effcss.surge.sh)
+-   [Docs](https://effnd.tech/css/)
 -   [Repository](https://gitverse.ru/msabitov/effcss)
 -   [Github mirror](https://github.com/msabitov/effcss)
 

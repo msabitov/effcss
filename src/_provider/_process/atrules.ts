@@ -43,7 +43,34 @@ type TKeyframes = {
          */
         fm: string;
     }>): object;
-}
+};
+type TScope= {
+    (val: object): object;
+    /**
+     * High bound
+     */
+    limit: (val: string) => TScope;
+    /**
+     * Low bound
+     */
+    root: (val: string) => TScope;
+    /**
+     * Both bounds inclusive
+     */
+    both: () => TScope;
+    /**
+     * None bounds inclusive
+     */
+    none: () => TScope;
+    /**
+     * High bound inclusive
+     */
+    high: () => TScope;
+    /**
+     * Low bound inclusive
+     */
+    low: () => TScope;
+};
 
 const mq = (q: string, t?: string) => {
     const s = AT_MEDIA + ` ${t || ''}${(t || '') && ' and '}(${q})`;
@@ -56,7 +83,55 @@ const mq = (q: string, t?: string) => {
 };
 mq.toString = () => AT_MEDIA;
 
-export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
+const scope = (state: Partial<{
+    root: string;
+    limit: string;
+    mode: [boolean, boolean];
+}>): TScope => {
+    const {
+        root = '', limit = '', mode = [false, false]
+    } = state;
+    const use = ((config: object) => ({
+        [AT_SCOPE + ` ${root ? `(${root}${mode[0] ? ' > *' : ''})` : ''}${root && limit ? ' ' : ''}${limit ? `to (${limit}${mode[1] ? ' > *' : ''})` : ''}`]: config
+    })) as unknown as TScope;
+    return Object.defineProperties(use, {
+        limit: {
+            value: (limit: string) => scope({
+                root, limit, mode
+            })
+        },
+        root: {
+            value: (root: string) => scope({
+                root, limit, mode
+            })
+        },
+        both: {
+            value: () => scope({
+                root, limit, mode: [false, true]
+            })
+        },
+        none: {
+            value: () => scope({
+                root, limit, mode: [true, false]
+            })
+        },
+        low: {
+            value: () => scope({
+                root, limit, mode: [true, true]
+            })
+        },
+        high: {
+            value: () => scope({
+                root, limit, mode: [false, false]
+            })
+        },
+        toString: {
+            value: () => ':scope'
+        },
+    });
+};
+
+export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
     const counters = {
         cp: 1,
         lay: 1,
@@ -81,7 +156,7 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
         s: string;
         toString(): string;
     } => {
-        const name = typeof c === 'string' ? c : scope.name('cq', counters.cq++);
+        const name = typeof c === 'string' ? c : ctx.name('cq', counters.cq++);
         const s = AT_CONTAINER + ` ${name ? name + ' ' : ''}(${q})`;
         return {
             c: name,
@@ -123,7 +198,7 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
         };
         toString(): string;
     } => {
-        const k = '--' + (n || scope.name('cp', counters.cp++));
+        const k = '--' + (n || ctx.name('cp', counters.cp++));
         const s = AT_PROPERTY + ' ' + k;
         return {
             k,
@@ -159,7 +234,7 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
         def?: string | number | boolean;
     } = {}): TProperty => {
         const {syn = '"*"', inh = true, ini, def} = config;
-        const name = '--' + scope.name('cp', counters.cp++);
+        const name = '--' + ctx.name('cp', counters.cp++);
         const value = `var(${name}${def !== undefined ? ',' + def : ''})`;
         const ruleKey = AT_PROPERTY + ' ' + name;
         const use: TProperty = (val: string | number | boolean) => {
@@ -197,7 +272,7 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
         s: string;
         toString(): string;
     } => {
-        const k = name || scope.name('kf', counters.kf++);
+        const k = name || ctx.name('kf', counters.kf++);
         const s = AT_KEYFRAMES + ' ' + k;
         return {
             k,
@@ -207,7 +282,7 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
     };
     kf.toString = () => AT_KEYFRAMES;
     const keyframes = (config: Record<string, object>): TKeyframes => {
-        const name = scope.name('kf', counters.kf++);
+        const name = ctx.name('kf', counters.kf++);
         const ruleKey = AT_KEYFRAMES + ' ' + name;
         const use: TKeyframes = (config) => {
             if (!config) return {
@@ -244,7 +319,7 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
         s: string;
         toString(): string;
     } => {
-        const k = name || scope.name('lay', counters.lay++);
+        const k = name || ctx.name('lay', counters.lay++);
         const s = AT_LAYER + ' ' + k;
         return {
             k,
@@ -311,11 +386,13 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
         /**
          * `@property` selector
          * @param name - property name
+         * @deprecated It will be deleted in the next major version, use `property` instead
          */
         pr,
         /**
          * `@keyframes` selector
          * @param name - keyframes name
+         * @deprecated It will be deleted in the next major version, use `keyframes` instead
          */
         kf,
         /**
@@ -334,6 +411,7 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
          * `@scope` selector
          * @param r - root
          * @param l - limit
+         * @deprecated It will be deleted in the next major version, use `scope` instead
          */
         sc,
         /**
@@ -351,6 +429,11 @@ export const resolveAtRules = (scope: ReturnType<ReturnType<TCreateScope>>) => {
          * Scoped `@property` rule maker
          * @param config - property params
          */
-        property
+        property,
+        /**
+         * `@scope` rule maker
+         * @param rules - nested rules
+         */
+        scope: scope({})
     };
 };

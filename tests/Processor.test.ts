@@ -1279,7 +1279,7 @@ describe('at-rules', () => {
     });
 });
 
-describe('scoped at-rules', () => {
+describe('scoped at-rule makers', () => {
     test('@keyframes:', () => {
         const key = 'cust';
         const styleString = processor.compile({
@@ -1352,6 +1352,50 @@ describe('scoped at-rules', () => {
             `.mod{--cust-cp-1:150px;}` +
             `.full{--cust-cp-2:100px;--cust-cp-3:red;aspect-ratio:1;}` +
             `.cls{width:var(--cust-cp-1);height:calc(2 * var(--cust-cp-2,10px));}`
+        );
+    });
+
+    test('@scope:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { scope } }) => {
+                const baseScope = scope.root('.base');
+                const limitedScope = baseScope.limit('.limit');
+                return {
+                    ...baseScope({
+                        span: {
+                            textOverflow: 'hidden'
+                        }
+                    }),
+                    ...limitedScope({
+                        div: {
+                            width: '100%'
+                        }
+                    }),
+                    ...limitedScope.none()({
+                        p: {
+                            fontSize: '1.5rem'
+                        }
+                    }),
+                    ...limitedScope.low()({
+                        p: {
+                            fontSize: '2rem'
+                        }
+                    }),
+                    ...limitedScope.both()({
+                        p: {
+                            fontSize: '0.5rem'
+                        }
+                    })
+                };
+            }
+        });
+        expect(styleString).toBe(
+            `@scope (.base){span{text-overflow:hidden;}}` +
+            `@scope (.base) to (.limit){div{width:100%;}}` +
+            `@scope (.base > *) to (.limit){p{font-size:1.5rem;}}` +
+            `@scope (.base > *) to (.limit > *){p{font-size:2rem;}}` +
+            `@scope (.base) to (.limit > *){p{font-size:0.5rem;}}`
         );
     });
 });

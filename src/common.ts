@@ -491,6 +491,8 @@ export const DEFAULT_ATTRS: TProviderAttrs = {
     time: null,
     angle: null
 };
+const BASE_HUE = 184;
+const computeHue = (val: number) => Number((0.1 * BASE_HUE + 0.9 * val).toFixed(2));
 
 const DEFAULT_PALETTE: TPaletteConfig = {
     l: {
@@ -554,12 +556,12 @@ const DEFAULT_PALETTE: TPaletteConfig = {
         }
     },
     h: {
-        pri: 184,
+        pri: BASE_HUE,
         sec: 290,
-        suc: Number((0.1 * 184 + 0.9 * 142).toFixed(2)),
-        inf: Number((0.1 * 184 + 0.9 * 264).toFixed(2)),
-        war: Number((0.1 * 184 + 0.9 * 109).toFixed(2)),
-        dan: Number((0.1 * 184 + 0.9 * 29).toFixed(2)),
+        suc: computeHue(142),
+        inf: computeHue(264),
+        war: computeHue(109),
+        dan: computeHue(29)
     }
 };
 
