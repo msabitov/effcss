@@ -1398,4 +1398,78 @@ describe('scoped at-rule makers', () => {
             `@scope (.base) to (.limit > *){p{font-size:0.5rem;}}`
         );
     });
+
+    test('@media:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { media } }) => {
+                const query1 = media.print.and('max-width: 1000px');
+                const query2 = media.screen.and('orientation: portrait').or(query1);
+                const query3 = query1.not;
+                const query4 = query2.not;
+                const query5 = media.and('prefers-reduced-motion: reduce', query4);
+                const query6 = media.and(media.and('width < 600px').not, media.and('width > 1000px').not);
+                const query7 = media.and(media.and('width > 600px').not.not);
+                const query8 = media.not.print;
+                return {
+                    ...media({
+                        '.cls': {
+                            width: 'auto'
+                        }
+                    }),
+                    ...query1({
+                        '.cls': {
+                            maxWidth: '976px'
+                        }
+                    }),
+                    ...query2({
+                        '.cls': {
+                            maxWidth: '720px'
+                        }
+                    }),
+                    ...query3({
+                        '.cls': {
+                            maxWidth: '480px'
+                        }
+                    }),
+                    ...query4({
+                        '.cls': {
+                            maxWidth: '210px'
+                        }
+                    }),
+                    ...query5({
+                        '.cls': {
+                            maxWidth: '340px'
+                        }
+                    }),
+                    ...query6({
+                        '.cls': {
+                            maxWidth: '560px'
+                        }
+                    }),
+                    ...query7({
+                        '.cls': {
+                            maxWidth: '600px'
+                        }
+                    }),
+                    ...query8({
+                        '.cls': {
+                            maxWidth: '100vw'
+                        }
+                    })
+                }
+            }
+        });
+        expect(styleString).toBe(
+           `@media{.cls{width:auto;}}` +
+           `@media print and (max-width: 1000px){.cls{max-width:976px;}}` +
+           `@media screen and (orientation: portrait),print and (max-width: 1000px){.cls{max-width:720px;}}` +
+           `@media not (print and (max-width: 1000px)){.cls{max-width:480px;}}` +
+           `@media not (screen and (orientation: portrait),print and (max-width: 1000px)){.cls{max-width:210px;}}` +
+           `@media (prefers-reduced-motion: reduce) and (not (screen and (orientation: portrait),print and (max-width: 1000px))){.cls{max-width:340px;}}` +
+           `@media (not (width < 600px)) and (not (width > 1000px)){.cls{max-width:560px;}}` +
+           `@media (width > 600px){.cls{max-width:600px;}}` +
+           `@media not print{.cls{max-width:100vw;}}`
+        );
+    });
 });

@@ -83,6 +83,116 @@ const mq = (q: string, t?: string) => {
 };
 mq.toString = () => AT_MEDIA;
 
+type TMedia = {
+    (val: object): object;
+    /**
+     * Combine with `or` logic
+     */
+    or: (...val: (TMedia | string)[]) => TMedia;
+    /**
+     * Combine with `and` logic
+     */
+    and: (...val: (TMedia | string)[]) => TMedia;
+    /**
+     * Negate with `not`
+     */
+    not: TMedia;
+    /**
+     * `screen` media type
+     */
+    screen: TMedia;
+    /**
+     * `all` media type
+     */
+    all: TMedia;
+    /**
+     * `print` media type
+     */
+    print: TMedia;
+}
+
+const MEDIA_TYPE = new Set(['screen', 'all', 'print']);
+
+const wrap = (val: string) => `(${val})`;
+
+const media = (params: {
+    type?: string;
+    or?: (TMedia | string)[];
+    and?: (TMedia | string)[];
+    not?: boolean;
+}): TMedia => {
+    const {
+        type,
+        or = [],
+        and = [],
+        not = false
+    } = params;
+    const toString = () => {
+        const queries = [];
+        const first = [];
+        if (type) first.push(type);
+        if (and) first.push(...and);
+        if (first.length) queries.push(first);
+        if (or) queries.push(...or);
+        let str = queries.map((g) => Array.isArray(g) ? g.map(i => {
+            const str = i + '';
+            return (MEDIA_TYPE.has(str) || str.split('(').length === 2 && !str.startsWith('not')) ? str : wrap(str);
+        }).join(' and ') : g).join(',')
+        if (not) str = 'not ' + ((str.includes(' and ') || str.includes(',')) ? wrap(str) : str);
+        return str;
+    };
+    const use = (rules: object) => {
+        const selector = toString();
+        return {
+            [`${AT_MEDIA}${selector ? ' ' + selector : ''}`]: rules
+        }
+    };
+    return Object.defineProperties(use, {
+        // type
+        all: {
+            get: () => media({
+                ...params,
+                type: 'all'
+            })
+        },
+        print: {
+            get: () => media({
+                ...params,
+                type: 'print'
+            })
+        },
+        screen: {
+            get: () => media({
+                ...params,
+                type: 'screen'
+            })
+        },
+        // logical
+        and: {
+            value: (...val: (string | TMedia)[]) => media({
+                ...params,
+                and: [...and, ...val]
+            })
+        },
+        or: {
+            value: (...val: (string | TMedia)[]) => media({
+                ...params,
+                or: [...or, ...val]
+            })
+        },
+        not: {
+            get: () => media({
+                ...params,
+                not: !not
+            })
+        },
+        // toString
+        toString: {
+            value: toString
+        }
+    }) as TMedia;
+};
+
 const scope = (state: Partial<{
     root: string;
     limit: string;
@@ -397,6 +507,7 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
         kf,
         /**
          * `@media` selector
+         * @deprecated It will be deleted in the next major version, use `media` instead
          */
         mq,
         /**
@@ -434,6 +545,11 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
          * `@scope` rule maker
          * @param rules - nested rules
          */
-        scope: scope({})
+        scope: scope({}),
+        /**
+         * `@media` rule maker
+         * @param rules - nested rules
+         */
+        media: media({})
     };
 };

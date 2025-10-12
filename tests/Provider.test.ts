@@ -155,6 +155,20 @@ describe('Provider utils:', () => {
         expect(stylesheets.length).toBe(3);
     });
 
+    test('get collected stylesheets by args', () => {
+        const makers = { [FIRST_ID]: FIRST_MAKER, [SECOND_ID]: SECOND_MAKER };
+        consumer.usePublic(makers);
+        const stylesheets = consumer.stylesheets(FIRST_ID, SECOND_ID);
+        expect(stylesheets.filter(Boolean).length).toBe(2);
+    });
+
+    test('get collected stylesheets by array', () => {
+        const makers = { [FIRST_ID]: FIRST_MAKER, [SECOND_ID]: SECOND_MAKER };
+        consumer.usePublic(makers);
+        const stylesheets = consumer.stylesheets([FIRST_ID, SECOND_ID]);
+        expect(stylesheets.filter(Boolean).length).toBe(2);
+    });
+
     test('use stylesheet', () => {
         const resolve = consumer.use(FIRST_MAKER);
         const attrs = resolve('');

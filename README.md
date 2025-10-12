@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://effnd.tech/css/">
-    <img alt="effcss" src="https://effnd.tech/effcss_logo.svg" height="256px" />
+    <img alt="effcss" src="https://effnd.tech/css/logo.svg" height="256px" />
   </a>
 </p>
 
@@ -30,6 +30,11 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 -   [Docs](https://effnd.tech/css/)
 -   [Repository](https://gitverse.ru/msabitov/effcss)
 -   [Github mirror](https://github.com/msabitov/effcss)
+
+## Devtools
+
+- [Mozilla Firefox](https://addons.mozilla.org/ru/firefox/addon/effcss-developer-tools/)
+- [zip for Chromium based browsers](https://storage.yandexcloud.net/effcss-devtools/chromium-based.zip), that can be installed using [chrome://extensions](https://www.geeksforgeeks.org/installation-guide/how-to-add-extensions-in-google-chrome-browser/)
 
 ## Examples
 

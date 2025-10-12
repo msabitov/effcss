@@ -190,6 +190,7 @@ export interface IStyleProvider {
      * @param targets - target stylesheet makers and/or keys
      */
     stylesheets(targets?: TStyleTarget[]): (CSSStyleSheet | undefined)[];
+    stylesheets(...targets: TStyleTarget[]): (CSSStyleSheet | undefined)[];
     /**
      * String representation that allows save or send current state
      */
@@ -380,7 +381,7 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
                     coef.max
                 ];
                 // create init stylesheet maker
-                this._ = ({ bem, each, when, vars, merge, at: { mq }, units: {px, ms, deg} }) => {
+                this._ = ({ bem, each, when, vars, merge, at: { media }, units: {px, ms, deg} }) => {
                     const PREFERS_COLOR_SCHEME = 'prefers-color-scheme';
                     const variants = {
                         light: `${PREFERS_COLOR_SCHEME}: light`,
@@ -405,8 +406,8 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
                                     [varName(PALETTE, 'c', 'bg', 'gray')]: 0,
                                     [varName(PALETTE, 'c', 'fg', 'gray')]: 0
                                 },
-                                each(variants, (mediaKey, mediaCond) => ({
-                                    [mq(mediaCond).s]: merge(
+                                each(variants, (mediaKey, mediaCond) => media.and(mediaCond)(
+                                    merge(
                                         themeVars[mediaKey] || {},
                                         each(tokens, (k, v) => ({
                                             [varName(PALETTE, 'l', 'bg', v)]: l[mediaKey].bg[v],
@@ -416,7 +417,8 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
                                             [varName(PALETTE, 'c', 'bg', v)]: c[mediaKey].bg[v],
                                             [varName(PALETTE, 'c', 'fg', v)]: c[mediaKey].fg[v],
                                         }))
-                                )}))
+                                    ))
+                                )
                             )
                         },
                         each(otherThemeVars, (k, v) => ({
@@ -509,8 +511,13 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
 
             key: IStyleProvider['key'] = (param) => (typeof param === 'string' ? param : this._c.getKey(param));
 
-            stylesheets: IStyleProvider['stylesheets'] = (targets = this._c.keys) =>
-                targets.map((target) => this._m.get(this.key(target)));
+            stylesheets: IStyleProvider['stylesheets'] = (...targets) => {
+                let clearTargets: TStyleTarget[];
+                if (!targets.length) clearTargets = this._c.keys;
+                else if (targets.length === 1 && Array.isArray(targets[0])) clearTargets = targets[0];
+                else clearTargets = targets as TStyleTarget[];
+                return clearTargets.map((target) => this._m.get(this.key(target)));
+            }
 
             toString() {
                 const attrs = [...this.attributes]
