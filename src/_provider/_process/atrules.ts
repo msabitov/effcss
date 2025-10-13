@@ -111,84 +111,116 @@ type TMedia = {
     print: TMedia;
 }
 
-const MEDIA_TYPE = new Set(['screen', 'all', 'print']);
-
 const wrap = (val: string) => `(${val})`;
 
+type TState = {
+    key: 'and' | 'or' | 'not';
+    args: (TState | string)[];
+}
+
+const isString = (val: any) => typeof val === 'string';
+
+function combine(state?: TState): string {
+    if (!state?.args?.length) return '';
+    switch(state.key) {
+        case 'or':
+            return state.args.map(i => isString(i) ? wrap(i) : combine(i)).join(' or ');
+        case 'and':
+            return state.args.map(i => {
+                const isNotString = !isString(i);
+                if (isNotString && i.key === 'or') return wrap(combine(i));
+                else if (isNotString) return combine(i);
+                else return wrap(i);
+            }).join(' and ');
+        case 'not':
+            const arg = state.args[0];
+            return 'not ' + (
+                isString(arg) ?
+                    wrap(arg) :
+                    wrap(combine(arg))
+            );
+    }
+}
+const stringify = (type: string[], state?: TState) => {
+    let str: string = '';
+    if (type.length) str = type.join(' ');
+    if (state) str = str + (str ? ' and ' : '') + (
+        str && state.key === 'or' ? wrap(combine(state)) : combine(state)
+    );
+    return str;
+};
+
 const media = (params: {
-    type?: string;
-    or?: (TMedia | string)[];
-    and?: (TMedia | string)[];
-    not?: boolean;
-}): TMedia => {
+    type?: [string] | [string, string] | [];
+    state?: TState;
+} = {}): TMedia => {
     const {
-        type,
-        or = [],
-        and = [],
-        not = false
+        type = [],
+        state
     } = params;
-    const toString = () => {
-        const queries = [];
-        const first = [];
-        if (type) first.push(type);
-        if (and) first.push(...and);
-        if (first.length) queries.push(first);
-        if (or) queries.push(...or);
-        let str = queries.map((g) => Array.isArray(g) ? g.map(i => {
-            const str = i + '';
-            return (MEDIA_TYPE.has(str) || str.split('(').length === 2 && !str.startsWith('not')) ? str : wrap(str);
-        }).join(' and ') : g).join(',')
-        if (not) str = 'not ' + ((str.includes(' and ') || str.includes(',')) ? wrap(str) : str);
-        return str;
-    };
+    
     const use = (rules: object) => {
-        const selector = toString();
+        const selector = stringify(type, state);
         return {
             [`${AT_MEDIA}${selector ? ' ' + selector : ''}`]: rules
         }
     };
     return Object.defineProperties(use, {
+        key: {
+            value: state?.key
+        },
+        args: {
+            value: state?.args
+        },
         // type
         all: {
             get: () => media({
-                ...params,
-                type: 'all'
+                state,
+                type: ['all']
             })
         },
         print: {
             get: () => media({
-                ...params,
-                type: 'print'
+                state,
+                type: ['print']
             })
         },
         screen: {
             get: () => media({
-                ...params,
-                type: 'screen'
+                state,
+                type: ['screen']
             })
         },
         // logical
         and: {
-            value: (...val: (string | TMedia)[]) => media({
-                ...params,
-                and: [...and, ...val]
+            value: (...args: (string | TState)[]) => media({
+                type,
+                state: {
+                    key: 'and',
+                    args: state ? [state, ...args] : args
+                }
             })
         },
         or: {
-            value: (...val: (string | TMedia)[]) => media({
-                ...params,
-                or: [...or, ...val]
+            value: (...args: (string | TState)[]) => media({
+                type,
+                state: {
+                    key: 'or',
+                    args: state ? [state, ...args] : args
+                }
             })
         },
         not: {
-            get: () => media({
-                ...params,
-                not: !not
+            get: () => !state ? media({
+                type: type.length === 2 ? [type[1]] : ['not', type[0] || 'all'],
+                state
+            }) : media({
+                type,
+                state: !isString(state) && state?.key === 'not' ? state.args[0] as TState : {
+                    key: 'not',
+                    args: [state]
+                }
             })
-        },
-        // toString
-        toString: {
-            value: toString
         }
     }) as TMedia;
 };

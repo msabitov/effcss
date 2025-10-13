@@ -1403,73 +1403,137 @@ describe('scoped at-rule makers', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ at: { media } }) => {
-                const query1 = media.print.and('max-width: 1000px');
-                const query2 = media.screen.and('orientation: portrait').or(query1);
-                const query3 = query1.not;
-                const query4 = query2.not;
-                const query5 = media.and('prefers-reduced-motion: reduce', query4);
-                const query6 = media.and(media.and('width < 600px').not, media.and('width > 1000px').not);
-                const query7 = media.and(media.and('width > 600px').not.not);
-                const query8 = media.not.print;
+                // only type
+                const query1 = media.print;
+                // only and
+                const query2 = media.and('prefers-reduced-motion: reduce', 'hover');
+                // only or
+                const query3 = media.or('prefers-reduced-motion: reduce', 'hover');
+                // type + and
+                const query4 = media.all.and('orientation: portrait', 'hover');
+                // type + or
+                const query5 = media.screen.or('prefers-reduced-motion: reduce', 'hover');
+                // type + not
+                const query6 = media.screen.not;
+                // type + not + not
+                const query7 = query6.not;
+                // and + not
+                const query8 = media.and('width > 600px', 'width < 200px').not;
+                // and + not + not
+                const query9 = query8.not;
+                // or + not
+                const query10 = media.or('width > 600px', 'width < 200px').not;
+                // or + not + not
+                const query11 = query10.not;
+                // or media
+                const query12 = media.or('width > 600px', query2);
+                // and media
+                const query13 = media.and('width > 600px', query3);
+                // or not media
+                const query14 = media.or('width < 100px', query12.not);
+                // and not media
+                const query15 = media.and('width < 100px', query13.not);
                 return {
                     ...media({
                         '.cls': {
-                            width: 'auto'
+                            width: '10px'
                         }
                     }),
                     ...query1({
                         '.cls': {
-                            maxWidth: '976px'
+                            maxWidth: '20px'
                         }
                     }),
                     ...query2({
                         '.cls': {
-                            maxWidth: '720px'
+                            maxWidth: '30px'
                         }
                     }),
                     ...query3({
                         '.cls': {
-                            maxWidth: '480px'
+                            maxWidth: '40px'
                         }
                     }),
                     ...query4({
                         '.cls': {
-                            maxWidth: '210px'
+                            maxWidth: '50px'
                         }
                     }),
                     ...query5({
                         '.cls': {
-                            maxWidth: '340px'
+                            maxWidth: '60px'
                         }
                     }),
                     ...query6({
                         '.cls': {
-                            maxWidth: '560px'
+                            maxWidth: '70px'
                         }
                     }),
                     ...query7({
                         '.cls': {
-                            maxWidth: '600px'
+                            maxWidth: '80px'
                         }
                     }),
                     ...query8({
                         '.cls': {
-                            maxWidth: '100vw'
+                            maxWidth: '90px'
+                        }
+                    }),
+                    ...query9({
+                        '.cls': {
+                            maxWidth: '100px'
+                        }
+                    }),
+                    ...query10({
+                        '.cls': {
+                            maxWidth: '110px'
+                        }
+                    }),
+                    ...query11({
+                        '.cls': {
+                            maxWidth: '120px'
+                        }
+                    }),
+                    ...query12({
+                        '.cls': {
+                            maxWidth: '130px'
+                        }
+                    }),
+                    ...query13({
+                        '.cls': {
+                            maxWidth: '140px'
+                        }
+                    }),
+                    ...query14({
+                        '.cls': {
+                            maxWidth: '150px'
+                        }
+                    }),
+                    ...query15({
+                        '.cls': {
+                            maxWidth: '160px'
                         }
                     })
                 }
             }
         });
         expect(styleString).toBe(
-           `@media{.cls{width:auto;}}` +
-           `@media print and (max-width: 1000px){.cls{max-width:976px;}}` +
-           `@media screen and (orientation: portrait),print and (max-width: 1000px){.cls{max-width:720px;}}` +
-           `@media not (print and (max-width: 1000px)){.cls{max-width:480px;}}` +
-           `@media not (screen and (orientation: portrait),print and (max-width: 1000px)){.cls{max-width:210px;}}` +
-           `@media (prefers-reduced-motion: reduce) and (not (screen and (orientation: portrait),print and (max-width: 1000px))){.cls{max-width:340px;}}` +
-           `@media (not (width < 600px)) and (not (width > 1000px)){.cls{max-width:560px;}}` +
-           `@media (width > 600px){.cls{max-width:600px;}}` +
-           `@media not print{.cls{max-width:100vw;}}`
+           `@media{.cls{width:10px;}}` +
+           `@media print{.cls{max-width:20px;}}` +
+           `@media (prefers-reduced-motion: reduce) and (hover){.cls{max-width:30px;}}` +
+           `@media (prefers-reduced-motion: reduce) or (hover){.cls{max-width:40px;}}` +
+           `@media all and (orientation: portrait) and (hover){.cls{max-width:50px;}}` +
+           `@media screen and ((prefers-reduced-motion: reduce) or (hover)){.cls{max-width:60px;}}` +
+           `@media not screen{.cls{max-width:70px;}}` +
+           `@media screen{.cls{max-width:80px;}}` +
+           `@media not ((width > 600px) and (width < 200px)){.cls{max-width:90px;}}` +
+           `@media (width > 600px) and (width < 200px){.cls{max-width:100px;}}` +
+           `@media not ((width > 600px) or (width < 200px)){.cls{max-width:110px;}}` +
+           `@media (width > 600px) or (width < 200px){.cls{max-width:120px;}}` +
+           `@media (width > 600px) or (prefers-reduced-motion: reduce) and (hover){.cls{max-width:130px;}}` +
+           `@media (width > 600px) and ((prefers-reduced-motion: reduce) or (hover)){.cls{max-width:140px;}}` +
+           `@media (width < 100px) or not ((width > 600px) or (prefers-reduced-motion: reduce) and (hover)){.cls{max-width:150px;}}` +
+           `@media (width < 100px) and not ((width > 600px) and ((prefers-reduced-motion: reduce) or (hover))){.cls{max-width:160px;}}`
         );
     });
 });
