@@ -1536,4 +1536,134 @@ describe('scoped at-rule makers', () => {
            `@media (width < 100px) and not ((width > 600px) and ((prefers-reduced-motion: reduce) or (hover))){.cls{max-width:160px;}}`
         );
     });
+
+    test('@container:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { container } }) => {
+                // only container
+                const query0 = container;
+                // with type
+                const query1 = container.isize;
+                // with scroll-state
+                const query2 = container.scroll;
+                // with type and scroll-state
+                const query3 = container.size.scroll.and('width > 100px');
+                // named
+                const query4 = query0.named.and('width > 100px');
+                // named with type
+                const query5 = query1.named.and('width > 100px');
+                // named with scroll-state
+                const query6 = query2.named.and('width > 100px');
+                // named with type and scroll-state
+                const query7 = query3.named.and('width > 100px');
+                // with conditions
+                const query8 = query0.and('orientation: landscape').or('height > 400px', 'width > 100px');
+                // named with conditions
+                const query9 = query7.or('height > 400px', 'width > 100px').and('orientation: landscape');
+                // not
+                const query10 = query1.not('height > 400px');
+                // named not
+                const query11 = query1.named.not('height > 400px');
+                return {
+                    '.cls0': {
+                        ...query0
+                    },
+                    '.cls1': {
+                        ...query1
+                    },
+                    '.cls2': {
+                        ...query2
+                    },
+                    '.cls3': {
+                        ...query3
+                    },
+                    '.cls4': {
+                        ...query4
+                    },
+                    '.cls5': {
+                        ...query5
+                    },
+                    '.cls6': {
+                        ...query6
+                    },
+                    '.cls7': {
+                        ...query7
+                    },
+                    '.cls8': {
+                        ...query8
+                    },
+                    '.cls9': {
+                        ...query9
+                    },
+                    ...query3({
+                        '.cls': {
+                            maxWidth: '40px'
+                        }
+                    }),
+                    ...query4({
+                        '.cls': {
+                            maxWidth: '50px'
+                        }
+                    }),
+                    ...query5({
+                        '.cls': {
+                            maxWidth: '60px'
+                        }
+                    }),
+                    ...query6({
+                        '.cls': {
+                            maxWidth: '70px'
+                        }
+                    }),
+                    ...query7({
+                        '.cls': {
+                            maxWidth: '80px'
+                        }
+                    }),
+                    ...query8({
+                        '.cls': {
+                            maxWidth: '90px'
+                        }
+                    }),
+                    ...query9({
+                        '.cls': {
+                            maxWidth: '100px'
+                        }
+                    }),
+                    ...query10({
+                        '.cls': {
+                            maxWidth: '110px'
+                        }
+                    }),
+                    ...query11({
+                        '.cls': {
+                            maxWidth: '120px'
+                        }
+                    })
+                };
+            }
+        });
+        expect(styleString).toBe(
+           `.cls0{container:none / normal;}` +
+           `.cls1{container:none / inline-size;}` +
+           `.cls2{container:none / scroll-state;}` +
+           `.cls3{container:none / size scroll-state;}` +
+           `.cls4{container:cust-cq-1 / normal;}` +
+           `.cls5{container:cust-cq-2 / inline-size;}` +
+           `.cls6{container:cust-cq-3 / scroll-state;}` +
+           `.cls7{container:cust-cq-4 / size scroll-state;}` +
+           `.cls8{container:none / normal;}` +
+           `.cls9{container:cust-cq-4 / size scroll-state;}` +
+           `@container (width > 100px){.cls{max-width:40px;}}` +
+           `@container cust-cq-1 (width > 100px){.cls{max-width:50px;}}` +
+           `@container cust-cq-2 (width > 100px){.cls{max-width:60px;}}` +
+           `@container cust-cq-3 (width > 100px){.cls{max-width:70px;}}` +
+           `@container cust-cq-4 (width > 100px) and (width > 100px){.cls{max-width:80px;}}` +
+           `@container (orientation: landscape) or (height > 400px) or (width > 100px){.cls{max-width:90px;}}` +
+           `@container cust-cq-4 ((width > 100px) and (width > 100px) or (height > 400px) or (width > 100px)) and (orientation: landscape){.cls{max-width:100px;}}` +
+           `@container not (height > 400px){.cls{max-width:110px;}}` +
+           `@container cust-cq-5 not (height > 400px){.cls{max-width:120px;}}`
+        )
+    });
 });

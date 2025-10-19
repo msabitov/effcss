@@ -111,6 +111,41 @@ type TMedia = {
     print: TMedia;
 }
 
+type TContainer = {
+    (val: object): object;
+    /**
+     * Get named container
+     */
+    named: TContainer;
+    /**
+     * Combine with `or`
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@container#logical_keywords_in_container_queries | logical keywords in container queries}
+     */
+    or: (...val: (TContainer | string)[]) => TContainer;
+    /**
+     * Combine with `and`
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@container#logical_keywords_in_container_queries | logical keywords in container queries}
+     */
+    and: (...val: (TContainer | string)[]) => TContainer;
+    /**
+     * Negate with `not`
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/@container#logical_keywords_in_container_queries | logical keywords in container queries}
+     */
+    not: (val: TContainer | string) => TContainer;
+    /**
+     * `inline-size` container type
+     */
+    isize: TContainer;
+    /**
+     * `size` container type
+     */
+    size: TContainer;
+    /**
+     * `scroll-state` container type
+     */
+    scroll: TContainer;
+}
+
 const wrap = (val: string) => `(${val})`;
 
 type TState = {
@@ -308,6 +343,108 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
         };
     };
     cq.toString = () => AT_CONTAINER;
+    const container = (params: {
+        type?: string;
+        name?: string;
+        state?: TState;
+        scroll?: boolean;
+    } = {}): TContainer => {
+        const {
+            scroll,
+            type,
+            name,
+            state
+        } = params;
+        
+        const use = (rules: object) => {
+            const selector = stringify([], state);
+            return {
+                [`${AT_CONTAINER}${name ? ' ' + name : ''}${selector ? ' ' + selector : ''}`]: rules
+            }
+        };
+        return Object.defineProperties(use, {
+            container: {
+                value: (name || 'none') + ' / ' + (type && scroll ? `${type} scroll-state` : scroll ? 'scroll-state' : (type || 'normal')),
+                enumerable: true
+            },
+            key: {
+                value: state?.key
+            },
+            args: {
+                value: state?.args
+            },
+            named: {
+                get: () => container({
+                    scroll,
+                    state,
+                    name: name || ctx.name('cq', counters.cq++),
+                    type
+                })
+            },
+            // type
+            size: {
+                get: () => container({
+                    name,
+                    scroll,
+                    state,
+                    type: 'size'
+                })
+            },
+            isize: {
+                get: () => container({
+                    name,
+                    scroll,
+                    state,
+                    type: 'inline-size'
+                })
+            },
+            scroll: {
+                get: () => container({
+                    name,
+                    scroll: true,
+                    state,
+                    type
+                })
+            },
+            // logical
+            and: {
+                value: (...args: (string | TState)[]) => container({
+                    name,
+                    scroll,
+                    type,
+                    state: {
+                        key: 'and',
+                        args: state ? [state, ...args] : args
+                    }
+                })
+            },
+            or: {
+                value: (...args: (string | TState)[]) => container({
+                    name,
+                    scroll,
+                    type,
+                    state: {
+                        key: 'or',
+                        args: state ? [state, ...args] : args
+                    }
+                })
+            },
+            not: {
+                value: (arg: string | TState) => container({
+                    name,
+                    scroll,
+                    type,
+                    state: {
+                        key: 'not',
+                        args: [arg]
+                    }
+                })
+            },
+            [NO_PARSE_SYMBOL]: {
+                value: true
+            }
+        }) as TContainer;
+    };
     const pr = (
         n?: string | number,
         p?: {
@@ -544,6 +681,7 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
         mq,
         /**
          * `@container` selector
+         * @deprecated It will be deleted in the next major version, use `container` instead
          */
         cq,
         /**
@@ -582,6 +720,11 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
          * `@media` rule maker
          * @param rules - nested rules
          */
-        media: media({})
+        media: media({}),
+        /**
+         * `@container` rule maker
+         * @param rules - nested rules
+         */
+        container: container({})
     };
 };
