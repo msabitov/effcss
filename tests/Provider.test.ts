@@ -37,6 +37,20 @@ const THIRD_MAKER: TStyleSheetMaker = ({ time, angle }) => {
         }
     };
 };
+const FOURTH_MAKER: TStyleSheetMaker = ({ bem, time }) => {
+    return {
+        [bem('')]: {
+            width: '100%',
+            'flex-shrink': 0
+        },
+        [bem('.element')]: {
+            width: '50%'
+        },
+        [bem('.element.animated')]: {
+            transitionDuration: time()
+        }
+    };
+};
 
 const PROVIDER_PARAMS = {
     vars: {
@@ -268,5 +282,41 @@ describe('Provider utils:', () => {
             15: PROVIDER_PARAMS.coef.$1_.xxl + '',
             max: PROVIDER_PARAMS.coef.max + '',
         });
+    });
+});
+
+describe('Provider with `min` mode:', () => {
+    let consumer: ReturnType<typeof createConsumer>;
+    beforeAll(() => {
+        defineProvider(PROVIDER_PARAMS);
+        const element = document.createElement('script', {
+            is: TAG_NAME
+        });
+        element.dataset.testid = PROVIDER_ID;
+        element.setAttribute('is', TAG_NAME);
+        element.setAttribute('mode', 'c');
+        element.setAttribute('min', '');
+        document.head.append(element);
+        consumer = createConsumer({});
+        consumer.usePrivate([FOURTH_MAKER]);
+    });
+
+    test('stylesheet content', () => {
+        const rules = consumer.stylesheets(FOURTH_MAKER)[0]?.cssRules || []
+        expect([...rules].map(s=>s.cssText).join('')).toBe(
+            '.f1-0 { width: 100%; flex-shrink: 0; }.f1-1 { width: 50%; }.f1-2 { transition-duration: calc(1 * var(--f0-rtime)); }'
+        );
+    });
+
+    test('minified selector resolver', () => {
+        const resolve = consumer.use(FOURTH_MAKER);
+        const attrs = resolve('.element.animated');
+        expect(attrs + '').toBe(`class="f1-1 f1-2"`);
+    });
+
+    test('non-implemented selector resolver', () => {
+        const resolve = consumer.use(FOURTH_MAKER);
+        const attrs = resolve('..animated');
+        expect(attrs + '').toBe(`class="f1-0 "`);
     });
 });

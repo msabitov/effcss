@@ -201,7 +201,7 @@ describe('Base:', () => {
             }
         });
         expect(styleString).toBe(
-            `[data-cust-block]{overflow:hidden;}[data-cust-block~="hidden"]{visibility:hidden;}[data-cust-block__elem~="sz_m"]{width:5rem;}[data-cust-block__elem~="sz_s"]{width:2rem;}`
+            `[data-cust~="block"]{overflow:hidden;}[data-cust~="block_hidden"]{visibility:hidden;}[data-cust~="block__elem_sz_m"]{width:5rem;}[data-cust~="block__elem_sz_s"]{width:2rem;}`
         );
     });
 

@@ -67,7 +67,11 @@ export interface IStyleProvider {
     /**
      * Get mode
      */
-    get mode(): string | null;
+    get mode(): string;
+    /**
+     * Get min flag
+     */
+    get min(): boolean;
     /**
      * Get hydrate
      */
@@ -269,7 +273,11 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
             }
 
             get mode() {
-                return getAttr(this, 'mode');
+                return this.getAttribute('mode') || 'a';
+            }
+
+            get min() {
+                return typeof this.getAttribute('min') === 'string';
             }
 
             get hydrate() {
@@ -454,7 +462,8 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
             connectedCallback() {
                 this._k = createKeyMaker({ prefix: this.prefix });
                 this._s = createScope({
-                    mode: this.mode
+                    mode: this.mode,
+                    min: this.min
                 });
                 // create notifier
                 const self = this;
@@ -481,8 +490,10 @@ export function defineProvider(settings: TProviderSettingsPartial = {}): boolean
             use: IStyleProvider['use'] = (maker, key, force) => {
                 const styleSheetKey = key || this._k.current;
                 let k = this._c.use(maker, styleSheetKey);
-                if (force || this._m && !this._m.has(key)) this._m.pack(k, this.css(maker, k));
-                if (!key) this._k.next();
+                if (force || this._m && !this._m.has(k)) {
+                    this._m.pack(k, this.css(maker, k));
+                    if (!key) this._k.next();
+                }
                 return this.resolve(k);
             };
             usePublic: IStyleProvider['usePublic'] = (styles) =>

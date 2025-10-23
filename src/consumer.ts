@@ -23,11 +23,12 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
     let theme: TAttr;
     let prefix: TAttr;
     let mode: TAttr;
+    let min: TAttr;
     let hydrate: TAttr;
     let size: TAttr;
     let time: TAttr;
     let angle: TAttr;
-    ({ prefix, mode, hydrate, theme, size, time, angle } = Object.assign({}, DEFAULT_ATTRS, attrs));
+    ({ prefix, mode, hydrate, theme, size, time, angle, min } = Object.assign({}, DEFAULT_ATTRS, attrs));
     let _size: number | null = numOrNull(size);
     let _time: number | null = numOrNull(time);
     let _angle: number | null = numOrNull(angle);
@@ -39,6 +40,7 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
     const getPrefix = () => prefix || (DEFAULT_ATTRS.prefix as string);
     const getMode = () => mode || (DEFAULT_ATTRS.mode as string);
     const getHydrate = () => hydrate === '';
+    const getMin = () => min === '';
 
     const _k: ReturnType<typeof createKeyMaker> = createKeyMaker({ prefix: getPrefix() });
     const _r: ReturnType<typeof createScope> = createScope({
@@ -75,6 +77,9 @@ export const createConsumer = (attrs: Partial<TProviderAttrs> = {}): IStyleProvi
         },
         get mode() {
             return getMode();
+        },
+        get min() {
+            return getMin();
         },
         get hydrate() {
             return getHydrate();

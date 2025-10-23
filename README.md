@@ -45,6 +45,9 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 -   [Svelte SSR](https://stackblitz.com/edit/effcss-3-svelte-ssr-vitejs?file=index.html)
 -   [Vue](https://stackblitz.com/edit/effcss-3-vue-vitejs?file=index.html)
 -   [Vue SSR](https://stackblitz.com/edit/effcss-3-vue-ssr-vitejs?file=index.html)
+-   [Angular](https://stackblitz.com/edit/effcss-3-angular-vitejs?file=src%2Findex.html)
+-   [SolidJS](https://stackblitz.com/edit/effcss-3-solidjs-vitejs?file=index.html)
+-   [Preact](https://stackblitz.com/edit/effcss-3-preact-vitejs?file=index.html)
 -   [Qwik](https://stackblitz.com/edit/effcss-3-qwik-vitejs?file=index.html)
 -   [Lit](https://stackblitz.com/edit/effcss-3-lit-vitejs?file=index.html)
 

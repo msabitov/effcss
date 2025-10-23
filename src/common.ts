@@ -263,6 +263,10 @@ export type TProviderAttrs = {
      */
     mode: 'a' | 'c' | null;
     /**
+     * BEM selectors minification
+     */
+    min: '' | null;
+    /**
      * Theme
      */
     theme: string | null;
@@ -406,18 +410,20 @@ type TScopeResolver = (key: string) => TScope;
 /**
  * Create stylesheet scope
  */
-export type TCreateScope = (params?: { mode?: string | null }) => TScopeResolver;
+export type TCreateScope = (params?: {
+    mode?: string | null;
+    min?: boolean;
+}) => TScopeResolver;
 
 // local utils
 const UND = undefined;
 const entries = Object.entries;
 const isArray = Array.isArray;
 const defineProperties = Object.defineProperties;
-const getDataBase = (base: string) => `data-${base}`;
 const isString = (val: any) => typeof val === 'string';
 const isObject = (val: string | number | object) => val !== null && typeof val === 'object';
 const isDefined = (val?: any) => val !== null && val !== UND;
-const getBase = (b: string, e?: string) => `${b}${e ? '__' + e : ''}`;
+const getBase = (b?: string, e?: string) => `${b || ''}${e ? '__' + e : ''}`;
 const parseStr = (val: string) => {
     return val.split('.');
 };
@@ -448,11 +454,11 @@ const parseObj = (val: object, attr?: boolean) => {
         return accb;
     }, [] as TParsedBEM);
 };
-const makeClsVal = (b: string, e?: string, m?: string, v?: string) =>
+const prepareName = (b: string, e?: string, m?: string, v?: string) =>
     `${getBase(b, e) + (m ? '_' + m : '') + (m && v ? '_' + v : '')}`;
-const makeCls = (b: string, e?: string, m?: string, v?: string) => '.' + makeClsVal(b, e, m, v);
-const makeAttr = (b: string, e?: string, m?: string, v?: string) =>
-    `[${getDataBase(getBase(b, e))}${m && v ? `~="${m}_${v}"` : m ? `~="${m}"` : ''}]`;
+const makeCls = (key: string, val?: string) => '.' + (val ? (key + '-' + val) : key);
+const makeAttr = (key: string, val?: string) => `[data-${key}${val ? `~="${val}"` : ''}]`;
+
 export const merge = (target: Record<string, any>, ...sources: Record<string, any>[]) =>
     !sources.length
         ? target
@@ -489,7 +495,8 @@ export const DEFAULT_ATTRS: TProviderAttrs = {
     prefix: 'f',
     size: null,
     time: null,
-    angle: null
+    angle: null,
+    min: null
 };
 const BASE_HUE = 184;
 const computeHue = (val: number) => Number((0.1 * BASE_HUE + 0.9 * val).toFixed(2));
@@ -807,130 +814,86 @@ function resolveMono<T extends Record<
     }) as unknown as TMonoResolver<T, '', ''>;
 }
 
+const repeat = (val: string) => val || '';
+
 /**
  * Create BEM resolver
  * @param params - BEM resolver params
  */
 export const createScope: TCreateScope = (params = {}) => {
-    const { mode } = params;
-    let selector: TScope['selector'];
-    let attr: TScope['attr'];
+    const { mode, min } = params;
+    let makeSelector;
+    if (mode === 'a') makeSelector = makeAttr;
+    else makeSelector = makeCls;
+    let store: Record<string, Record<string, string>>;
+    if (min) store = {};
     return (styleSheetKey: string) => {
-        const name: TScope['name'] = (...parts) =>
-            '' + parts.filter(Boolean).reduce((acc, part) => `${acc}-${part}`, styleSheetKey);
+        let ind: number = 0;
+        let min = repeat;
+        let unmin = repeat;
+        if (store) {
+            if (!store[styleSheetKey]) store[styleSheetKey] = {};
+            min = (val: string) => store[styleSheetKey][val] ?? (store[styleSheetKey][val] = (ind++).toString(36));
+            unmin = (val: string) => store[styleSheetKey][val];
+        };
+        let name: TScope['name'] = (...parts) => [styleSheetKey, ...parts].filter(Boolean).join('-');
+        let keyAttr = 'class';
+        let prefix = (val: string) => val ? styleSheetKey + (val.startsWith('_') ? '' : '-') + val : (val === undefined ? undefined : styleSheetKey);
+        if (mode === 'a') {
+            keyAttr = 'data-' + styleSheetKey;
+            prefix = repeat;
+        }
         const varName: TScope['name'] = (...parts) => '--' + name(...parts);
         const varExp: TScope['name'] = (...parts) => `var(${varName(...parts)})`;
-        if (mode === 'c') {
-            selector = (params) => {
-                let braw, e, m, v;
-                if (isString(params)) {
-                    [braw, e, m, v] = parseStr(params);
-                    return makeCls(name(braw), e, m, v);
-                } else {
-                    return (
-                        params &&
-                        parseObj(params)
-                            .map(([braw, e, m, v]) => makeCls(name(braw), e, m, v))
-                            .join(',')
-                    );
-                }
-            };
-            attr = (<T extends TStyleSheet>(params?: TBEM<T>) => {
-                if (params === undefined) return resolveMono<T>(attr);
-                let b, e, m, v;
-                const k = 'class';
-                let val = '';
-                if (Array.isArray(params)) {
-                    val = [
-                        ...params
-                            .reduce((acc, p) => {
-                                [b, e, m, v] = parseStr(p);
-                                acc.add(makeClsVal(name(b), e));
-                                if (m) acc.add(makeClsVal(name(b), e, m, v));
-                                return acc;
-                            }, new Set())
-                            .values()
-                    ].join(' ');
-                } else if (isString(params)) {
-                    [b, e, m, v] = parseStr(params);
-                    val = makeClsVal(name(b), e, m, v);
-                } else {
-                    val =
-                        params &&
-                        parseObj(params, true)
-                            .map(([b, e, m, v]) => makeClsVal(name(b), e, m, v))
-                            .join(' ');
-                }
-                return defineProperties(
-                    { [k]: val },
-                    {
-                        toString: {
-                            value: () => `${k}="${val}"`
-                        }
-                    }
+        const selector: TScope['selector'] = (params) => {
+            let braw, e, m, v;
+            if (isString(params)) {
+                [braw, e, m, v] = parseStr(params);
+                return makeSelector(styleSheetKey, min(prepareName(braw, e, m, v)));
+            } else {
+                return (
+                    params &&
+                    parseObj(params)
+                        .map(([braw, e, m, v]) => makeSelector(styleSheetKey, min(prepareName(braw, e, m, v))))
+                        .join(',')
                 );
-            }) as TResolveAttr;
-        } else {
-            selector = (params) => {
-                let b, e, m, v;
-                if (isString(params)) {
-                    [b, e, m, v] = parseStr(params);
-                    return makeAttr(name(b), e, m, v);
-                } else {
-                    return (
-                        params &&
-                        parseObj(params)
-                            .map(([b, e, m, v]) => makeAttr(name(b), e, m, v))
-                            .join(',')
-                    );
-                }
-            };
-            attr = (<T extends TStyleSheet>(params?: TBEM<T>) => {
-                if (params === undefined) return resolveMono<T>(attr);
-                let b, e, m, v;
-                let k: string;
-                let val: string = '';
-                let result: Record<string, string>;
-                if (Array.isArray(params))
-                    result = params.reduce((acc, p) => {
-                        [b, e, m, v] = parseStr(p);
-                        const base = getBase(name(b), e);
-                        k = getDataBase(base);
-                        val = m ? (v ? `${m}_${v}` : `${m}`) : '';
-                        if (acc[k] && val) acc[k] = acc[k] + ' ' + val;
-                        else acc[k] = val;
-                        return acc;
-                    }, {} as Record<string, string>);
-                else if (isString(params)) {
-                    [b, e, m, v] = parseStr(params);
-                    const base = getBase(name(b), e);
-                    k = getDataBase(base);
-                    val = m ? (v ? `${m}_${v}` : `${m}`) : '';
-                    result = { [k]: val };
-                } else {
-                    result =
-                        params &&
-                        parseObj(params, true).reduce((acc, [b, e, m, v]) => {
-                            const base = getBase(name(b), e);
-                            k = getDataBase(base);
-                            const next = m ? (v ? `${m}_${v}` : `${m}`) : '';
-                            if (acc[k]) val = acc[k] + ' ' + next;
-                            else val = next;
-                            acc[k] = val;
+            }
+        };
+        const attr: TScope['attr'] = (<T extends TStyleSheet>(params?: TBEM<T>) => {
+            if (params === undefined) return resolveMono<T>(attr);
+            let b, e, m, v;
+            let val = '';
+            const isStr = isString(params);
+            if (isStr || Array.isArray(params)) {
+                val = [
+                    ...(isStr ? [params] : params)
+                        .reduce((acc, p) => {
+                            [b, e, m, v] = parseStr(p);
+                            acc.add(prefix(unmin(prepareName(b, e))));
+                            if (m) acc.add(prefix(unmin(prepareName(b, e, m, v))));
                             return acc;
-                        }, {} as Record<string, string>);
-                }
-                defineProperties(result, {
+                        }, new Set())
+                        .values()
+                ].join(' ');
+            } else {
+                val =
+                    params &&
+                    parseObj(params, true)
+                        .map(([b, e, m, v]) => prefix(unmin(prepareName(b, e, m, v))))
+                        .join(' ');
+            }
+            return defineProperties(
+                { [keyAttr]: val },
+                {
                     toString: {
-                        value: () =>
-                            entries(result)
-                                .map(([k, v]) => `${k}="${v}"`)
-                                .join(' ')
+                        value: () => `${keyAttr}="${val}"`
+                    },
+                    $: {
+                        value: val
                     }
-                });
-                return result;
-            }) as TResolveAttr;
-        }
+                }
+            );
+        }) as TResolveAttr;
         return {
             selector,
             attr,
