@@ -456,7 +456,7 @@ const parseObj = (val: object, attr?: boolean) => {
 };
 const prepareName = (b: string, e?: string, m?: string, v?: string) =>
     `${getBase(b, e) + (m ? '_' + m : '') + (m && v ? '_' + v : '')}`;
-const makeCls = (key: string, val?: string) => '.' + (val ? (key + '-' + val) : key);
+const makeCls = (key: string, val?: string) => '.' + (val ? (key + (val.startsWith('_') ? '' : '-') + val) : key);
 const makeAttr = (key: string, val?: string) => `[data-${key}${val ? `~="${val}"` : ''}]`;
 
 export const merge = (target: Record<string, any>, ...sources: Record<string, any>[]) =>

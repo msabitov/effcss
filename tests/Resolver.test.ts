@@ -2,6 +2,16 @@ import { beforeAll, describe, expect, test } from 'vitest';
 import { createScope } from '../src/common';
 
 type TCustomStyleSheet = {
+    '': {
+        '': {
+            w: 's' | 'l';
+            sm: ''
+        };
+        elem: {
+            h: 's' | 'm';
+            lg: '';
+        }
+    }
     block: {
         /**
          * Block modifiers
@@ -198,6 +208,26 @@ describe('BEM to data-attribute:', () => {
         }).$;
         expect(styleAttr.$).toBe(`${block}__${elem} ${block}__${elem}_w_s ${block}__${elem}_lg`);
     });
+
+    test('Empty block selector:', () => {
+        const styleSelector = attrResolver.selector<TCustomStyleSheet>('');
+        expect(styleSelector).toBe(`[data-${styleSheetKey}]`);
+    });
+
+    test('Empty block modifier selector:', () => {
+        const styleSelector = attrResolver.selector<TCustomStyleSheet>('..w.s');
+        expect(styleSelector).toBe(`[data-${styleSheetKey}~="_w_s"]`);
+    });
+
+    test('Empty block element selector:', () => {
+        const styleSelector = attrResolver.selector<TCustomStyleSheet>('.elem');
+        expect(styleSelector).toBe(`[data-${styleSheetKey}~="__elem"]`);
+    });
+
+    test('Empty block element modifiers selector:', () => {
+        const styleSelector = attrResolver.selector<TCustomStyleSheet>('.elem.h.s');
+        expect(styleSelector).toBe(`[data-${styleSheetKey}~="__elem_h_s"]`);
+    });
 });
 
 describe('BEM to class:', () => {
@@ -365,6 +395,26 @@ describe('BEM to class:', () => {
         }).$;
         expect(styleAttr.$).toBe(`${styleSheetKey}-${block}__${elem} ${styleSheetKey}-${block}__${elem}_w_s ${styleSheetKey}-${block}__${elem}_lg`);
     });
+
+    test('Empty block selector:', () => {
+        const styleSelector = clsResolver.selector<TCustomStyleSheet>('');
+        expect(styleSelector).toBe(`.${styleSheetKey}`);
+    });
+
+    test('Empty block modifier selector:', () => {
+        const styleSelector = clsResolver.selector<TCustomStyleSheet>('..w.s');
+        expect(styleSelector).toBe(`.${styleSheetKey}_w_s`);
+    });
+
+    test('Empty block element selector:', () => {
+        const styleSelector = clsResolver.selector<TCustomStyleSheet>('.elem');
+        expect(styleSelector).toBe(`.${styleSheetKey}__elem`);
+    });
+
+    test('Empty block element modifiers selector:', () => {
+        const styleSelector = clsResolver.selector<TCustomStyleSheet>('.elem.h.s');
+        expect(styleSelector).toBe(`.${styleSheetKey}__elem_h_s`);
+    });
 });
 
 
@@ -382,6 +432,14 @@ describe('BEM to minified class:', () => {
         clsMinResolver.selector<TCustomStyleSheet>(`${block}.elem1`);
         clsMinResolver.selector<TCustomStyleSheet>(`${block}.elem1.h.s`);
         clsMinResolver.selector<TCustomStyleSheet>(`${block}.elem1.h.l`);
+        clsMinResolver.selector<TCustomStyleSheet>('');
+        clsMinResolver.selector<TCustomStyleSheet>('..w.s');
+        clsMinResolver.selector<TCustomStyleSheet>('..w.l');
+        clsMinResolver.selector<TCustomStyleSheet>('..sm');
+        clsMinResolver.selector<TCustomStyleSheet>('.elem');
+        clsMinResolver.selector<TCustomStyleSheet>('.elem.h.s');
+        clsMinResolver.selector<TCustomStyleSheet>('.elem.h.m');
+        clsMinResolver.selector<TCustomStyleSheet>('.elem.lg');
     });
 
     test('Block object:', () => {
@@ -547,6 +605,26 @@ describe('BEM to minified class:', () => {
         }).$;
         expect(styleAttr.$).toBe(`${styleSheetKey}-4 ${styleSheetKey}-5 ${styleSheetKey}-8`);
     });
+
+    test('Empty block selector:', () => {
+        const styleSelector = clsMinResolver.selector<TCustomStyleSheet>('');
+        expect(styleSelector).toBe(`.${styleSheetKey}-c`);
+    });
+
+    test('Empty block modifier selector:', () => {
+        const styleSelector = clsMinResolver.selector<TCustomStyleSheet>('..w.s');
+        expect(styleSelector).toBe(`.${styleSheetKey}-d`);
+    });
+
+    test('Empty block element selector:', () => {
+        const styleSelector = clsMinResolver.selector<TCustomStyleSheet>('.elem');
+        expect(styleSelector).toBe(`.${styleSheetKey}-g`);
+    });
+
+    test('Empty block element modifiers selector:', () => {
+        const styleSelector = clsMinResolver.selector<TCustomStyleSheet>('.elem.h.s');
+        expect(styleSelector).toBe(`.${styleSheetKey}-h`);
+    });
 });
 
 describe('BEM to minified data-attribute:', () => {
@@ -563,6 +641,14 @@ describe('BEM to minified data-attribute:', () => {
         attrMinResolver.selector<TCustomStyleSheet>(`${block}.elem1`);
         attrMinResolver.selector<TCustomStyleSheet>(`${block}.elem1.h.s`);
         attrMinResolver.selector<TCustomStyleSheet>(`${block}.elem1.h.l`);
+        attrMinResolver.selector<TCustomStyleSheet>('');
+        attrMinResolver.selector<TCustomStyleSheet>('..w.s');
+        attrMinResolver.selector<TCustomStyleSheet>('..w.l');
+        attrMinResolver.selector<TCustomStyleSheet>('..sm');
+        attrMinResolver.selector<TCustomStyleSheet>('.elem');
+        attrMinResolver.selector<TCustomStyleSheet>('.elem.h.s');
+        attrMinResolver.selector<TCustomStyleSheet>('.elem.h.m');
+        attrMinResolver.selector<TCustomStyleSheet>('.elem.lg');
     });
 
     test('Block object:', () => {
@@ -727,5 +813,25 @@ describe('BEM to minified data-attribute:', () => {
             lg: ''
         }).$;
         expect(styleAttr.$).toBe(`4 5 8`);
+    });
+
+    test('Empty block selector:', () => {
+        const styleSelector = attrMinResolver.selector<TCustomStyleSheet>('');
+        expect(styleSelector).toBe(`[data-${styleSheetKey}~="c"]`);
+    });
+
+    test('Empty block modifier selector:', () => {
+        const styleSelector = attrMinResolver.selector<TCustomStyleSheet>('..w.s');
+        expect(styleSelector).toBe(`[data-${styleSheetKey}~="d"]`);
+    });
+
+    test('Empty block element selector:', () => {
+        const styleSelector = attrMinResolver.selector<TCustomStyleSheet>('.elem');
+        expect(styleSelector).toBe(`[data-${styleSheetKey}~="g"]`);
+    });
+
+    test('Empty block element modifiers selector:', () => {
+        const styleSelector = attrMinResolver.selector<TCustomStyleSheet>('.elem.h.s');
+        expect(styleSelector).toBe(`[data-${styleSheetKey}~="h"]`);
     });
 });
