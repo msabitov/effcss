@@ -455,7 +455,7 @@ const parseObj = (val: object, attr?: boolean) => {
     }, [] as TParsedBEM);
 };
 const prepareName = (b: string, e?: string, m?: string, v?: string) =>
-    `${getBase(b, e) + (m ? '_' + m : '') + (m && v ? '_' + v : '')}`;
+    `${getBase(b, e) + (m ? '_' + m : '') + (m && v ? '_' + v : '')}` || '_';
 const makeCls = (key: string, val?: string) => '.' + (val ? (key + (val.startsWith('_') ? '' : '-') + val) : key);
 const makeAttr = (key: string, val?: string) => `[data-${key}${val ? `~="${val}"` : ''}]`;
 
@@ -851,6 +851,7 @@ export const createScope: TCreateScope = (params = {}) => {
                 [braw, e, m, v] = parseStr(params);
                 return makeSelector(styleSheetKey, min(prepareName(braw, e, m, v)));
             } else {
+                // array arg will be deprecated since v4
                 return (
                     params &&
                     parseObj(params)

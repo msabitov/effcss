@@ -8,6 +8,7 @@ const AT_KEYFRAMES = '@keyframes';
 const AT_LAYER = '@layer';
 const AT_SCOPE = '@scope';
 const AT_SUPPORTS = '@supports';
+const AT_STARTING_STYLE = '@starting-style';
 
 type TProperty = {
     (val: string | number | boolean): object;
@@ -307,6 +308,8 @@ const scope = (state: Partial<{
         },
     });
 };
+
+const startingStyle = (rules: object) => ({[AT_STARTING_STYLE]: rules});
 
 export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
     const counters = {
@@ -725,6 +728,11 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
          * `@container` rule maker
          * @param rules - nested rules
          */
-        container: container({})
+        container: container({}),
+        /**
+         * `@starting-style` rule maker
+         * @param rules - nested rules
+         */
+        startingStyle
     };
 };

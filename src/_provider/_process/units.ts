@@ -4,10 +4,14 @@ const px: TGetUnit = (val) => val + 'px';
 const vh: TGetUnit = (val) => val + 'vh';
 const vw: TGetUnit = (val) => val + 'vw';
 const vmin: TGetUnit = (val) => val + 'vmin';
-const vmax: TGetUnit = (val) => val + 'vmax'; 
+const vmax: TGetUnit = (val) => val + 'vmax';
+const em: TGetUnit = (val) => val + 'em';
 const rem: TGetUnit = (val) => val + 'rem';
 const deg: TGetUnit = (val) => val + 'deg';
+const rad: TGetUnit = (val) => val + 'rad';
+const turn: TGetUnit = (val) => val + 'rad';
 const ms: TGetUnit = (val) => val + 'ms';
+const s: TGetUnit = (val) => val + 's';
 const pc: TGetUnit = (val) => val + '%';
 const cqw: TGetUnit = (val) => val + 'cqw';
 const cqh: TGetUnit = (val) => val + 'cqh';
@@ -22,9 +26,13 @@ export const resolveUnits = () => ({
     vw,
     vmin,
     vmax,
+    em,
     rem,
     deg,
+    rad,
+    turn,
     ms,
+    s,
     pc,
     cqw,
     cqh,

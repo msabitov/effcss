@@ -1280,6 +1280,33 @@ describe('at-rules', () => {
 });
 
 describe('scoped at-rule makers', () => {
+    test('@starting-style:', () => {
+        const key = 'cust';
+        const styleString = processor.compile({
+            key,
+            maker: ({ at: { startingStyle } }) => {
+                return {
+                    '.target': {
+                        transition: 'background-color 1.5s',
+                        backgroundColor: 'green',
+                        ...startingStyle({opacity: 0})
+                    },
+                    ...startingStyle({
+                        '.target': {
+                            backgroundColor: 'transparent'
+                        }
+                    }),
+                    
+                }
+            }
+        });
+        expect(styleString).toBe(
+            `.target{transition:background-color 1.5s;background-color:green;` +
+            `@starting-style{opacity:0;}}` +
+            `@starting-style{.target{background-color:transparent;}}`
+        );
+    });
+
     test('@keyframes:', () => {
         const key = 'cust';
         const styleString = processor.compile({

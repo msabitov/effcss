@@ -211,7 +211,7 @@ describe('BEM to data-attribute:', () => {
 
     test('Empty block selector:', () => {
         const styleSelector = attrResolver.selector<TCustomStyleSheet>('');
-        expect(styleSelector).toBe(`[data-${styleSheetKey}]`);
+        expect(styleSelector).toBe(`[data-${styleSheetKey}~="_"]`);
     });
 
     test('Empty block modifier selector:', () => {
@@ -398,7 +398,7 @@ describe('BEM to class:', () => {
 
     test('Empty block selector:', () => {
         const styleSelector = clsResolver.selector<TCustomStyleSheet>('');
-        expect(styleSelector).toBe(`.${styleSheetKey}`);
+        expect(styleSelector).toBe(`.${styleSheetKey}_`);
     });
 
     test('Empty block modifier selector:', () => {

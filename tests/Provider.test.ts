@@ -186,26 +186,26 @@ describe('Provider utils:', () => {
     test('use stylesheet', () => {
         const resolve = consumer.use(FIRST_MAKER);
         const attrs = resolve('');
-        expect(attrs + '').toBe(`data-${prefix}1=""`);
+        expect(attrs + '').toBe(`data-${prefix}1="_"`);
     });
 
     test('use public stylesheets', () => {
         const resolvers = consumer.usePublic({ [FIRST_ID]: FIRST_MAKER });
         const resolver = resolvers[FIRST_ID];
         const attrs = resolver('');
-        expect(attrs[`data-${FIRST_ID}`]).toBe('');
+        expect(attrs[`data-${FIRST_ID}`]).toBe('_');
     });
 
     test('use private stylesheets', () => {
         const resolvers = consumer.usePrivate([SECOND_MAKER]);
         const resolver = resolvers[0];
         const attrs = resolver('');
-        expect(attrs + '').toBe(`data-${prefix}1=""`);
+        expect(attrs + '').toBe(`data-${prefix}1="_"`);
     });
 
     test('resolve stylesheet', () => {
         consumer.use(FIRST_MAKER, FIRST_ID);
-        expect(consumer.resolve(FIRST_ID)('') + '').toBe(`data-${FIRST_ID}=""`);
+        expect(consumer.resolve(FIRST_ID)('') + '').toBe(`data-${FIRST_ID}="_"`);
     });
 
     test('get provider settings', () => {
