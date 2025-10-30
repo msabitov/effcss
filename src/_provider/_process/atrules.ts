@@ -1,4 +1,4 @@
-import { TCreateScope } from '../../common';
+import type { TCreateScope } from '../scope';
 import { NO_PARSE_SYMBOL } from './utils';
 
 const AT_MEDIA = '@media';
@@ -668,23 +668,23 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
         /**
          * `@property` selector
          * @param name - property name
-         * @deprecated It will be deleted in the next major version, use `property` instead
+         * @deprecated It will be deleted in v4, use `property` instead
          */
         pr,
         /**
          * `@keyframes` selector
          * @param name - keyframes name
-         * @deprecated It will be deleted in the next major version, use `keyframes` instead
+         * @deprecated It will be deleted in v4, use `keyframes` instead
          */
         kf,
         /**
          * `@media` selector
-         * @deprecated It will be deleted in the next major version, use `media` instead
+         * @deprecated It will be deleted in v4, use `media` instead
          */
         mq,
         /**
          * `@container` selector
-         * @deprecated It will be deleted in the next major version, use `container` instead
+         * @deprecated It will be deleted in v4, use `container` instead
          */
         cq,
         /**
@@ -695,7 +695,7 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
          * `@scope` selector
          * @param r - root
          * @param l - limit
-         * @deprecated It will be deleted in the next major version, use `scope` instead
+         * @deprecated It will be deleted in v4, use `scope` instead
          */
         sc,
         /**

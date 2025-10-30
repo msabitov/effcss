@@ -1,5 +1,7 @@
 // types
-import type { TDeafultBreakpoints, TCreateScope } from '../common';
+import type { TDeafultBreakpoints } from '../common';
+import type { TCreateScope } from './scope'; 
+// common
 import { merge } from '../common';
 // process utils
 import { resolveAtRules } from './_process/atrules';

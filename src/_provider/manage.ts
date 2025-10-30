@@ -98,7 +98,13 @@ const PREFIX = 'effcss-';
  * @param params - manager params
  * @returns IStyleManager
  */
-export function createManager(): IStyleManager {
+export function createManager(initStyles?: NodeListOf<HTMLStyleElement>): IStyleManager {
+    const initCSS: Record<string, HTMLStyleElement> = {};
+    initStyles?.forEach((i) => {
+        const key = i.dataset.effcss;
+        if (key) initCSS[key] = i;
+    });
+    
     /**
      * Stylesheets dict
      */
@@ -141,6 +147,8 @@ export function createManager(): IStyleManager {
         if (!_s[key]) {
             _s[key] = mark(key, stylesheet);
             _a.push(_s[key]);
+            const serverStyle = initCSS[key];
+            if (serverStyle) serverStyle.disabled = true;
             notify();
             return true;
         }

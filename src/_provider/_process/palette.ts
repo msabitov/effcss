@@ -1,4 +1,6 @@
-import { TCreateScope, IPalette } from '../../common';
+
+import type { TCreateScope } from '../../_provider/scope';
+import { IPalette } from '../../common';
 import { NO_PARSE_SYMBOL } from './utils';
 
 const PALETTE = 'palette';

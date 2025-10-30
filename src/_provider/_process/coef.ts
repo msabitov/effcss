@@ -1,4 +1,5 @@
-import { TCreateScope, ICoef } from '../../common';
+import type { TCreateScope } from '../scope';
+import { ICoef } from '../../common';
 
 const COEF = 'coef';
 

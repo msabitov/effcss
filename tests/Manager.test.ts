@@ -8,8 +8,8 @@ describe('Manager:', () => {
     const secondId = 'second';
 
     let manager: ReturnType<typeof createStyleManager>;
-    let firstStylesheet;
-    let secondStylesheet;
+    let firstStylesheet: CSSStyleSheet;
+    let secondStylesheet: CSSStyleSheet;
     let stylesheets;
     beforeEach(async () => {
         manager = createStyleManager();

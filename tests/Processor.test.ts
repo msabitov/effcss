@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { createProcessor } from '../src/_provider/process';
-import { createScope, DEFAULT_SETTINGS } from '../src/common';
+import { createScope } from '../src/_provider/scope';
+import { DEFAULT_SETTINGS } from '../src/common';
 
 const processor = createProcessor({
     scope: createScope({ mode: 'a' }),

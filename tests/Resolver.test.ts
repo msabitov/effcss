@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from 'vitest';
-import { createScope } from '../src/common';
+import { createScope } from '../src/_provider/scope';
 
 type TCustomStyleSheet = {
     '': {

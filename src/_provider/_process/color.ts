@@ -1,4 +1,4 @@
-import { TCreateScope } from '../../common';
+import type { TCreateScope } from '../scope';
 type TStrOrNum = string | number;
 type TChangeStr = (val: string) => string;
 type TChangeColor = (color: string | object, val?: number | string) => string;

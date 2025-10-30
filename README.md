@@ -15,15 +15,15 @@
 
 </div>
 
-EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use the full power of JS & TS when creating styles!
+EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use the full power of JS and TS to create styles.
 
 ## Some features
 
--   zero-dependency
--   framework agnostic
--   runtime stylesheets generation
--   built-in BEM support
--   server-side rendering compatible
+-   zero-dependency,
+-   framework agnostic,
+-   selectors isolation and minification out of the box,
+-   BEM based stylesheet types,
+-   compatible with any rendering (CSR, SSR, SSG).
 
 ## Links
 
@@ -68,37 +68,20 @@ yarn add effcss
 
 ## Quick start
 
-First, define and add `Style provider` to your HTML:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <!-- define the style provider custom element -->
-        <script src="https://unpkg.com/effcss/dist/build/define-provider.min.js" crossorigin="anonymous"></script>
-        <!-- and create it -->
-        <script is="effcss-provider"></script>
-    </head>
-    <body>
-        <div id="root"></div>
-    </body>
-</html>
-```
-
-Second, use `Style consumer` to operate styles in your code:
+Just call `useStyleProvider` in your code:
 
 **main.js**
 
 ```jsx
-import { createConsumer } from "effcss/consumer";
+import { useStyleProvider } from "effcss";
 
-const consumer = createConsumer();
+const consumer = useStyleProvider();
 
 const root = createRoot(document.getElementById("root"));
 root.render(<App css={consumer} />);
 ```
 
-Each CSS stylesheet corresponds to a single `Stylesheet maker`. `Stylesheet maker` is a pure JS function that should return object with style rules:
+Each CSS stylesheet corresponds to a single `Stylesheet maker`. `Stylesheet maker` is a JS function that should return object with style rules:
 
 **App.tsx**
 
@@ -106,7 +89,8 @@ Each CSS stylesheet corresponds to a single `Stylesheet maker`. `Stylesheet make
 import { useRef } from 'react';
 import { IStyleProvider, TStyleSheetMaker } from 'effcss';
 
-// describe your styles in BEM notation so that other people can use them
+// you can describe your styles using BEM notation
+// so that other people can use them via TypeScript generics
 export interface ICardMaker {
     /**
      * Card block

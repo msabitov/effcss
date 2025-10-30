@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { createConsumer } from '../src/consumer';
-import { TAG_NAME } from '../src/common';
+import { TAG_NAME } from '../src';
+import type { IStyleProvider } from '../src';
 
 const FIRST_MAKER = () => {
     return { div: { height: '300px' } };
@@ -14,13 +15,13 @@ const FIRST_KEY = 'first';
 const SECOND_KEY = PREFIX + 1;
 
 describe('Consumer:', () => {
-    let consumer;
+    let consumer: IStyleProvider;
     beforeEach(() => {
         consumer = createConsumer({
             prefix: PREFIX
         });
         return () => {
-            consumer = undefined;
+            consumer = {} as IStyleProvider;
         };
     });
 
@@ -65,7 +66,7 @@ describe('Consumer:', () => {
         consumer.use(SECOND_MAKER);
         consumer.time = 200;
         expect('' + consumer).toEqual(
-            `<script is="${TAG_NAME}" prefix="pre" mode="a" time="200">document.currentScript.settings = {makers: {first: () => { return { div: { height: "300px" } }; },pre1: () => { return { body: { width: "300px" } }; }},}</script>`
+            `<script is="${TAG_NAME}" prefix="pre" time="200"></script>`
         );
     });
 });
