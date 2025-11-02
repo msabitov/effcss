@@ -378,6 +378,25 @@ describe('useStyleProvider:', () => {
             expect(provider.tagName).toBe('');
         });
 
+        test(`switch off maker with script emulation:`, () => {
+            provider = useStyleProvider({
+                emulate: true
+            });
+            provider.use(FOURTH_MAKER);
+            provider.off(FOURTH_MAKER);
+            expect(provider.status(FOURTH_MAKER)).toBeFalsy();
+        });
+
+        test(`switch on maker with script emulation:`, () => {
+            provider = useStyleProvider({
+                emulate: true
+            });
+            provider.use(FOURTH_MAKER);
+            provider.off(FOURTH_MAKER);
+            provider.on(FOURTH_MAKER);
+            expect(provider.status(FOURTH_MAKER)).toBeTruthy();
+        });
+
         test(`stringify the script emulation for SSR:`, () => {
             provider = useStyleProvider({
                 emulate: true,
@@ -394,7 +413,8 @@ describe('useStyleProvider:', () => {
             provider.off(SECOND_ID);
             expect((provider + '').split('</style>').slice(1).join('</style>')).toBe(
                 `<style data-effcss="f1">.f1-0{width:100%;flex-shrink:0;}.f1-1{width:50%;}.f1-2{transition-duration:calc(1 * var(--f0-rtime));}</style>` +
-                `<style data-effcss="first">.first-0{width:100%;flex-shrink:0;}html{transition-duration:calc(1 * var(--f0-rtime));}</style><style data-effcss="second">.second-0{height:100vh;border-top-left-radius:14px;flex-grow:10;}</style>` +
+                `<style data-effcss="first">.first-0{width:100%;flex-shrink:0;}html{transition-duration:calc(1 * var(--f0-rtime));}</style>` +
+                `<script data-effcss-scope type="application/json">{"f0":{},"f1":{"_":"0","__element":"1","__element_animated":"2"},"first":{"_":"0"},"second":{"_":"0"}}</script>` +
                 `<script is="effcss-provider" type="application/json" mode="c" min size="12" time="250">{"vars":{"":{"rem":"18px","rtime":"150ms","rangle":"15deg","l":{"def":0.4},"h":{"def":261.35,"b":261.35,"i":194.77,"e":29.23,"w":70.66,"s":142.49},"c":{"def":0.03,"xs":0.03,"s":0.06,"m":0.1,"l":0.15,"xl":0.25},"a":{"def":1,"min":0,"xs":0.1,"s":0.25,"m":0.5,"l":0.75,"xl":0.9,"max":1},"t":{"def":300,"xs":100,"s":200,"m":300,"l":450},"sz":{"s":10,"m":20,"l":30}}},"palette":{"h":{"sec":220},"l":{"light":{"bg":{"s":0.785}}},"c":{"light":{"fg":{"rich":0.145}}}},"coef":{"$0_":{"xxs":0.05},"max":220,"$1_":{"xxl":1.9}}}</script>`
             );
         });
@@ -413,8 +433,41 @@ describe('useStyleProvider:', () => {
             provider.off(SECOND_ID);
             expect((provider + '').split('</style>').slice(1).join('</style>')).toBe(
                 `<style data-effcss="f1">.f1-0{width:100%;flex-shrink:0;}.f1-1{width:50%;}.f1-2{transition-duration:calc(1 * var(--f0-rtime));}</style>` +
-                `<style data-effcss="first">.first-0{width:100%;flex-shrink:0;}html{transition-duration:calc(1 * var(--f0-rtime));}</style><style data-effcss="second">.second-0{height:100vh;border-top-left-radius:14px;flex-grow:10;}</style>`    
+                `<style data-effcss="first">.first-0{width:100%;flex-shrink:0;}html{transition-duration:calc(1 * var(--f0-rtime));}</style>`
             );
+        });
+
+        test(`hydrate stylesheet from SSR without maker call:`, () => {
+            let called = 0;
+            const maker: TStyleSheetMaker = ({ bem, time }) => {                
+                called++;
+                return {
+                    [bem('')]: {
+                        width: '100%',
+                        'flex-shrink': 0
+                    },
+                    [bem('.element')]: {
+                        width: '50%'
+                    },
+                    [bem('.element.animated')]: {
+                        transitionDuration: time()
+                    }
+                };
+            };
+            provider = useStyleProvider({
+                emulate: true,
+                attrs: {
+                    min: true,
+                    mode: 'c',
+                    time: 250,
+                    size: 12
+                },
+                ...PROVIDER_PARAMS
+            });
+            provider.use(maker);
+            document.head.innerHTML = (document.head.innerHTML + provider);
+            provider = useStyleProvider();
+            expect(called).toBe(1);
         });
     });
 });

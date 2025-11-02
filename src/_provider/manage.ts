@@ -29,6 +29,11 @@ interface IStyleManager {
      */
     add(key: string, stylesheet: CSSStyleSheet): TOptBool;
     /**
+     * Hydrate stylesheet
+     * @param key - stylesheet key
+     */
+    hydrate(key: string): string | undefined;
+    /**
      * Replace stylesheet content
      * @param key - stylesheet key
      * @param styles - stylesheet content
@@ -121,6 +126,7 @@ export function createManager(initStyles?: NodeListOf<HTMLStyleElement>): IStyle
      * Dependent nodes
      */
     let _l: WeakRef<TStyleRoot>[] = [];
+    const hydrate: IStyleManager['hydrate'] = (key: string)=> initCSS[key] && !initCSS[key].disabled ? initCSS[key].textContent || undefined : undefined;
     const mark = (key: string, styleSheet: CSSStyleSheet): CSSStyleSheet => {
         styleSheet.toString = () => 'effcss-' + key;
         return styleSheet;
@@ -243,6 +249,7 @@ export function createManager(initStyles?: NodeListOf<HTMLStyleElement>): IStyle
         pack,
         replace,
         register,
-        unregister
+        unregister,
+        hydrate
     };
 }

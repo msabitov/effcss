@@ -1370,6 +1370,9 @@ describe('scoped at-rule makers', () => {
                     '.cls': {
                         width: firstProperty,
                         height: `calc(2 * ${secondProperty})`
+                    },
+                    '.cls2': {
+                        height: `calc(2 * ${secondProperty.fallback('35px')})`
                     }
                 };
             }
@@ -1379,7 +1382,8 @@ describe('scoped at-rule makers', () => {
             `@property --cust-cp-2{syntax:"*";inherits:false;initial-value:25px;}` +
             `.mod{--cust-cp-1:150px;}` +
             `.full{--cust-cp-2:100px;--cust-cp-3:red;aspect-ratio:1;}` +
-            `.cls{width:var(--cust-cp-1);height:calc(2 * var(--cust-cp-2,10px));}`
+            `.cls{width:var(--cust-cp-1);height:calc(2 * var(--cust-cp-2,10px));}` +
+            `.cls2{height:calc(2 * var(--cust-cp-2,35px));}`
         );
     });
 

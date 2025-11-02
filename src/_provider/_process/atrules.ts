@@ -12,6 +12,10 @@ const AT_STARTING_STYLE = '@starting-style';
 
 type TProperty = {
     (val: string | number | boolean): object;
+    /**
+     * Use property with fallback value
+     */
+    fallback(val: string | number): string;
 };
 type TKeyframes = {
     (config?: Partial<{
@@ -519,7 +523,7 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
         const name = '--' + ctx.name('cp', counters.cp++);
         const value = `var(${name}${def !== undefined ? ',' + def : ''})`;
         const ruleKey = AT_PROPERTY + ' ' + name;
-        const use: TProperty = (val: string | number | boolean) => {
+        const use = (val: string | number | boolean) => {
             return {
                 [name]: val
             };
@@ -536,10 +540,13 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
             toString: {
                 value: () => value
             },
+            fallback : {
+                value: (val: string | number) => `var(${name},${val})`
+            },
             [NO_PARSE_SYMBOL]: {
                 value: true
             }
-        });
+        }) as TProperty;
     };
     const kf = (
         name?: string

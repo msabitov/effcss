@@ -89,7 +89,10 @@ type TScope = {
 /**
  * Style scope resolver
  */
-type TScopeResolver = (key: string) => TScope;
+type TScopeResolver = {
+    (key: string): TScope;
+    dict?: Record<string, Record<string, string>>;
+};
 
 /**
  * Create stylesheet scope
@@ -97,6 +100,7 @@ type TScopeResolver = (key: string) => TScope;
 export type TCreateScope = (params?: {
     mode?: string | null;
     min?: boolean;
+    dict?: Record<string, Record<string, string>>;
 }) => TScopeResolver;
 
 // local utils
@@ -194,16 +198,15 @@ const repeat = (val: string) => val || '';
  * @param params - BEM resolver params
  */
 export const createScope: TCreateScope = (params = {}) => {
-    const { mode, min } = params;
+    const { mode, min, dict = {} } = params;
     let makeSelector;
     if (mode === 'a') makeSelector = makeAttr;
     else makeSelector = makeCls;
-    let store: Record<string, Record<string, string>>;
-    if (min) store = {};
-    return (styleSheetKey: string) => {
+    const scope: TScopeResolver = (styleSheetKey: string) => {
         let ind: number = 0;
         let min = repeat;
         let unmin = repeat;
+        const store = scope.dict;
         if (store) {
             if (!store[styleSheetKey]) store[styleSheetKey] = {};
             min = (val: string) => store[styleSheetKey][val] ?? (store[styleSheetKey][val] = (ind++).toString(36));
@@ -276,4 +279,6 @@ export const createScope: TCreateScope = (params = {}) => {
             varExp
         };
     };
+    if (min) scope.dict = dict;
+    return scope;
 };

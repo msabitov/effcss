@@ -50,6 +50,7 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 -   [Preact](https://stackblitz.com/edit/effcss-3-preact-vitejs?file=index.html)
 -   [Qwik](https://stackblitz.com/edit/effcss-3-qwik-vitejs?file=index.html)
 -   [Lit](https://stackblitz.com/edit/effcss-3-lit-vitejs?file=index.html)
+-   [Astro](https://stackblitz.com/edit/effcss-3-ts-astro?file=src%2Fpages%2Findex.astro)
 
 ## Installation
 

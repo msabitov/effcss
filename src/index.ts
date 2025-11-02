@@ -19,17 +19,22 @@ import {
 
 // constants
 export const TAG_NAME = 'effcss-provider';
+const SCRIPT = 'script';
 const THEME_ATTR = 'theme';
 const SIZE_ATTR = 'size';
 const TIME_ATTR = 'time';
 const ANGLE_ATTR = 'angle';
 const EVENT_NAME = 'effcsschanges';
 const PALETTE = 'palette';
+const EFFCSS_ATTR = 'data-effcss';
+const EFFCSS_ATTR_SCOPE = EFFCSS_ATTR + '-scope';
+const APP_JSON = 'application/json';
 
 // aliases
 const assign = Object.assign;
 const entries = Object.entries;
 const fromEntries = Object.fromEntries;
+const isBoolean = (val: any) => typeof val === 'boolean';
 const numOrNull = (val: string | null | undefined) => val !== null ? Number(val) : null;
 const getAttr = (self: {
     getAttribute(qualifiedName: string): string | null;
@@ -44,7 +49,7 @@ const setAttr = (self: {
     removeAttribute(name: string): void;
     setAttribute(name: string, value: string): void
 }, name: string, val: string | number | null) => val === null ? self.removeAttribute(name) : self.setAttribute(name, val + '');
-const getAttrSelector = (attr?: string) => `:root:has(script[is=${TAG_NAME}]${attr ? `[${attr}]` : ''})`;
+const getAttrSelector = (attr?: string) => `:root:has(${SCRIPT}[is=${TAG_NAME}]${attr ? `[${attr}]` : ''})`;
 const getOrderedRange = (range: Record<string, number>) => [
     range.xxs,
     range.xs,
@@ -58,8 +63,9 @@ const tokens = ['xs', 's', 'm', 'l', 'xl'] as const;
 const ctokens = ['pale', 'base', 'rich'] as const;
 
 type TManager = Pick<ReturnType<
-    typeof createManager>, 'has' | 'pack' | 'status' | 'on' | 'off' | 'get'
+    typeof createManager>, 'has' | 'pack' | 'status' | 'on' | 'off' | 'get' | 'hydrate'
 >;
+type TServerStyleSheet = {key: string; styles: string;};
 
 const createGlobalMaker = ({
     scope, keyMaker, provider
@@ -195,7 +201,7 @@ const getHandlers = ({
         const styleSheetKey = key || keyMaker.current;
         let k = collector.use(maker, styleSheetKey);
         if (force || manager && !manager.has(k)) {
-            manager.pack(k, css(maker, k));
+            manager.pack(k, manager.hydrate(k) || css(maker, k));
             if (!key) keyMaker.next();
         }
         return resolve(k);
@@ -598,17 +604,19 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                 if (this.textContent) this._settings = merge(this._settings, JSON.parse(this.textContent));
                 else if (settings) this._settings = merge(this._settings, settings);
                 defineAttrHandlers(this);
+                const dict = doc.querySelector(`script[${EFFCSS_ATTR_SCOPE}]`)?.textContent;
                 this._k = createKeyMaker({ prefix: this.prefix });
                 this._s = createScope({
                     mode: this.mode,
-                    min: this.min
+                    min: this.min,
+                    dict: dict && JSON.parse(dict)
                 });
                 this._p = createProcessor({
                     scope: this._s,
                     globalKey: this._k.base,
                     bp: settings.bp || this.settings.bp
                 });
-                this._m = createManager(doc.querySelectorAll('[data-effcss]'));
+                this._m = createManager(doc.querySelectorAll(`style[${EFFCSS_ATTR}]`));
                 const handlers = getHandlers({
                     scope: this._s,
                     processor: this._p,
@@ -657,10 +665,10 @@ export function defineProvider(settings: Partial<TProviderSettings> = {}): boole
                     .map((attr) => (attr.value ? `${attr.name}="${attr.value}"` : attr.value === '' ? attr.name : ''))
                     .filter(Boolean)
                     .join(' ');
-                return `<script ${attrs}>${this.textContent}</script>`;
+                return `<${SCRIPT} ${attrs}>${this.textContent}</${SCRIPT}>`;
             }
         }
-        custom.define(TAG_NAME, StyleProvider, { extends: 'script' });
+        custom.define(TAG_NAME, StyleProvider, { extends: SCRIPT });
         return true;
     }
 }
@@ -689,15 +697,18 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
     });
     const collector = createCollector();
 
-    const styleSheetsDict: Record<string, object> = {};
-    const activeStyleSheets: object[] = [];
+    const styleSheetsDict: Record<string, TServerStyleSheet> = {};
+    const activeStyleSheets: TServerStyleSheet[] = [];
     const getIndex = (styleSheet: object) => activeStyleSheets.findIndex((item) => item === styleSheet);
     const manager: TManager = {
+        hydrate(key) {
+            return undefined;
+        },
         get(key?: string) {
-            return key ? styleSheetsDict[key] as CSSStyleSheet : undefined;
+            return key ? styleSheetsDict[key] as unknown as CSSStyleSheet : undefined;
         },
         pack(key: string, styles: string) {
-            const styleSheet = styleSheetsDict[key] || {};
+            const styleSheet = styleSheetsDict[key] || {key, styles};
             if (!styleSheetsDict[key]) {
                 styleSheetsDict[key] = styleSheet;
                 activeStyleSheets.push(styleSheet);
@@ -715,7 +726,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
             return targets.reduce((acc, key) => {
                 const styleSheet = this.get(key);
                 if (styleSheet && !this.status(key)) {
-                    activeStyleSheets.push(styleSheet);
+                    activeStyleSheets.push(styleSheet as unknown as TServerStyleSheet);
                     return acc;
                 }
                 return false;
@@ -748,7 +759,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         } as Record<string, string | boolean | undefined>,
         getAttribute(name: string) {
             const val = this.attributes[name];
-            return val ? typeof val === 'boolean' ? '' : val : null;
+            return val ? isBoolean(val) ? '' : val : null;
         },
         setAttribute(name: string, val: string) {
             this.attributes[name] = val;
@@ -767,24 +778,25 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         },
         ...handlers,
         toString() {
-            const cssContent = [[
-                keyMaker.base,
-                createGlobalMaker({
+            const cssContent = [{
+                key: keyMaker.base,
+                styles: handlers.css(createGlobalMaker({
                     scope,
                     keyMaker,
                     provider: this as unknown as IStyleProvider
-                })
-            ], ...Object.entries(collector.makers)].map(([key, maker]) => `<style data-effcss="${key}">${handlers.css(maker as TStyleSheetMaker, key as string)}</style>`).join('');
+                }) as TStyleSheetMaker, keyMaker.base)
+            }, ...activeStyleSheets].map(({key, styles}) => `<style ${EFFCSS_ATTR}="${key}">${styles}</style>`).join('');
             if (noscript) return cssContent;
+            const scopeContent = min && collector.keys.length > 1 ? `<${SCRIPT} ${EFFCSS_ATTR_SCOPE} type="${APP_JSON}">${JSON.stringify(scope.dict)}</${SCRIPT}>` : '';
             const textContent = Object.keys(restSettings).length ? JSON.stringify(restSettings) : '';
             const attrs = Object.entries({
                 is: TAG_NAME,
-                type: 'application/json',
+                type: APP_JSON,
                 ...this.attributes,
-            }).map(([name, value]) => value && value !== DEFAULT_ATTRS[name] ? (typeof value === 'boolean' ? name :  `${name}="${value}"`) : '')
+            }).map(([name, value]) => value && value !== DEFAULT_ATTRS[name] ? (isBoolean(value) ? name :  `${name}="${value}"`) : '')
                 .filter(Boolean)
                 .join(' ');
-            return cssContent + `<script ${attrs}>${textContent}</script>`;
+            return cssContent + scopeContent + `<${SCRIPT} ${attrs}>${textContent}</${SCRIPT}>`;
         }
     };
     return defineAttrHandlers(emulation) as unknown as IStyleProvider;
@@ -802,15 +814,15 @@ export const useStyleProvider: TUseStyleProvider = (params = {}) => {
     if (document && !emulate) {
         if (useStyleProvider.isDefined === undefined) useStyleProvider.isDefined = defineProvider(settings);
         const provider: IStyleProvider = document.querySelector(
-            `script[is=${TAG_NAME}]`
+            SCRIPT + `[is=${TAG_NAME}]`
         ) as unknown as IStyleProvider;
         if (provider) return provider;
-        const script = document.createElement('script', {
+        const script = document.createElement(SCRIPT, {
             is: TAG_NAME
         })
         script.setAttribute('is', TAG_NAME);
         const attrs = settings?.attrs;
-        if (attrs) Object.entries(attrs).map(([k,v]) => v && DEFAULT_ATTRS[k] !== v && script.setAttribute(k, typeof v === 'boolean' ? '' : v + ''));
+        if (attrs) Object.entries(attrs).map(([k,v]) => v && DEFAULT_ATTRS[k] !== v && script.setAttribute(k, isBoolean(v) ? '' : v + ''));
         document.head.appendChild(script);
         return script as unknown as IStyleProvider;
     }
