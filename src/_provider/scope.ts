@@ -20,6 +20,10 @@ type TElems<T> = T extends object
               : never}`;
       }[keyof T]
     : never;
+
+type TLeaves<T> = T extends object ? { [K in keyof T]:
+  `${Exclude<K, symbol>}${TLeaves<T[K]> extends never ? "" : `.${TLeaves<T[K]>}`}`
+}[keyof T] : never;
 type TMods<T> = T extends object
     ? {
           [K in keyof T]: `${Exclude<K, symbol>}${'' | Paths<T[K]> extends '' ? '' : `.${Paths<T[K]>}`}`;
@@ -32,6 +36,11 @@ type TBEM<T> = TDeepPartial<T> | TStringBEM<T> | TStringBEM<T>[];
 type TStyleSheet = Record<
     string, Record<string, Record<string, string | number>>
 >;
+export type Leaves<T> = T extends object
+    ? {
+          [K in keyof T]: `${Exclude<K, symbol>}${Leaves<T[K]> extends never ? '' : `.${Leaves<T[K]>}`}`;
+      }[keyof T]
+    : never;
 export type TMonoResolver<T extends TStyleSheet,
     B extends keyof T, E extends keyof T[B]
 > = {
@@ -57,13 +66,23 @@ export type TMonoResolver<T extends TStyleSheet,
         [key in string]: string;
     };
 }
-type TResolveSelector = <T extends TStyleSheet>(params: TBEM<T>) => string;
+type TResolveSelector = <T extends TStyleSheet>(params: TStringBEM<T>) => string;
 type TResolveAttr = {
     <T extends TStyleSheet>(params: TBEM<T>): Record<string, string>;
     <T extends TStyleSheet>(): TMonoResolver<T, "", "">;
 };
 type TParts = (string | number)[];
-type TScope = {
+
+export type TDefaultTheme = {
+    angle: number;
+    size: number;
+    time: number;
+    coef: Record<number, number>;
+    hue: Record<'pri' | 'sec' | 'suc' | 'inf' | 'war' | 'dan', number>;
+    lightness: Record<'bg' | 'fg', Record<'xs' | 's' | 'm' | 'l' | 'xl', number>>;
+    chroma: Record<'bg' | 'fg', Record<'pale' | 'base' | 'rich' | 'gray', number>>;
+};
+export type TScope = {
     /**
      * BEM selector resolver
      */
@@ -75,21 +94,21 @@ type TScope = {
     /**
      * Name resolver
      */
-    name: (...parts: TParts) => string;
+    name: (parts: TParts | string) => string;
     /**
      * Var name
      */
-    varName: (...parts: TParts) => string;
+    varName: (name: TParts | string) => string;
     /**
      * Var expression
      */
-    varExp: (...parts: TParts) => string;
+    varExp: <T extends Record<string, object | number | string | boolean> = TDefaultTheme>(name: TLeaves<T>, fallback?: string | number) => string;
 };
 
 /**
  * Style scope resolver
  */
-type TScopeResolver = {
+export type TScopeResolver = {
     (key: string): TScope;
     dict?: Record<string, Record<string, string>>;
 };
@@ -212,29 +231,18 @@ export const createScope: TCreateScope = (params = {}) => {
             min = (val: string) => store[styleSheetKey][val] ?? (store[styleSheetKey][val] = (ind++).toString(36));
             unmin = (val: string) => store[styleSheetKey][val];
         };
-        let name: TScope['name'] = (...parts) => [styleSheetKey, ...parts].filter(Boolean).join('-');
+        let name: TScope['name'] = (parts) => [styleSheetKey, ...(isString(parts) ? parts.split('.') : parts)].filter(Boolean).join('-');
         let keyAttr = 'class';
         let prefix = (val: string) => val ? styleSheetKey + (val.startsWith('_') ? '' : '-') + val : (val === undefined ? undefined : styleSheetKey);
         if (mode === 'a') {
             keyAttr = 'data-' + styleSheetKey;
             prefix = repeat;
         }
-        const varName: TScope['name'] = (...parts) => '--' + name(...parts);
-        const varExp: TScope['name'] = (...parts) => `var(${varName(...parts)})`;
+        const varName: TScope['varName'] = (val) => '--' + name(isString(val) ? val.split('.') : val);
+        const varExp: TScope['varExp'] = <T extends object = TDefaultTheme>(val: TLeaves<T>, fallback?: string | number) => `var(${varName(val)}${fallback !== undefined ? ',' + fallback : ''})`;
         const selector: TScope['selector'] = (params) => {
-            let braw, e, m, v;
-            if (isString(params)) {
-                [braw, e, m, v] = parseStr(params);
-                return makeSelector(styleSheetKey, min(prepareName(braw, e, m, v)));
-            } else {
-                // array arg will be deprecated since v4
-                return (
-                    params &&
-                    parseObj(params)
-                        .map(([braw, e, m, v]) => makeSelector(styleSheetKey, min(prepareName(braw, e, m, v))))
-                        .join(',')
-                );
-            }
+            const [braw, e, m, v] = parseStr(params);
+            return makeSelector(styleSheetKey, min(prepareName(braw, e, m, v)));
         };
         const attr: TScope['attr'] = (<T extends TStyleSheet>(params?: TBEM<T>) => {
             if (params === undefined) return resolveMono<T>(attr);

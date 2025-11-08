@@ -36,32 +36,5 @@ export default [
             }),
             tsPlugin
         ]
-    },
-    {
-        input: {
-            consumer: 'src/consumer.ts'
-        },
-        output,
-        plugins: [
-            tsPlugin
-        ]
-    },
-    {
-        input: 'build/defineProvider.ts',
-        output: {
-            file: 'dist/build/define-provider.min.js',
-            format: 'es',
-            banner,
-            plugins: [
-                terser(),
-            ]
-        },
-        plugins: [
-            typescript({
-                compilerOptions: {
-                    declaration: false
-                }
-            }),
-        ]
     }
 ];

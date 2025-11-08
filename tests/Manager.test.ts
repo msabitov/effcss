@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import { createManager as createStyleManager } from '../src/_provider/manage';
+import { createManager as createStyleManager, TManager } from '../src/_provider/manage';
 
 describe('Manager:', () => {
     const cssText = '.cls{padding:2px;}';
@@ -7,7 +7,7 @@ describe('Manager:', () => {
     const firstId = 'first';
     const secondId = 'second';
 
-    let manager: ReturnType<typeof createStyleManager>;
+    let manager: TManager;
     let firstStylesheet: CSSStyleSheet;
     let secondStylesheet: CSSStyleSheet;
     let stylesheets;
@@ -31,31 +31,11 @@ describe('Manager:', () => {
         expect(manager.get(firstId)).toBe(firstStylesheet);
     });
 
-    test('add & replace & get', () => {
-        manager.add(firstId, firstStylesheet);
-        manager.replace(firstId, nextCssText);
-        const stylesheet = manager.get(firstId);
-        expect(
-            stylesheet === firstStylesheet &&
-                !!stylesheet &&
-                [...stylesheet?.cssRules]
-                    .map((i) => i.cssText)
-                    .join('')
-                    .replaceAll(' ', '') === nextCssText
-        ).toBeTruthy();
-    });
-
-    test('add & getAll', () => {
+    test('add & all', () => {
         manager.add(firstId, firstStylesheet);
         manager.add(secondId, firstStylesheet);
-        const all = manager.getAll();
+        const all = manager.all();
         expect(!!all[firstId] && !!all[secondId]).toBeTruthy();
-    });
-
-    test('add & apply', () => {
-        manager.add(firstId, firstStylesheet);
-        manager.apply(document);
-        expect(document.adoptedStyleSheets).toContain(firstStylesheet);
     });
 
     test('add & remove', () => {
@@ -68,7 +48,7 @@ describe('Manager:', () => {
         manager.add(firstId, firstStylesheet);
         manager.register(document);
         manager.off(firstId);
-        expect(document.adoptedStyleSheets.findIndex((stylesheet) => stylesheet === firstStylesheet)).toBe(-1);
+        expect(firstStylesheet.disabled).toBeTruthy();
     });
 
     test('add & register & off & on', () => {
@@ -76,7 +56,7 @@ describe('Manager:', () => {
         manager.register(document);
         manager.off(firstId);
         manager.on(firstId);
-        expect(document.adoptedStyleSheets).toContain(firstStylesheet);
+        expect(firstStylesheet.disabled).toBeFalsy();
     });
 
     test('add & add & register & off many', () => {
@@ -84,10 +64,9 @@ describe('Manager:', () => {
         manager.add(secondId, secondStylesheet);
         manager.register(document);
         manager.off(firstId, secondId);
-        const arr = [...document.adoptedStyleSheets];
         expect(
-            arr.findIndex((stylesheet) => stylesheet === firstStylesheet) === -1 &&
-                arr.findIndex((stylesheet) => stylesheet === secondStylesheet) === -1
+            firstStylesheet.disabled &&
+            secondStylesheet.disabled
         ).toBeTruthy();
     });
 
@@ -98,8 +77,8 @@ describe('Manager:', () => {
         manager.off(firstId, secondId);
         manager.on(secondId, firstId);
         expect(
-            document.adoptedStyleSheets.findIndex((stylesheet) => stylesheet === firstStylesheet) !== -1 &&
-                document.adoptedStyleSheets.findIndex((stylesheet) => stylesheet === secondStylesheet) !== -1
+            !firstStylesheet.disabled &&
+            !secondStylesheet.disabled
         ).toBeTruthy();
     });
 
@@ -116,7 +95,7 @@ describe('Manager:', () => {
         manager.add(firstId, firstStylesheet);
         manager.add(secondId, firstStylesheet);
         manager.removeAll();
-        expect(manager.getAll()).toEqual({});
+        expect(manager.all()).toEqual({});
     });
 
     test('pack & get', () => {

@@ -1,61 +1,44 @@
 import { describe, expect, test } from 'vitest';
 import { createProcessor } from '../src/_provider/process';
 import { createScope } from '../src/_provider/scope';
-import { DEFAULT_SETTINGS } from '../src/common';
 
 const processor = createProcessor({
     scope: createScope({ mode: 'a' }),
-    globalKey: 'f0',
-    bp: DEFAULT_SETTINGS.bp
-});
-
-const clsProcessor = createProcessor({
-    scope: createScope({ mode: 'c' }),
-    globalKey: 'f0',
-    bp: DEFAULT_SETTINGS.bp
+    globalKey: 'f0'
 });
 
 const key = 'key';
 
 type TGlobals = { sz: { m: string; l: string } };
-type TStyleSheet = {
-    block: {
-        '': {
-            hidden: '';
-        };
-        elem: {
-            sz: 's' | 'm';
-        };
-    };
-};
 
 describe('Base:', () => {
-    test('Key:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ key }) => {
-                return {
-                    [`.${key}`]: {
-                        color: 'green'
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe(`.cust{color:green;}`);
-    });
 
-    test('Global:', () => {
+    test('Theme variable:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ vars }) => {
+            maker: ({ themeVar }) => {
                 return {
                     [`.cust`]: {
-                        width: vars<TGlobals>('sz.m')
+                        width: themeVar<TGlobals>('sz.m')
                     }
                 };
             }
         });
         expect(styleString).toBe(`.cust{width:var(--f0-sz-m);}`);
+    });
+
+    test('themeVar with fallback:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ themeVar }) => {
+                return {
+                    [`.cust`]: {
+                        width: themeVar<TGlobals>('sz.m', '100px')
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(`.cust{width:var(--f0-sz-m,100px);}`);
     });
 
     test('Time:', () => {
@@ -69,7 +52,7 @@ describe('Base:', () => {
                 };
             }
         });
-        expect(styleString).toBe(`.cust{transition-duration:calc(2 * var(--f0-rtime));}`);
+        expect(styleString).toBe(`.cust{transition-duration:calc(2 * var(--f0-time) * 1ms);}`);
     });
 
     test('Size:', () => {
@@ -83,7 +66,7 @@ describe('Base:', () => {
                 };
             }
         });
-        expect(styleString).toBe(`.cust{width:calc(2 * 1rem);}`);
+        expect(styleString).toBe(`.cust{width:calc(2 * var(--f0-size) * 1px);}`);
     });
 
     test('Angle:', () => {
@@ -97,7 +80,7 @@ describe('Base:', () => {
                 };
             }
         });
-        expect(styleString).toBe(`.cust{transform:skew(calc(1.5 * var(--f0-rangle)));}`);
+        expect(styleString).toBe(`.cust{transform:skew(calc(1.5 * var(--f0-angle) * 1deg));}`);
     });
 
     test('Nested selector:', () => {
@@ -160,93 +143,6 @@ describe('Base:', () => {
             }
         });
         expect(styleString.includes(`body{padding-top:2rem;border-start-end-radius:4px;}`)).toBeTruthy();
-    });
-
-    test('BEM attrs:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ bem }) => {
-                const select = bem<TStyleSheet>;
-                const selector0 = select({
-                    block: {}
-                });
-                const selector1 = select({
-                    block: {
-                        '': {
-                            hidden: ''
-                        }
-                    }
-                });
-                const selector2 = select({
-                    block: {
-                        elem: {
-                            sz: 'm'
-                        }
-                    }
-                });
-                const selector3 = select('block.elem.sz.s');
-                return {
-                    [selector0]: {
-                        overflow: 'hidden'
-                    },
-                    [selector1]: {
-                        visibility: 'hidden'
-                    },
-                    [selector2]: {
-                        width: '5rem'
-                    },
-                    [selector3]: {
-                        width: '2rem'
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe(
-            `[data-cust~="block"]{overflow:hidden;}[data-cust~="block_hidden"]{visibility:hidden;}[data-cust~="block__elem_sz_m"]{width:5rem;}[data-cust~="block__elem_sz_s"]{width:2rem;}`
-        );
-    });
-
-    test('BEM cls:', () => {
-        const styleString = clsProcessor.compile({
-            key: 'cust',
-            maker: ({ bem }) => {
-                const selector0 = bem<TStyleSheet>({
-                    block: {}
-                });
-                const selector1 = bem<TStyleSheet>({
-                    block: {
-                        '': {
-                            hidden: ''
-                        }
-                    }
-                });
-                const selector2 = bem<TStyleSheet>({
-                    block: {
-                        elem: {
-                            sz: 'm'
-                        }
-                    }
-                });
-                const selector3 = bem<TStyleSheet>('block.elem.sz.s');
-                return {
-                    [selector0]: {
-                        overflow: 'hidden'
-                    },
-                    [selector1]: {
-                        visibility: 'hidden'
-                    },
-                    [selector2]: {
-                        width: '5rem'
-                    },
-                    [selector3]: {
-                        width: '2rem'
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe(
-            `.cust-block{overflow:hidden;}.cust-block_hidden{visibility:hidden;}.cust-block__elem_sz_m{width:5rem;}.cust-block__elem_sz_s{width:2rem;}`
-        );
     });
 });
 
@@ -431,7 +327,7 @@ describe('Units:', () => {
                 };
             }
         });
-        expect(styleString).toBe('.custom{width:100px;height:1.5rem;}');
+        expect(styleString).toBe('.custom{width:calc(100 * 1px);height:calc(1.5 * 1rem);}');
     });
 });
 
@@ -448,12 +344,12 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.color-pri{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
-            '.color-sec{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-sec) / 1);}' +
-            '.color-suc{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-suc) / 1);}' +
-            '.color-inf{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-inf) / 1);}' +
-            '.color-war{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-war) / 1);}' +
-            '.color-dan{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-dan) / 1);}'
+            '.color-pri{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
+            '.color-sec{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-sec) / 1);}' +
+            '.color-suc{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-suc) / 1);}' +
+            '.color-inf{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-inf) / 1);}' +
+            '.color-war{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-war) / 1);}' +
+            '.color-dan{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-dan) / 1);}'
         );
     });
 
@@ -469,10 +365,10 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.color-gray{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-gray) var(--f0-palette-h-pri) / 1);}' +
-            '.color-pale{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-pale) var(--f0-palette-h-pri) / 1);}' + 
-            '.color-base{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
-            '.color-rich{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-rich) var(--f0-palette-h-pri) / 1);}'
+            '.color-gray{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-gray) var(--f0-hue-pri) / 1);}' +
+            '.color-pale{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-pale) var(--f0-hue-pri) / 1);}' + 
+            '.color-base{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
+            '.color-rich{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-rich) var(--f0-hue-pri) / 1);}'
         );
     });
 
@@ -488,11 +384,11 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.color-xs{color:oklch(var(--f0-palette-l-bg-xs) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
-            '.color-s{color:oklch(var(--f0-palette-l-bg-s) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
-            '.color-m{color:oklch(var(--f0-palette-l-bg-m) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
-            '.color-l{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}' +
-            '.color-xl{color:oklch(var(--f0-palette-l-bg-xl) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}'
+            '.color-xs{color:oklch(var(--f0-lightness-bg-xs) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
+            '.color-s{color:oklch(var(--f0-lightness-bg-s) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
+            '.color-m{color:oklch(var(--f0-lightness-bg-m) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
+            '.color-l{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
+            '.color-xl{color:oklch(var(--f0-lightness-bg-xl) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}'
         );
     });
 
@@ -508,7 +404,7 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.color-half{color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 0.5);}'
+            '.color-half{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 0.5);}'
         );
     });
 
@@ -525,8 +421,8 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.color-half{color:oklch(var(--f0-palette-l-fg-l) var(--f0-palette-c-fg-base) var(--f0-palette-h-pri) / 1);' +
-            'background-color:oklch(var(--f0-palette-l-bg-l) var(--f0-palette-c-bg-base) var(--f0-palette-h-pri) / 1);}'
+            '.color-half{color:oklch(var(--f0-lightness-fg-l) var(--f0-chroma-fg-base) var(--f0-hue-pri) / 1);' +
+            'background-color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}'
         );
     });
 
@@ -535,7 +431,7 @@ describe('Palette:', () => {
             key: 'cust',
             maker: ({ palette }) => {
                 return {
-                    '.palette-complex': {
+                    '.chromaomplex': {
                         color: palette.fg.gray.inf.l,
                         backgroundColor: palette.bg.pale.sec.xl,
                         borderColor: palette.fg.rich.xs.suc.alpha(0.75)
@@ -544,9 +440,9 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.palette-complex{color:oklch(var(--f0-palette-l-fg-l) var(--f0-palette-c-fg-gray) var(--f0-palette-h-inf) / 1);' +
-            'background-color:oklch(var(--f0-palette-l-bg-xl) var(--f0-palette-c-bg-pale) var(--f0-palette-h-sec) / 1);' +
-            'border-color:oklch(var(--f0-palette-l-fg-xs) var(--f0-palette-c-fg-rich) var(--f0-palette-h-suc) / 0.75);}'
+            '.chromaomplex{color:oklch(var(--f0-lightness-fg-l) var(--f0-chroma-fg-gray) var(--f0-hue-inf) / 1);' +
+            'background-color:oklch(var(--f0-lightness-bg-xl) var(--f0-chroma-bg-pale) var(--f0-hue-sec) / 1);' +
+            'border-color:oklch(var(--f0-lightness-fg-xs) var(--f0-chroma-fg-rich) var(--f0-hue-suc) / 0.75);}'
         );
     });
 });
@@ -564,9 +460,9 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-s{width:calc(var(--f0-coef-7) * 1rem);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
-            '.size-l{width:calc(var(--f0-coef-9) * 1rem);}'
+            '.size-s{width:calc(var(--f0-coef-7) * var(--f0-size) * 1px);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
+            '.size-l{width:calc(var(--f0-coef-9) * var(--f0-size) * 1px);}'
         );
     });
 
@@ -582,11 +478,11 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-xs{width:calc(var(--f0-coef-6) * 1rem);}' +
-            '.size-s{width:calc(var(--f0-coef-7) * 1rem);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
-            '.size-l{width:calc(var(--f0-coef-9) * 1rem);}' +
-            '.size-xl{width:calc(var(--f0-coef-10) * 1rem);}'
+            '.size-xs{width:calc(var(--f0-coef-6) * var(--f0-size) * 1px);}' +
+            '.size-s{width:calc(var(--f0-coef-7) * var(--f0-size) * 1px);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
+            '.size-l{width:calc(var(--f0-coef-9) * var(--f0-size) * 1px);}' +
+            '.size-xl{width:calc(var(--f0-coef-10) * var(--f0-size) * 1px);}'
         );
     });
 
@@ -602,13 +498,13 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-xxs{width:calc(var(--f0-coef-5) * 1rem);}' +
-            '.size-xs{width:calc(var(--f0-coef-6) * 1rem);}' +
-            '.size-s{width:calc(var(--f0-coef-7) * 1rem);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
-            '.size-l{width:calc(var(--f0-coef-9) * 1rem);}' +
-            '.size-xl{width:calc(var(--f0-coef-10) * 1rem);}' +
-            '.size-xxl{width:calc(var(--f0-coef-11) * 1rem);}'
+            '.size-xxs{width:calc(var(--f0-coef-5) * var(--f0-size) * 1px);}' +
+            '.size-xs{width:calc(var(--f0-coef-6) * var(--f0-size) * 1px);}' +
+            '.size-s{width:calc(var(--f0-coef-7) * var(--f0-size) * 1px);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
+            '.size-l{width:calc(var(--f0-coef-9) * var(--f0-size) * 1px);}' +
+            '.size-xl{width:calc(var(--f0-coef-10) * var(--f0-size) * 1px);}' +
+            '.size-xxl{width:calc(var(--f0-coef-11) * var(--f0-size) * 1px);}'
         );
     });
 
@@ -624,15 +520,15 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-min{width:calc(var(--f0-coef-4) * 1rem);}' +
-            '.size-xxs{width:calc(var(--f0-coef-5) * 1rem);}' +
-            '.size-xs{width:calc(var(--f0-coef-6) * 1rem);}' +
-            '.size-s{width:calc(var(--f0-coef-7) * 1rem);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
-            '.size-l{width:calc(var(--f0-coef-9) * 1rem);}' +
-            '.size-xl{width:calc(var(--f0-coef-10) * 1rem);}' +
-            '.size-xxl{width:calc(var(--f0-coef-11) * 1rem);}' +
-            '.size-max{width:calc(var(--f0-coef-12) * 1rem);}'
+            '.size-min{width:calc(var(--f0-coef-4) * var(--f0-size) * 1px);}' +
+            '.size-xxs{width:calc(var(--f0-coef-5) * var(--f0-size) * 1px);}' +
+            '.size-xs{width:calc(var(--f0-coef-6) * var(--f0-size) * 1px);}' +
+            '.size-s{width:calc(var(--f0-coef-7) * var(--f0-size) * 1px);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
+            '.size-l{width:calc(var(--f0-coef-9) * var(--f0-size) * 1px);}' +
+            '.size-xl{width:calc(var(--f0-coef-10) * var(--f0-size) * 1px);}' +
+            '.size-xxl{width:calc(var(--f0-coef-11) * var(--f0-size) * 1px);}' +
+            '.size-max{width:calc(var(--f0-coef-12) * var(--f0-size) * 1px);}'
         );
     });
 
@@ -648,11 +544,11 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-min{width:calc(var(--f0-coef-4) * 1rem);}' +
-            '.size-xs{width:calc(var(--f0-coef-6) * 1rem);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
-            '.size-xl{width:calc(var(--f0-coef-10) * 1rem);}' +
-            '.size-max{width:calc(var(--f0-coef-12) * 1rem);}'
+            '.size-min{width:calc(var(--f0-coef-4) * var(--f0-size) * 1px);}' +
+            '.size-xs{width:calc(var(--f0-coef-6) * var(--f0-size) * 1px);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
+            '.size-xl{width:calc(var(--f0-coef-10) * var(--f0-size) * 1px);}' +
+            '.size-max{width:calc(var(--f0-coef-12) * var(--f0-size) * 1px);}'
         );
     });
 
@@ -668,148 +564,126 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-min{width:calc(var(--f0-coef-4) * 1rem);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * 1rem);}' +
-            '.size-max{width:calc(var(--f0-coef-12) * 1rem);}'
+            '.size-min{width:calc(var(--f0-coef-4) * var(--f0-size) * 1px);}' +
+            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
+            '.size-max{width:calc(var(--f0-coef-12) * var(--f0-size) * 1px);}'
         );
     });
 
-    test('`0-1` range center:', () => {
+    test('`XXS` range center:', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ coef, size }) => {
                 return {
                     [`.size`]: {
-                        width: size(coef.$0_.m)
+                        width: size(coef.$xxs.m)
                     }
                 };
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-4) * 1rem);}'
+            '.size{width:calc(var(--f0-coef-4) * var(--f0-size) * 1px);}'
         );
     });
 
-    test('`1` range center:', () => {
+    test('`XS` range center:', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ coef, size }) => {
                 return {
                     [`.size`]: {
-                        width: size(coef.$1.m)
+                        width: size(coef.$xs.m)
                     }
                 };
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-8) * 1rem);}'
+            '.size{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}'
         );
     });
 
-    test('`1-2` range center:', () => {
+    test('`S` range center:', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ coef, size }) => {
                 return {
                     [`.size`]: {
-                        width: size(coef.$1_.m)
+                        width: size(coef.$s.m)
                     }
                 };
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-12) * 1rem);}'
+            '.size{width:calc(var(--f0-coef-12) * var(--f0-size) * 1px);}'
         );
     });
 
-    test('`2` range center:', () => {
+    test('`M` range center:', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ coef, size }) => {
                 return {
                     [`.size`]: {
-                        width: size(coef.$2.m)
+                        width: size(coef.$m.m)
                     }
                 };
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-16) * 1rem);}'
+            '.size{width:calc(var(--f0-coef-16) * var(--f0-size) * 1px);}'
         );
     });
 
-    test('`2-16` range center:', () => {
+    test('`L` range center:', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ coef, size }) => {
                 return {
                     [`.size`]: {
-                        width: size(coef.$2_.m)
+                        width: size(coef.$l.m)
                     }
                 };
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-20) * 1rem);}'
+            '.size{width:calc(var(--f0-coef-20) * var(--f0-size) * 1px);}'
         );
     });
 
-    test('`16` range center:', () => {
+    test('`XL` range center:', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ coef, size }) => {
                 return {
                     [`.size`]: {
-                        width: size(coef.$16.m)
+                        width: size(coef.$xl.m)
                     }
                 };
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-24) * 1rem);}'
+            '.size{width:calc(var(--f0-coef-24) * var(--f0-size) * 1px);}'
         );
     });
 
-    test('`16-inf` range center:', () => {
+    test('`XXL` range center:', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ coef, size }) => {
                 return {
                     [`.size`]: {
-                        width: size(coef.$16_.m)
+                        width: size(coef.$xxl.m)
                     }
                 };
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-28) * 1rem);}'
+            '.size{width:calc(var(--f0-coef-28) * var(--f0-size) * 1px);}'
         );
     });
 });
 
 describe('Color:', () => {
-    test('create:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ color }) => {
-                const { create } = color;
-                let first = create();
-                first = first.a(0.5);
-                first = first.c(0.2);
-                const second = create({ h: 'c' });
-                return {
-                    '.custom': {
-                        background: first + '',
-                        color: second.s
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe(
-            '.custom{background:oklch(var(--f0-l-def) 0.2 var(--f0-h-def) / 0.5);color:oklch(var(--f0-l-def) var(--f0-c-def) c / var(--f0-a-def));}'
-        );
-    });
-
     test('darken/lighten:', () => {
         const styleString = processor.compile({
             key: 'cust',
@@ -893,24 +767,6 @@ describe('Color:', () => {
             '.custom{background:oklch(from green l c calc(h + 30) / alpha));color:oklch(from green l c calc(h + 180) / alpha));}'
         );
     });
-
-    test('mix:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ color }) => {
-                const { mix } = color;
-                const base = 'green';
-                const mixin = '#110011';
-                const result = mix({ base, mixin, bpart: 10 });
-                return {
-                    '.custom': {
-                        background: result
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('.custom{background:color-mix(in oklch, green 10%, #110011);}');
-    });
 });
 
 describe('Pseudo:', () => {
@@ -975,312 +831,50 @@ describe('Pseudo:', () => {
     });
 });
 
-describe('Limit:', () => {
-    test('@media up:', () => {
+describe('at-rule makers', () => {
+    test('@supports:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ limit: { up } }) => {
-                return {
-                    [up('lg')]: {
-                        width: '100%'
+            maker: ({ at: { supports } }) => {
+                const supportsRule = supports.where('not (text-align-last:justify)');
+                return supportsRule({
+                    div: {
+                        textAlignLast: 'justify'
                     }
-                };
+                });
             }
         });
-        expect(styleString).toBe('@media (min-width: 64rem){width:100%;}');
-    });
-
-    test('@media down:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { down } }) => {
-                return {
-                    [down('md')]: {
-                        flexGrow: 1
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@media (max-width: 48rem){flex-grow:1;}');
-    });
-
-    test('@media between:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { between } }) => {
-                return {
-                    [between('xs', 'xl')]: {
-                        flexShrink: 0
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@media (min-width: 30rem) and (max-width: 80rem){flex-shrink:0;}');
-    });
-
-    test('@media only:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { only } }) => {
-                return {
-                    [only('xs')]: {
-                        flexBasis: '100%'
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@media (min-width: 30rem) and (max-width: 30rem){flex-basis:100%;}');
-    });
-
-    test('@container up:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { up } }) => {
-                return {
-                    [up('lg', '')]: {
-                        width: '100%'
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@container (min-width: 64rem){width:100%;}');
-    });
-
-    test('@container down:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { down } }) => {
-                return {
-                    [down('md', '')]: {
-                        flexGrow: 1
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@container (max-width: 48rem){flex-grow:1;}');
-    });
-
-    test('@container between:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { between } }) => {
-                return {
-                    [between('xs', 'xl', '')]: {
-                        flexShrink: 0
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@container (min-width: 30rem) and (max-width: 80rem){flex-shrink:0;}');
-    });
-
-    test('@container only:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { only } }) => {
-                return {
-                    [only('xs', '')]: {
-                        flexBasis: '100%'
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@container (min-width: 30rem) and (max-width: 30rem){flex-basis:100%;}');
-    });
-
-    test('named @container up:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { up } }) => {
-                return {
-                    [up('lg', 'cont')]: {
-                        width: '100%'
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@container cont (min-width: 64rem){width:100%;}');
-    });
-
-    test('named @container down:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { down } }) => {
-                return {
-                    [down('md', 'cont')]: {
-                        flexGrow: 1
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@container cont (max-width: 48rem){flex-grow:1;}');
-    });
-
-    test('named @container between:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { between } }) => {
-                return {
-                    [between('xs', 'xl', 'cont')]: {
-                        flexShrink: 0
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@container cont (min-width: 30rem) and (max-width: 80rem){flex-shrink:0;}');
-    });
-
-    test('named @container only:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ limit: { only } }) => {
-                return {
-                    [only('xs', 'cont')]: {
-                        flexBasis: '100%'
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe('@container cont (min-width: 30rem) and (max-width: 30rem){flex-basis:100%;}');
-    });
-});
-
-describe('at-rules', () => {
-    test('@media:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ at: { mq } }) => {
-                const query = mq('prefers-color-scheme: light');
-                return {
-                    [query.s]: {
-                        div: {
-                            width: '100%'
-                        }
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe(`@media (prefers-color-scheme: light){div{width:100%;}}`);
-    });
-
-    test('@container:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ at: { cq } }) => {
-                const query = cq('min-width: 5rem');
-                return {
-                    '.container': {
-                        containerName: query.c,
-                        containerType: 'inline-size'
-                    },
-                    [query.s]: {
-                        '.nested': {
-                            width: '100%'
-                        }
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe(
-            `.container{container-name:cust-cq-1;container-type:inline-size;}@container cust-cq-1 (min-width: 5rem){.nested{width:100%;}}`
-        );
-    });
-
-    test('@keyframes:', () => {
-        const key = 'cust';
-        const styleString = processor.compile({
-            key,
-            maker: ({ at: { kf } }) => {
-                const keyframes = kf();
-                return {
-                    [keyframes.s]: {
-                        from: { width: '10px' },
-                        to: { width: '20px' }
-                    },
-                    '.cls': { animationName: keyframes.k }
-                };
-            }
-        });
-        expect(styleString).toBe(
-            `@keyframes cust-kf-1{from{width:10px;}to{width:20px;}}.cls{animation-name:cust-kf-1;}`
-        );
-    });
-
-    test('@property:', () => {
-        const key = 'cust';
-        const styleString = processor.compile({
-            key,
-            maker: ({ at: { pr } }) => {
-                const property = pr();
-                return {
-                    ...property.r,
-                    '.mod': {
-                        [property.k]: '150px'
-                    },
-                    '.cls': {
-                        width: property.v
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe(
-            `@property --cust-cp-1{syntax:"*";inherits:false;}.mod{--cust-cp-1:150px;}.cls{width:var(--cust-cp-1);}`
-        );
+        expect(styleString).toBe(`@supports not (text-align-last:justify){div{text-align-last:justify;}}`);
     });
 
     test('@layer:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ at: { lay } }) => {
-                const layer = lay();
+            maker: ({ at: { layer } }) => {
+                const layer1 = layer.named;
+                const layer2 = layer.named;
                 return {
-                    [layer.s]: {
+                    ...layer.list(layer1, layer2),
+                    ...layer1({
                         '.padding-sm': {
                             padding: '0.5rem'
                         }
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe(`@layer cust-lay-1{.padding-sm{padding:0.5rem;}}`);
-    });
-
-    test('@scope:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ at: { sc } }) => {
-                const scope = sc('.base', '.limit');
-                return {
-                    [scope.s]: {
-                        div: {
-                            width: '100%'
+                    }),
+                    ...layer2({
+                        '.padding-sm': {
+                            padding: '0.75rem'
                         }
-                    }
+                    })
                 };
             }
         });
-        expect(styleString).toBe(`@scope (.base) to (.limit){div{width:100%;}}`);
+        expect(styleString).toBe(
+            `@layer cust-lay-1, cust-lay-2;` +
+            `@layer cust-lay-1{.padding-sm{padding:0.5rem;}}` +
+            `@layer cust-lay-2{.padding-sm{padding:0.75rem;}}`
+        );
     });
 
-    test('@supports:', () => {
-        const styleString = processor.compile({
-            key: 'cust',
-            maker: ({ at: { sup } }) => {
-                const scope = sup('text-align-last:justify', true);
-                return {
-                    [scope.s]: {
-                        div: {
-                            textAlignLast: 'justify'
-                        }
-                    }
-                };
-            }
-        });
-        expect(styleString).toBe(`@supports not (text-align-last:justify){div{text-align-last:justify;}}`);
-    });
-});
-
-describe('scoped at-rule makers', () => {
     test('@starting-style:', () => {
         const key = 'cust';
         const styleString = processor.compile({
@@ -1434,37 +1028,38 @@ describe('scoped at-rule makers', () => {
     test('@media:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ at: { media } }) => {
+            maker: ({ at: { media, $logic: {and, or, not} } }) => {
+                const logic1 = and('prefers-reduced-motion: reduce', 'hover');
+                const logic2 = or('prefers-reduced-motion: reduce', 'hover');
+                const logic3 = and('orientation: portrait', 'hover');
+                const logic4 = not(and('width > 600px', 'width < 200px'));
+                const logic5 = not(or('width > 600px', 'width < 200px'));
                 // only type
                 const query1 = media.print;
                 // only and
-                const query2 = media.and('prefers-reduced-motion: reduce', 'hover');
+                const query2 = media.where(logic1);
                 // only or
-                const query3 = media.or('prefers-reduced-motion: reduce', 'hover');
+                const query3 = media.where(logic2);
                 // type + and
-                const query4 = media.all.and('orientation: portrait', 'hover');
+                const query4 = media.all.where(logic3);
                 // type + or
-                const query5 = media.screen.or('prefers-reduced-motion: reduce', 'hover');
-                // type + not
-                const query6 = media.screen.not;
-                // type + not + not
-                const query7 = query6.not;
+                const query5 = media.screen.where(logic2);
                 // and + not
-                const query8 = media.and('width > 600px', 'width < 200px').not;
+                const query8 = media.where(logic4);
                 // and + not + not
-                const query9 = query8.not;
+                const query9 = query8.where(not(logic4));
                 // or + not
-                const query10 = media.or('width > 600px', 'width < 200px').not;
+                const query10 = media.where(logic5);
                 // or + not + not
-                const query11 = query10.not;
+                const query11 = query10.where(not(logic5));
                 // or media
-                const query12 = media.or('width > 600px', query2);
+                const query12 = media.where(or(logic1, 'width > 600px'));
                 // and media
-                const query13 = media.and('width > 600px', query3);
+                const query13 = media.where(and(logic2, 'width > 600px'));
                 // or not media
-                const query14 = media.or('width < 100px', query12.not);
+                const query14 = media.where(or('width < 100px', not(or(logic1, 'width > 600px'))));
                 // and not media
-                const query15 = media.and('width < 100px', query13.not);
+                const query15 = media.where(and('width < 100px', not(and(logic2, 'width > 600px'))));
                 return {
                     ...media({
                         '.cls': {
@@ -1494,16 +1089,6 @@ describe('scoped at-rule makers', () => {
                     ...query5({
                         '.cls': {
                             maxWidth: '60px'
-                        }
-                    }),
-                    ...query6({
-                        '.cls': {
-                            maxWidth: '70px'
-                        }
-                    }),
-                    ...query7({
-                        '.cls': {
-                            maxWidth: '80px'
                         }
                     }),
                     ...query8({
@@ -1556,23 +1141,24 @@ describe('scoped at-rule makers', () => {
            `@media (prefers-reduced-motion: reduce) or (hover){.cls{max-width:40px;}}` +
            `@media all and (orientation: portrait) and (hover){.cls{max-width:50px;}}` +
            `@media screen and ((prefers-reduced-motion: reduce) or (hover)){.cls{max-width:60px;}}` +
-           `@media not screen{.cls{max-width:70px;}}` +
-           `@media screen{.cls{max-width:80px;}}` +
            `@media not ((width > 600px) and (width < 200px)){.cls{max-width:90px;}}` +
            `@media (width > 600px) and (width < 200px){.cls{max-width:100px;}}` +
            `@media not ((width > 600px) or (width < 200px)){.cls{max-width:110px;}}` +
            `@media (width > 600px) or (width < 200px){.cls{max-width:120px;}}` +
-           `@media (width > 600px) or (prefers-reduced-motion: reduce) and (hover){.cls{max-width:130px;}}` +
-           `@media (width > 600px) and ((prefers-reduced-motion: reduce) or (hover)){.cls{max-width:140px;}}` +
-           `@media (width < 100px) or not ((width > 600px) or (prefers-reduced-motion: reduce) and (hover)){.cls{max-width:150px;}}` +
-           `@media (width < 100px) and not ((width > 600px) and ((prefers-reduced-motion: reduce) or (hover))){.cls{max-width:160px;}}`
+           `@media (prefers-reduced-motion: reduce) and (hover) or (width > 600px){.cls{max-width:130px;}}` +
+           `@media ((prefers-reduced-motion: reduce) or (hover)) and (width > 600px){.cls{max-width:140px;}}` +
+           `@media (width < 100px) or not ((prefers-reduced-motion: reduce) and (hover) or (width > 600px)){.cls{max-width:150px;}}` +
+           `@media (width < 100px) and not (((prefers-reduced-motion: reduce) or (hover)) and (width > 600px)){.cls{max-width:160px;}}`
         );
     });
 
     test('@container:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ at: { container } }) => {
+            maker: ({ at: { container, $logic: {or, and, not} } }) => {
+                const logic1 = and('width > 100px');
+                const logic2 = or('orientation: landscape', 'height > 400px', 'width > 100px');
+                const logic3 = 'height > 400px';
                 // only container
                 const query0 = container;
                 // with type
@@ -1580,23 +1166,23 @@ describe('scoped at-rule makers', () => {
                 // with scroll-state
                 const query2 = container.scroll;
                 // with type and scroll-state
-                const query3 = container.size.scroll.and('width > 100px');
+                const query3 = container.size.scroll.where(logic1);
                 // named
-                const query4 = query0.named.and('width > 100px');
+                const query4 = query0.named.where(logic1);
                 // named with type
-                const query5 = query1.named.and('width > 100px');
+                const query5 = query1.named.where(logic1);
                 // named with scroll-state
-                const query6 = query2.named.and('width > 100px');
+                const query6 = query2.named.where(logic1);
                 // named with type and scroll-state
-                const query7 = query3.named.and('width > 100px');
+                const query7 = query3.named;
                 // with conditions
-                const query8 = query0.and('orientation: landscape').or('height > 400px', 'width > 100px');
+                const query8 = query0.where(logic2);
                 // named with conditions
-                const query9 = query7.or('height > 400px', 'width > 100px').and('orientation: landscape');
+                const query9 = query7.where(and(or(logic1, 'height > 400px', 'width > 100px'), 'orientation: landscape'));
                 // not
-                const query10 = query1.not('height > 400px');
+                const query10 = query1.where(not(logic3));
                 // named not
-                const query11 = query1.named.not('height > 400px');
+                const query11 = query1.named.where(not(logic3));
                 return {
                     '.cls0': {
                         ...query0
@@ -1691,11 +1277,181 @@ describe('scoped at-rule makers', () => {
            `@container cust-cq-1 (width > 100px){.cls{max-width:50px;}}` +
            `@container cust-cq-2 (width > 100px){.cls{max-width:60px;}}` +
            `@container cust-cq-3 (width > 100px){.cls{max-width:70px;}}` +
-           `@container cust-cq-4 (width > 100px) and (width > 100px){.cls{max-width:80px;}}` +
+           `@container cust-cq-4 (width > 100px){.cls{max-width:80px;}}` +
            `@container (orientation: landscape) or (height > 400px) or (width > 100px){.cls{max-width:90px;}}` +
-           `@container cust-cq-4 ((width > 100px) and (width > 100px) or (height > 400px) or (width > 100px)) and (orientation: landscape){.cls{max-width:100px;}}` +
+           `@container cust-cq-4 ((width > 100px) or (height > 400px) or (width > 100px)) and (orientation: landscape){.cls{max-width:100px;}}` +
            `@container not (height > 400px){.cls{max-width:110px;}}` +
            `@container cust-cq-5 not (height > 400px){.cls{max-width:120px;}}`
         )
+    });
+});
+
+describe('at.$width:', () => {
+    test('@media $width.up:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { media, $width: {up} } }) => {
+                return media.where(up(64))({
+                    '.cls': {
+                        width: '100%'
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@media (min-width:64rem){.cls{width:100%;}}');
+    });
+
+    test('@media $width.down:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { media, $width: {down} } }) => {
+                return media.where(down(48))({
+                    '.cls': {
+                        flexGrow: 1
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@media (max-width:48rem){.cls{flex-grow:1;}}');
+    });
+
+    test('@media $width.between:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { media, $width: {between} } }) => {
+                return media.where(between(30,80))({
+                    '.cls': {
+                        flexShrink: 0
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@media (min-width:30rem) and (max-width:80rem){.cls{flex-shrink:0;}}');
+    });
+
+    test('@media $width.only:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { media, $width: {only} } }) => {
+                return media.where(only(30))({
+                    '.cls': {
+                        flexBasis: '100%'
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@media (min-width:30rem) and (max-width:30rem){.cls{flex-basis:100%;}}');
+    });
+
+    test('@container $width.up:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { container, $width: {up} } }) => {
+                return container.where(up(64))({
+                    '.cls': {
+                        width: '100%'
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@container (min-width:64rem){.cls{width:100%;}}');
+    });
+
+    test('@container $width.down:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { container, $width: {down} } }) => {
+                return container.where(down(48))({
+                    '.cls': {
+                        flexGrow: 1
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@container (max-width:48rem){.cls{flex-grow:1;}}');
+    });
+
+    test('@container $width.between:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { container, $width: {between} } }) => {
+                return container.where(between(30,80))({
+                    '.cls': {
+                        flexShrink: 0
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@container (min-width:30rem) and (max-width:80rem){.cls{flex-shrink:0;}}');
+    });
+
+    test('@container $width.only:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { container, $width: {only} } }) => {
+                return container.where(only(30))({
+                    '.cls': {
+                        flexBasis: '100%'
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@container (min-width:30rem) and (max-width:30rem){.cls{flex-basis:100%;}}');
+    });
+
+   test('named @container $width.up:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { container, $width: {up} } }) => {
+                return container.named.where(up(64))({
+                    '.cls': {
+                        width: '100%'
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@container cust-cq-1 (min-width:64rem){.cls{width:100%;}}');
+    });
+
+    test('named @container $width.down:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { container, $width: {down} } }) => {
+                return container.named.where(down(48))({
+                    '.cls': {
+                        flexGrow: 1
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@container cust-cq-1 (max-width:48rem){.cls{flex-grow:1;}}');
+    });
+
+    test('named @container $width.between:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { container, $width: {between} } }) => {
+                return container.named.where(between(30,80))({
+                    '.cls': {
+                        flexShrink: 0
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@container cust-cq-1 (min-width:30rem) and (max-width:80rem){.cls{flex-shrink:0;}}');
+    });
+
+    test('named @container $width.only:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ at: { container, $width: {only} } }) => {
+                return container.named.where(only(30))({
+                    '.cls': {
+                        flexBasis: '100%'
+                    }
+                });
+            }
+        });
+        expect(styleString).toBe('@container cust-cq-1 (min-width:30rem) and (max-width:30rem){.cls{flex-basis:100%;}}');
     });
 });

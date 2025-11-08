@@ -1,25 +1,21 @@
-
-/**
- * Create stylesheet maker collector
- * @param params - collector params
- */
-export const createCollector = (): {
+export type TCollector = {
     /**
      * Collect maker
      * @param maker - stylesheet maker
      * @param key - stylesheet key
      */
-    use(maker: Function, key: string): string;
+    use(maker: Function): string;
     /**
-     * Collect makers
-     * @param makers - stylesheet makers dict
+     * Replace collected maker
+     * @param maker - next maker
+     * @param original - original maker
      */
-    useMany(makers: Record<string, Function>): string[];
+    remake(maker: Function, key: Function): string;
     /**
      * Get key of collected maker
      * @param maker - stylesheet maker
      */
-    getKey(maker: Function): string | undefined;
+    key(maker?: Function): string;
     /**
      * Get all collected keys
      */
@@ -28,24 +24,81 @@ export const createCollector = (): {
      * Get all collected makers
      */
     makers: Record<string, Function>;
+};
+
+/**
+ * Create stylesheet key maker
+ * @param params - collector params
+ */
+const createKeyMaker = ({
+    prefix
+}: {
+    prefix: string;
+}): {
+    /**
+     * Initial stylesheet key
+     */
+    initial: string;
+    /**
+     * Current stylesheet key
+     */
+    current: string;
+    /**
+     * Create next key
+     */
+    next(): string;
 } => {
+    let count = 0;
+    return {
+        get initial() {
+            return prefix + 0;
+        },
+        get current() {
+            return prefix + count;
+        },
+        next() {
+            count++;
+            return this.current;
+        }
+    };
+};
+
+/**
+ * Create stylesheet maker collector
+ * @param params - collector params
+ */
+export const createCollector = ({
+    prefix
+}: {
+    prefix: string;
+}): TCollector => {
     const k: Set<string> = new Set();
     const _ = new Map<Function, string>();
+    const keyMaker = createKeyMaker({ prefix })
     return {
-        use(maker, key) {
-            const existedKey = _.get(maker);
-            if (existedKey) return existedKey;
+        use(maker) {
+            let key = this.key(maker);
+            if (key) return key;
+            key = keyMaker.current;
             k.add(key);
             _.set(maker, key);
+            keyMaker.next();
             return key;
         },
 
-        useMany(makers) {
-            return Object.entries(makers).map(([k, v]) => this.use(v, k));
+        remake(maker, original) {
+            const key = _.get(original);
+            if (key) {
+                _.delete(original);
+                _.set(maker, key);
+                return key;
+            }
+            return this.use(maker);
         },
 
-        getKey(maker) {
-            return _.get(maker);
+        key(maker) {
+            if (!maker) return keyMaker.initial;
+            return _.get(maker) || '';
         },
 
         get keys() {

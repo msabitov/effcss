@@ -27,6 +27,7 @@ const stringify = (key: string, value: object | string | number | undefined | un
             resKey +
             `{${objectReduce(value, (acc, item) => acc + stringify(...item, resKey), '')}}`
         );
+    else if (value === '') return resKey + ';';
     else return `${kebabCase(resKey)}:${'' + value};`;
 };
 

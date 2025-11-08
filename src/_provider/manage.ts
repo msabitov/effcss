@@ -7,21 +7,16 @@ type TStyleRoot = { adoptedStyleSheets: CSSStyleSheet[] };
 /**
  * Style manager
  */
-interface IStyleManager {
+export type TManager = {
     /**
      * Get stylesheet by key
      * @param key - stylesheet key
      */
     get(key?: string): CSSStyleSheet | undefined;
     /**
-     * Get index of stylesheet
-     * @param styleSheet - CSSStylesheet
-     */
-    getIndex(styleSheet: CSSStyleSheet): number;
-    /**
      * Get all stylesheets dictionary
      */
-    getAll(): Record<string, CSSStyleSheet>;
+    all(): Record<string, CSSStyleSheet>;
     /**
      * Add stylesheet
      * @param key - stylesheet key
@@ -33,12 +28,6 @@ interface IStyleManager {
      * @param key - stylesheet key
      */
     hydrate(key: string): string | undefined;
-    /**
-     * Replace stylesheet content
-     * @param key - stylesheet key
-     * @param styles - stylesheet content
-     */
-    replace(key: string, styles: string): TOptBool;
     /**
      * Remove stylesheet
      * @param key - stylesheet key
@@ -56,11 +45,6 @@ interface IStyleManager {
      */
     pack(key: string, styles: string): TOptBool;
     /**
-     * Check if stylesheet exist
-     * @param key - stylesheet key
-     */
-    has(key?: string): boolean;
-    /**
      * Is stylesheet on
      * @param key - stylesheet key
      */
@@ -69,17 +53,12 @@ interface IStyleManager {
      * Switch stylesheet on
      * @param key - stylesheet key
      */
-    on(...keys: (string | undefined)[]): TOptBool;
+    on(...keys: (string | undefined)[]): void;
     /**
      * Switch stylesheet off
      * @param key - stylesheet key
      */
-    off(...keys: (string | undefined)[]): TOptBool;
-    /**
-     * Apply stylesheets to style root
-     * @param consumer - style root
-     */
-    apply(consumer: TStyleRoot): void;
+    off(...keys: (string | undefined)[]): void;
     /**
      * Register style root
      * @param consumer - style root
@@ -90,23 +69,47 @@ interface IStyleManager {
      * @param consumer - style root
      */
     unregister(consumer: TStyleRoot): void;
-    /**
-     * Apply style changes to dependent nodes
-     */
-    notify(): void;
 }
 
-const PREFIX = 'effcss-';
+const EFFCSS_SYMBOL: symbol = Symbol('effcss-stylesheet');
+
+class CSSServerStyleSheet {
+    disabled: boolean = false;
+    cssRules: object[] = [];
+
+    replaceSync(text: string) {
+        if (text) {
+            this.cssRules = [{
+                cssText: text
+            }];
+        }
+    }
+}
 
 /**
- * Create {@link IStyleManager | style manager}
+ * Create {@link TManager | style manager}
  * @param params - manager params
- * @returns IStyleManager
+ * @returns TManager
  */
-export function createManager(initStyles?: NodeListOf<HTMLStyleElement>): IStyleManager {
-    const initCSS: Record<string, HTMLStyleElement> = {};
+export function createManager({
+    initStyles,
+    emulate
+}: {
+    initStyles?: {
+        dataset?: {
+            effcss?: string;
+        };
+        disabled: boolean;
+        textContent: string | null;
+    }[];
+    emulate?: boolean;
+} = {}): TManager {
+    const initCSS: Record<string, {
+        disabled?: boolean;
+        textContent?: string | null;
+    }> = {};
     initStyles?.forEach((i) => {
-        const key = i.dataset.effcss;
+        const key = i?.dataset?.effcss;
         if (key) initCSS[key] = i;
     });
     
@@ -126,16 +129,18 @@ export function createManager(initStyles?: NodeListOf<HTMLStyleElement>): IStyle
      * Dependent nodes
      */
     let _l: WeakRef<TStyleRoot>[] = [];
-    const hydrate: IStyleManager['hydrate'] = (key: string)=> initCSS[key] && !initCSS[key].disabled ? initCSS[key].textContent || undefined : undefined;
-    const mark = (key: string, styleSheet: CSSStyleSheet): CSSStyleSheet => {
-        styleSheet.toString = () => 'effcss-' + key;
-        return styleSheet;
-    };
-    const apply: IStyleManager['apply'] = (root) => root.adoptedStyleSheets = [
-        ...(root.adoptedStyleSheets?.length ? [...root.adoptedStyleSheets].filter((s) => !(s + '').startsWith(PREFIX)) : []),
+    const createStyleSheet = () => !emulate && globalThis.CSSStyleSheet ? new globalThis.CSSStyleSheet() : new CSSServerStyleSheet();
+    const hydrate: TManager['hydrate'] = (key: string)=> initCSS[key] && !initCSS[key].disabled ? initCSS[key].textContent || undefined : undefined;
+    const mark = (key: string, styleSheet: CSSStyleSheet): CSSStyleSheet => styleSheet.hasOwnProperty(EFFCSS_SYMBOL) ? styleSheet : Object.defineProperties(styleSheet, {
+        [EFFCSS_SYMBOL]: {
+            value: key
+        }
+    });
+    const apply = (root: TStyleRoot) => root.adoptedStyleSheets = [
+        ...(root.adoptedStyleSheets?.length ? [...root.adoptedStyleSheets].filter((s) => !s.hasOwnProperty(EFFCSS_SYMBOL)) : []),
         ..._a
     ];
-    const notify: IStyleManager['notify'] = () => {
+    const notify = () => {
         _l = _l.reduce((acc, listener) => {
             const ref = listener.deref();
             if (ref) {
@@ -145,11 +150,10 @@ export function createManager(initStyles?: NodeListOf<HTMLStyleElement>): IStyle
             return acc;
         }, [] as WeakRef<TStyleRoot>[]);
     };
-    const getIndex: IStyleManager['getIndex'] = (styleSheet) => _a.findIndex((item) => item === styleSheet);
-    const get: IStyleManager['get'] = (key) => (key ? _s[key] : undefined);
-    const has: IStyleManager['has'] = (key) => !!key && !!get(key);
-    const getAll: IStyleManager['getAll'] = () => _s;
-    const add: IStyleManager['add'] = (key, stylesheet: CSSStyleSheet) => {
+    const getIndex = (styleSheet: CSSStyleSheet): number => _a.findIndex((item) => item === styleSheet);
+    const get: TManager['get'] = (key) => (key ? _s[key] : undefined);
+    const all: TManager['all'] = () => _s;
+    const add: TManager['add'] = (key, stylesheet: CSSStyleSheet) => {
         if (!_s[key]) {
             _s[key] = mark(key, stylesheet);
             _a.push(_s[key]);
@@ -159,40 +163,27 @@ export function createManager(initStyles?: NodeListOf<HTMLStyleElement>): IStyle
             return true;
         }
     };
-    const status: IStyleManager['status'] = (key) => {
+    const status: TManager['status'] = (key) => {
         const styleSheet = get(key);
-        return !!styleSheet && getIndex(styleSheet) !== -1;
+        return !styleSheet?.disabled;
     };
-    const on: IStyleManager['on'] = (...targets) => {
-        const result = targets.reduce((acc, key) => {
-            const styleSheet = get(key);
-            if (styleSheet && !status(key)) {
-                _a.push(styleSheet);
-                return acc;
-            }
-            return false;
-        }, true);
+    const on: TManager['on'] = (...targets) => {
+        targets.forEach((target) => {
+            const styleSheet = get(target);
+            if (styleSheet) styleSheet.disabled = false;
+        });
         notify();
-        return result;
     };
-    const off: IStyleManager['off'] = (...targets) => {
-        const result = targets.reduce((acc, key) => {
-            const styleSheet = get(key);
-            if (styleSheet && status(key)) {
-                const index = getIndex(styleSheet);
-                _a.splice(index, 1);
-                return acc;
-            }
-            return false;
-        }, true);
+    const off: TManager['off'] = (...targets) => {
+        targets.forEach((target) => {
+            const styleSheet = get(target);
+            if (styleSheet) styleSheet.disabled = true;
+        });
         notify();
-        return result;
     };
-    const remove: IStyleManager['remove'] = (key: string) => {
+    const remove: TManager['remove'] = (key: string) => {
         const current = get(key);
-        if (!current) {
-            return;
-        }
+        if (!current) return;
         const index = getIndex(current);
         if (index > -1) {
             _a.splice(index, 1);
@@ -202,44 +193,32 @@ export function createManager(initStyles?: NodeListOf<HTMLStyleElement>): IStyle
         notify();
         return true;
     };
-    const removeAll: IStyleManager['removeAll'] = () => {
+    const removeAll: TManager['removeAll'] = () => {
         _a.splice(0);
         _s = {};
         _r = {};
         notify();
         return true;
     };
-    const pack: IStyleManager['pack'] = (key, styles) => {
-        let styleSheet = _s[key] || new CSSStyleSheet();
+    const pack: TManager['pack'] = (key, styles) => {
+        let styleSheet = _s[key] || createStyleSheet();
         styleSheet.replaceSync(styles);
         styleSheet = mark(key, styleSheet);
         return !!styleSheet.cssRules.length && add(key, styleSheet);
     };
-    const replace: IStyleManager['replace'] = (key, styles) => {
-        const styleSheet = _s[key];
-        if (styleSheet) {
-            styleSheet.replaceSync(styles);
-            notify();
-            return true;
-        }
-    };
-    const register: IStyleManager['register'] = (node) => {
+    const register: TManager['register'] = (node) => {
         const index = _l.findIndex((listener) => listener.deref() === node);
         if (index >= 0) return;
         _l.push(new WeakRef(node));
         apply(node);
     };
-    const unregister: IStyleManager['unregister'] = (node: TStyleRoot) => {
+    const unregister: TManager['unregister'] = (node: TStyleRoot) => {
         const index = _l.findIndex((listener) => listener.deref() === node);
         if (index >= 0) _l.splice(index, 1);
     };
     return {
-        apply,
-        notify,
-        getIndex,
         get,
-        has,
-        getAll,
+        all,
         add,
         status,
         on,
@@ -247,7 +226,6 @@ export function createManager(initStyles?: NodeListOf<HTMLStyleElement>): IStyle
         remove,
         removeAll,
         pack,
-        replace,
         register,
         unregister,
         hydrate

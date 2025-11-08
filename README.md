@@ -36,7 +36,11 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 - [Mozilla Firefox](https://addons.mozilla.org/ru/firefox/addon/effcss-developer-tools/)
 - [zip for Chromium based browsers](https://storage.yandexcloud.net/effcss-devtools/chromium-based.zip), that can be installed using [chrome://extensions](https://www.geeksforgeeks.org/installation-guide/how-to-add-extensions-in-google-chrome-browser/)
 
-## Examples
+## v3 Examples
+
+Coming soon.
+
+## v3 Examples
 
 -   [Vanilla TS](https://stackblitz.com/edit/effcss-3-ts-vitejs?file=index.html)
 -   [React](https://stackblitz.com/edit/effcss-3-react-vitejs?file=index.html)
@@ -92,7 +96,7 @@ import { IStyleProvider, TStyleSheetMaker } from 'effcss';
 
 // you can describe your styles using BEM notation
 // so that other people can use them via TypeScript generics
-export interface ICardMaker {
+export interface TCardMaker {
     /**
      * Card block
      */
@@ -132,7 +136,7 @@ export interface ICardMaker {
 
 const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { keyframes }, merge, palette, coef, size }) = {
     // specify selector variants via generic
-    const selector = bem<ICardMaker>;
+    const selector = bem<TCardMaker>;
     // creates unique keyframes identifier
     const spin = keyframes({
         from: {
@@ -178,13 +182,13 @@ export const App = (props: {
     const { css } = props;
     const stylesRef = useRef();
     if (!stylesRef.current) {
-        const bem = css.use(myStyleSheetMaker)<ICardMaker>;
-        // thanks to the ICardMaker interface,
+        const [card] = css.use(myStyleSheetMaker)<TCardMaker>;
+        // thanks to the TCardMaker type,
         // you don't need to look at the implementation - just create the necessary attributes
         stylesRef.current = {
-            card: bem('card..rounded'),
+            card: card('card..rounded'),
             // element with modifiers
-            footer: bem({
+            footer: card({
                 card: {
                     footer: {
                         visible: '',

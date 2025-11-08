@@ -1,9 +1,110 @@
 
 import type { TCreateScope } from '../../_provider/scope';
-import { IPalette } from '../../common';
 import { NO_PARSE_SYMBOL } from './utils';
 
-const PALETTE = 'palette';
+// local types
+type THue = 'pri' | 'sec' | 'suc' | 'inf' | 'war' | 'dan';
+type TLightness = 'xs' | 's' | 'm' | 'l' | 'xl';
+type TChroma = 'gray' | 'pale' | 'base' | 'rich';
+type TMode = 'bg' | 'fg';
+/**
+ * Palette generator
+ * @description
+ * Allows to create palette colors 
+ */
+export interface IPalette {
+    state: {
+        l: TLightness;
+        c: TChroma;
+        h: THue;
+        a: number;
+        m: TMode;
+    }
+    /**
+     * Returns `xs` lightness color
+     */
+    get xs(): IPalette;
+    /**
+     * Returns `s` lightness color
+     */
+    get s(): IPalette;
+    /**
+     * Returns `m` lightness color
+     */
+    get m(): IPalette;
+    /**
+     * Returns `l` lightness color
+     */
+    get l(): IPalette;
+    /**
+     * Returns `xl` lightness color
+     */
+    get xl(): IPalette;
+    /**
+     * Returns lightness color dictionary
+     */
+    get lightness(): Record<TLightness, IPalette>;
+    /**
+     * Returns zero chroma color
+     */
+    get gray(): IPalette;
+    /**
+     * Returns pale chroma color
+     */
+    get pale(): IPalette;
+    /**
+     * Returns base chroma color
+     */
+    get base(): IPalette;
+    /**
+     * Returns rich chroma color
+     */
+    get rich(): IPalette;
+    /**
+     * Returns chroma color dictionary
+     */
+    get chroma(): Record<TChroma, IPalette>;
+    /**
+     * Returns primary hue color
+     */
+    get pri(): IPalette;
+    /**
+     * Returns secondary hue color
+     */
+    get sec(): IPalette;
+    /**
+     * Returns success hue color
+     */
+    get suc(): IPalette;
+    /**
+     * Returns info hue color
+     */
+    get inf(): IPalette;
+    /**
+     * Returns warning hue color
+     */
+    get war(): IPalette;
+    /**
+     * Returns danger hue color
+     */
+    get dan(): IPalette;
+    /**
+     * Returns hue color dictionary
+     */
+    get hue(): Record<THue, IPalette>;
+    /**
+     * Returns specified alpha color
+     */
+    alpha(a?: number): IPalette;
+    /**
+     * Returns background color
+     */
+    get bg(): IPalette;
+    /**
+     * Returns foreground color
+     */
+    get fg(): IPalette;
+}
 
 export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']): IPalette => {
     class Palette implements IPalette {
@@ -190,7 +291,7 @@ export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['var
 
         toString() {
             const { l, c, h, a, m } = this.state;
-            return `oklch(${varExp(PALETTE, 'l', m, l)} ${varExp(PALETTE, 'c', m, c)} ${varExp(PALETTE, 'h', h)} / ${a})`;
+            return `oklch(${varExp(`lightness.${m}.${l}`)} ${varExp(`chroma.${m}.${c}`)} ${varExp(`hue.${h}`)} / ${a})`;
         }
     }
     return new Palette();

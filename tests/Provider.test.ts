@@ -1,17 +1,16 @@
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from '@vitest/browser/context';
-import { defineProvider, TStyleSheetMaker, useStyleProvider } from '../src/index';
-import { createConsumer } from '../src/consumer';
+import { IStyleProvider, IStyleProviderScript, TStyleSheetMaker, useStyleProvider } from '../src/index';
 import { TAG_NAME } from '../src';
 
 const PROVIDER_ID = 'provider';
 const FIRST_ID = 'first';
 const SECOND_ID = 'second';
 const THIRD_ID = 'third';
-const prefix = 'f';
+const prefix = 'ff';
 const FIRST_MAKER: TStyleSheetMaker = ({ bem, time }) => {
     return {
-        [bem<{}>('')]: {
+        [bem('')]: {
             width: '100%',
             'flex-shrink': 0
         },
@@ -22,7 +21,7 @@ const FIRST_MAKER: TStyleSheetMaker = ({ bem, time }) => {
 };
 const SECOND_MAKER: TStyleSheetMaker = ({ bem, units: { px, vh } }) => {
     return {
-        [bem<{}>('')]: {
+        [bem('')]: {
             height: vh(100),
             borderTopLeftRadius: px(14),
             flexGrow: 10
@@ -33,7 +32,8 @@ const THIRD_MAKER: TStyleSheetMaker = ({ time, angle }) => {
     return {
         html: {
             transitionDuration: time(),
-            transform: `skew(${angle()})`
+            rotate: angle(2),
+            '--angle': angle()
         }
     };
 };
@@ -52,105 +52,73 @@ const FOURTH_MAKER: TStyleSheetMaker = ({ bem, time }) => {
     };
 };
 
-const PROVIDER_PARAMS = {
-    vars: {
-        '': {
-            rem: '18px',
-            rtime: '150ms',
-            rangle: '15deg',
-            l: {
-                def: 0.4
-            },
-            h: {
-                def: 261.35,
-                // brand
-                b: 261.35,
-                // info
-                i: 194.77,
-                // error
-                e: 29.23,
-                // warning
-                w: 70.66,
-                // success
-                s: 142.49
-            },
-            c: {
-                def: 0.03,
-                xs: 0.03,
-                s: 0.06,
-                m: 0.1,
-                l: 0.15,
-                xl: 0.25
-            },
-            a: {
-                def: 1,
-                min: 0,
-                xs: 0.1,
-                s: 0.25,
-                m: 0.5,
-                l: 0.75,
-                xl: 0.9,
-                max: 1
-            },
-            t: {
-                def: 300,
-                xs: 100,
-                s: 200,
-                m: 300,
-                l: 450
-            },
-            sz: {
-                s: 10,
-                m: 20,
-                l: 30
-            }
-        }
-    },
-    palette: {
-        h: {
-            sec: 220,
-        },
-        l: {
-            light: {
-                bg: {
-                    s: 0.785
-                }
-            }
-        },
-        c: {
-            light: {
-                fg: {
-                    rich: 0.145
-                }
-            }
-        }
+const defThemeVars = {
+    size: 18,
+    time: 150,
+    angle: 15,
+    sz: {
+        s: 10,
+        m: 20,
+        l: 30
     },
     coef: {
-        $0_: {
-            xxs: 0.05
+        1: 0.05,
+        32: 220,
+        15: 1.9
+    },
+    hue: {
+        sec: 220,
+    },
+    $light: {
+        lightness: {
+            bg: {
+                s: 0.785
+            }
         },
-        max: 220,
-        $1_: {
-            xxl: 1.9
+        chroma: {
+            fg: {
+                rich: 0.145
+            }
+        }
+    }
+};
+
+const customThemeVars = {
+    size: 18,
+    time: 150,
+    angle: 15,
+    mySize: {
+        s: 10,
+        m: 20,
+        l: 30
+    },
+    coef: {
+        1: 0.05,
+        32: 220,
+        15: 1.9
+    },
+    hue: {
+        sec: 220,
+    },
+    lightness: {
+        bg: {
+            s: 0.785
+        }
+    },
+    chroma: {
+        fg: {
+            rich: 0.145
         }
     }
 };
 
 describe('Provider utils:', () => {
-    let consumer: ReturnType<typeof createConsumer>;
-    beforeAll(() => {
-        defineProvider(PROVIDER_PARAMS);
-    });
-
+    let consumer: IStyleProviderScript;
     beforeEach(() => {
-        const element = document.createElement('script', {
-            is: TAG_NAME
-        });
-        element.dataset.testid = PROVIDER_ID;
-        element.setAttribute('is', TAG_NAME);
-        document.head.append(element);
-        consumer = createConsumer({});
-        return () => element.remove();
+        consumer = useStyleProvider() as IStyleProviderScript;
+        consumer.dataset.testid = PROVIDER_ID;
+        consumer.theme.update(defThemeVars);
+        return () => consumer.remove();
     });
 
     test('get provider', () => {
@@ -159,62 +127,81 @@ describe('Provider utils:', () => {
     });
 
     test('initial rem', () => {
-        expect(getComputedStyle(document.documentElement).fontSize).toBe(PROVIDER_PARAMS.vars[''].rem);
+        expect(getComputedStyle(document.documentElement).fontSize).toBe(defThemeVars.size + 'px');
     });
 
     test('get collected stylesheets', () => {
-        const makers = { [FIRST_ID]: FIRST_MAKER, [SECOND_ID]: SECOND_MAKER };
-        consumer.usePublic(makers);
+        consumer.use(FIRST_MAKER, SECOND_MAKER);
         const stylesheets = consumer.stylesheets();
         expect(stylesheets.length).toBe(3);
     });
 
     test('get collected stylesheets by args', () => {
-        const makers = { [FIRST_ID]: FIRST_MAKER, [SECOND_ID]: SECOND_MAKER };
-        consumer.usePublic(makers);
-        const stylesheets = consumer.stylesheets(FIRST_ID, SECOND_ID);
-        expect(stylesheets.filter(Boolean).length).toBe(2);
-    });
-
-    test('get collected stylesheets by array', () => {
-        const makers = { [FIRST_ID]: FIRST_MAKER, [SECOND_ID]: SECOND_MAKER };
-        consumer.usePublic(makers);
-        const stylesheets = consumer.stylesheets([FIRST_ID, SECOND_ID]);
+        const makers = [FIRST_MAKER, SECOND_MAKER ];
+        consumer.use(...makers);
+        const stylesheets = consumer.stylesheets([FIRST_MAKER, SECOND_MAKER]);
         expect(stylesheets.filter(Boolean).length).toBe(2);
     });
 
     test('use stylesheet', () => {
-        const resolve = consumer.use(FIRST_MAKER);
+        const [resolve] = consumer.use(FIRST_MAKER);
         const attrs = resolve('');
-        expect(attrs + '').toBe(`data-${prefix}1="_"`);
+        expect(attrs + '').toBe(`data-f1="_"`);
     });
 
-    test('use public stylesheets', () => {
-        const resolvers = consumer.usePublic({ [FIRST_ID]: FIRST_MAKER });
-        const resolver = resolvers[FIRST_ID];
-        const attrs = resolver('');
-        expect(attrs[`data-${FIRST_ID}`]).toBe('_');
+    test('remake stylesheet with the same function', () => {
+        const property = '--custom-width';
+        let width = 50;
+        const maker: TStyleSheetMaker = ({units: {px}}) => ({
+            html: {
+                [property]: px(width)
+            }
+        });
+        consumer.use(maker);
+        width = 100;
+        consumer.remake(maker);
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(property)).toBe(`calc(${width} * 1px)`);
     });
 
-    test('use private stylesheets', () => {
-        const resolvers = consumer.usePrivate([SECOND_MAKER]);
-        const resolver = resolvers[0];
-        const attrs = resolver('');
-        expect(attrs + '').toBe(`data-${prefix}1="_"`);
+    test('remake stylesheet with the different function', () => {
+        const property = '--custom-width';
+        const width1 = 50;
+        const width2 = 100;
+        const maker1: TStyleSheetMaker = ({units: {px}}) => ({
+            html: {
+                [property]: px(width1)
+            }
+        });
+        const maker2: TStyleSheetMaker = ({units: {px}}) => ({
+            html: {
+                [property]: px(width2)
+            }
+        });
+        consumer.use(maker1);
+        consumer.remake(maker2, maker1);
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(property)).toBe(`calc(${width2} * 1px)`);
     });
 
-    test('resolve stylesheet', () => {
-        consumer.use(FIRST_MAKER, FIRST_ID);
-        expect(consumer.resolve(FIRST_ID)('') + '').toBe(`data-${FIRST_ID}="_"`);
+    test('use many stylesheets', () => {
+        const [firstResolver, secondResolver] = consumer.use(FIRST_MAKER, SECOND_MAKER);
+        const attrs = {
+            ...firstResolver(''),
+            ...secondResolver('')
+        };
+        expect(attrs).toEqual({
+            'data-f1': '_',
+            'data-f2': '_'
+        });
     });
 
-    test('get provider settings', () => {
-        expect(consumer.settings.vars).toMatchObject(PROVIDER_PARAMS.vars);
+    test('get custom theme list', () => {
+        consumer.theme.add(customThemeVars, 'custom');
+        expect(consumer.theme.list).toContain('custom');
     });
 
     test('get provider makers', () => {
-        consumer.use(FIRST_MAKER, FIRST_ID);
-        expect(consumer.makers[FIRST_ID]).toBe(FIRST_MAKER);
+        consumer.use(FIRST_MAKER);
+        expect(Object.values(consumer.makers)).toContain(FIRST_MAKER);
     });
 
     test('set size attribute', () => {
@@ -227,18 +214,18 @@ describe('Provider utils:', () => {
         const rem = 24;
         consumer.size = rem;
         consumer.size = null;
-        expect(getComputedStyle(document.documentElement).fontSize).toBe(PROVIDER_PARAMS.vars[''].rem);
+        expect(getComputedStyle(document.documentElement).fontSize).toBe(defThemeVars.size + 'px');
     });
 
     test('set time attribute', () => {
-        consumer.use(THIRD_MAKER, THIRD_ID);
+        consumer.use(THIRD_MAKER);
         const time = 550;
         consumer.time = time;
         expect(getComputedStyle(document.documentElement).transitionDuration).toBe(time / 1000 + 's');
     });
 
     test('reset time attribute', () => {
-        consumer.use(THIRD_MAKER, THIRD_ID);
+        consumer.use(THIRD_MAKER);
         const time = 550;
         consumer.time = time;
         consumer.time = null;
@@ -246,28 +233,31 @@ describe('Provider utils:', () => {
     });
 
     test('set angle attribute', () => {
+        consumer.use(THIRD_MAKER);
         const angle = 60;
         consumer.angle = angle;
-        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--f0-rangle') + '').toBe(angle + 'deg');
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--angle')).toBe(`calc(${angle} * 1deg)`);
     });
 
     test('reset angle attribute', () => {
+        consumer.use(THIRD_MAKER);
         const angle = 35;
         consumer.angle = angle;
         consumer.angle = null;
-        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--f0-rangle') + '').toBe(PROVIDER_PARAMS.vars[''].rangle)
+        const defAngle = consumer.theme.get().angle;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--angle')).toBe(`calc(${defAngle} * 1deg)`);
     });
 
     test('custom palette values', () => {
         const custom = {
-            sec: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-palette-h-sec'),
-            s: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-palette-l-bg-s'),
-            rich: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-palette-c-fg-rich')
+            sec: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-hue-sec'),
+            s: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-lightness-bg-s'),
+            rich: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-chroma-fg-rich')
         };
         expect(custom).toEqual({
-            sec: PROVIDER_PARAMS.palette.h.sec + '',
-            s: PROVIDER_PARAMS.palette.l.light.bg.s + '',
-            rich: PROVIDER_PARAMS.palette.c.light.fg.rich + '',
+            sec: defThemeVars.hue.sec + '',
+            s: defThemeVars.$light.lightness.bg.s + '',
+            rich: defThemeVars.$light.chroma.fg.rich + '',
         });
     });
 
@@ -275,54 +265,50 @@ describe('Provider utils:', () => {
         const custom = {
             1: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-coef-1'),
             15: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-coef-15'),
-            max: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-coef-32'),
+            32: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-coef-32'),
         };
         expect(custom).toEqual({
-            1: PROVIDER_PARAMS.coef.$0_.xxs + '',
-            15: PROVIDER_PARAMS.coef.$1_.xxl + '',
-            max: PROVIDER_PARAMS.coef.max + '',
+            1: defThemeVars.coef[1] + '',
+            15: defThemeVars.coef[15] + '',
+            32: defThemeVars.coef[32] + ''
         });
     });
 });
 
 describe('Provider with `min` mode:', () => {
-    let consumer: ReturnType<typeof createConsumer>;
+    let consumer: IStyleProvider;
     beforeAll(() => {
-        defineProvider(PROVIDER_PARAMS);
-        const element = document.createElement('script', {
-            is: TAG_NAME
+        consumer = useStyleProvider({
+            attrs: {
+                mode: 'c',
+                min: true
+            }
         });
-        element.dataset.testid = PROVIDER_ID;
-        element.setAttribute('is', TAG_NAME);
-        element.setAttribute('mode', 'c');
-        element.setAttribute('min', '');
-        document.head.append(element);
-        consumer = createConsumer({});
-        consumer.usePrivate([FOURTH_MAKER]);
+        consumer.use(FOURTH_MAKER);
     });
 
     test('stylesheet content', () => {
-        const rules = consumer.stylesheets(FOURTH_MAKER)[0]?.cssRules || []
+        const rules = consumer.stylesheets([FOURTH_MAKER])[0]?.cssRules || []
         expect([...rules].map(s=>s.cssText).join('')).toBe(
-            '.f1-0 { width: 100%; flex-shrink: 0; }.f1-1 { width: 50%; }.f1-2 { transition-duration: calc(1 * var(--f0-rtime)); }'
+            '.f1-0 { width: 100%; flex-shrink: 0; }.f1-1 { width: 50%; }.f1-2 { transition-duration: calc(var(--f0-time) * 1ms); }'
         );
     });
 
     test('minified selector resolver', () => {
-        const resolve = consumer.use(FOURTH_MAKER);
+        const [resolve] = consumer.use(FOURTH_MAKER);
         const attrs = resolve('.element.animated');
         expect(attrs + '').toBe(`class="f1-1 f1-2"`);
     });
 
     test('non-implemented selector resolver', () => {
-        const resolve = consumer.use(FOURTH_MAKER);
+        const [resolve] = consumer.use(FOURTH_MAKER);
         const attrs = resolve('..animated');
         expect(attrs + '').toBe(`class="f1-0 "`);
     });
 });
 
 describe('useStyleProvider:', () => {
-    let provider: ReturnType<typeof useStyleProvider>;
+    let provider: IStyleProvider;
 
     describe('client-side:', () => {
         beforeEach(() => {
@@ -347,11 +333,14 @@ describe('useStyleProvider:', () => {
                     mode: 'c',
                     time: 250,
                     size: 12,
-                    prefix: 'eff',
-                    theme: 'main'
+                    pre: 'eff'
                 }
             });
-            expect(provider + '').toBe(`<script is="effcss-provider" min mode="c" time="250" size="12" prefix="eff" theme="main"></script>`);
+            provider.theme.add({}, 'main');
+            provider.theme.switch('main');
+            expect((provider + '').split('</style>').slice(1).join('</style>')).toBe(
+                `<script is="effcss-provider" min mode="c" size="12" time="250" type="application/json" theme="main">{"theme":[{"type":"add","payload":{"params":{},"name":"main"}}]}</script>`
+            );
         });
 
         test(`use the existing script`, () => {
@@ -405,17 +394,19 @@ describe('useStyleProvider:', () => {
                     mode: 'c',
                     time: 250,
                     size: 12
-                },
-                ...PROVIDER_PARAMS
+                }
             });
+            provider.theme.add(customThemeVars, 'custom');
+            provider.theme.switch('custom');
             provider.use(FOURTH_MAKER);
-            provider.usePublic({ [FIRST_ID]: FIRST_MAKER, [SECOND_ID]: SECOND_MAKER });
-            provider.off(SECOND_ID);
+            provider.use(FIRST_MAKER, SECOND_MAKER);
+            provider.off(SECOND_MAKER);
             expect((provider + '').split('</style>').slice(1).join('</style>')).toBe(
-                `<style data-effcss="f1">.f1-0{width:100%;flex-shrink:0;}.f1-1{width:50%;}.f1-2{transition-duration:calc(1 * var(--f0-rtime));}</style>` +
-                `<style data-effcss="first">.first-0{width:100%;flex-shrink:0;}html{transition-duration:calc(1 * var(--f0-rtime));}</style>` +
-                `<script data-effcss-scope type="application/json">{"f0":{},"f1":{"_":"0","__element":"1","__element_animated":"2"},"first":{"_":"0"},"second":{"_":"0"}}</script>` +
-                `<script is="effcss-provider" type="application/json" mode="c" min size="12" time="250">{"vars":{"":{"rem":"18px","rtime":"150ms","rangle":"15deg","l":{"def":0.4},"h":{"def":261.35,"b":261.35,"i":194.77,"e":29.23,"w":70.66,"s":142.49},"c":{"def":0.03,"xs":0.03,"s":0.06,"m":0.1,"l":0.15,"xl":0.25},"a":{"def":1,"min":0,"xs":0.1,"s":0.25,"m":0.5,"l":0.75,"xl":0.9,"max":1},"t":{"def":300,"xs":100,"s":200,"m":300,"l":450},"sz":{"s":10,"m":20,"l":30}}},"palette":{"h":{"sec":220},"l":{"light":{"bg":{"s":0.785}}},"c":{"light":{"fg":{"rich":0.145}}}},"coef":{"$0_":{"xxs":0.05},"max":220,"$1_":{"xxl":1.9}}}</script>`
+                `<style data-effcss="f1">.f1-0{width:100%;flex-shrink:0;}.f1-1{width:50%;}.f1-2{transition-duration:calc(var(--f0-time) * 1ms);}</style>` +
+                `<style data-effcss="f2">.f2-0{width:100%;flex-shrink:0;}html{transition-duration:calc(var(--f0-time) * 1ms);}</style>` +
+                `<script is="effcss-provider" min mode="c" size="12" time="250" type="application/json" theme="custom">` +
+                `{"theme":[{"type":"add","payload":{"params":{"size":18,"time":150,"angle":15,"mySize":{"s":10,"m":20,"l":30},"coef":{"1":0.05,"15":1.9,"32":220},"hue":{"sec":220},"lightness":{"bg":{"s":0.785}},"chroma":{"fg":{"rich":0.145}}},"name":"custom"}}],` +
+                `"dict":{"f0":{"_theme_0":"0"},"f1":{"_":"0","__element":"1","__element_animated":"2"},"f2":{"_":"0"},"f3":{"_":"0"}}}</script>`
             );
         });
 
@@ -428,12 +419,15 @@ describe('useStyleProvider:', () => {
                 },
                 noscript: true
             });
+            provider.theme.add(customThemeVars, 'custom');
+            provider.theme.switch('custom');
             provider.use(FOURTH_MAKER);
-            provider.usePublic({ [FIRST_ID]: FIRST_MAKER, [SECOND_ID]: SECOND_MAKER });
-            provider.off(SECOND_ID);
+            provider.use(FIRST_MAKER, SECOND_MAKER);
+            provider.off(SECOND_MAKER);
             expect((provider + '').split('</style>').slice(1).join('</style>')).toBe(
-                `<style data-effcss="f1">.f1-0{width:100%;flex-shrink:0;}.f1-1{width:50%;}.f1-2{transition-duration:calc(1 * var(--f0-rtime));}</style>` +
-                `<style data-effcss="first">.first-0{width:100%;flex-shrink:0;}html{transition-duration:calc(1 * var(--f0-rtime));}</style>`
+                `<style data-effcss="f1">.f1-0{width:100%;flex-shrink:0;}.f1-1{width:50%;}.f1-2{transition-duration:calc(var(--f0-time) * 1ms);}</style>` +
+                `<style data-effcss="f2">.f2-0{width:100%;flex-shrink:0;}html{transition-duration:calc(var(--f0-time) * 1ms);}</style>` +
+                `<style is="effcss-provider" min mode="c" theme="custom"></style>`
             );
         });
 
@@ -461,8 +455,7 @@ describe('useStyleProvider:', () => {
                     mode: 'c',
                     time: 250,
                     size: 12
-                },
-                ...PROVIDER_PARAMS
+                }
             });
             provider.use(maker);
             document.head.innerHTML = (document.head.innerHTML + provider);
