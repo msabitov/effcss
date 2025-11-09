@@ -36,25 +36,21 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 - [Mozilla Firefox](https://addons.mozilla.org/ru/firefox/addon/effcss-developer-tools/)
 - [zip for Chromium based browsers](https://storage.yandexcloud.net/effcss-devtools/chromium-based.zip), that can be installed using [chrome://extensions](https://www.geeksforgeeks.org/installation-guide/how-to-add-extensions-in-google-chrome-browser/)
 
-## v3 Examples
+## Examples
 
-Coming soon.
-
-## v3 Examples
-
--   [Vanilla TS](https://stackblitz.com/edit/effcss-3-ts-vitejs?file=index.html)
--   [React](https://stackblitz.com/edit/effcss-3-react-vitejs?file=index.html)
--   [React SSR](https://stackblitz.com/edit/effcss-3-react-ssr-vitejs?file=index.html)
--   [Svelte](https://stackblitz.com/edit/effcss-3-svelte-vitejs?file=index.html)
--   [Svelte SSR](https://stackblitz.com/edit/effcss-3-svelte-ssr-vitejs?file=index.html)
--   [Vue](https://stackblitz.com/edit/effcss-3-vue-vitejs?file=index.html)
--   [Vue SSR](https://stackblitz.com/edit/effcss-3-vue-ssr-vitejs?file=index.html)
--   [Angular](https://stackblitz.com/edit/effcss-3-angular-vitejs?file=src%2Findex.html)
--   [SolidJS](https://stackblitz.com/edit/effcss-3-solidjs-vitejs?file=index.html)
--   [Preact](https://stackblitz.com/edit/effcss-3-preact-vitejs?file=index.html)
--   [Qwik](https://stackblitz.com/edit/effcss-3-qwik-vitejs?file=index.html)
--   [Lit](https://stackblitz.com/edit/effcss-3-lit-vitejs?file=index.html)
--   [Astro](https://stackblitz.com/edit/effcss-3-ts-astro?file=src%2Fpages%2Findex.astro)
+-   [Vanilla TS](https://stackblitz.com/edit/effcss-ts-vitejs?file=src%2Fmain.ts)
+-   [React](https://stackblitz.com/edit/effcss-react-vitejs?file=src%2FApp.tsx)
+-   [Svelte](https://stackblitz.com/edit/effcss-svelte-vitejs?file=src%2FApp.svelte)
+-   [Vue](https://stackblitz.com/edit/effcss-vue-vitejs?file=src%2FApp.vue)
+-   [Angular](https://stackblitz.com/edit/effcss-angular-vitejs?file=src%2Fmain.ts)
+-   [SolidJS](https://stackblitz.com/edit/effcss-solidjs-vitejs?file=src%2FApp.tsx)
+-   [Preact](https://stackblitz.com/edit/effcss-preact-vitejs?file=src%2Fapp.tsx)
+-   [Qwik](https://stackblitz.com/edit/effcss-qwik-vitejs?file=src%2Fapp.tsx)
+-   [Lit](https://stackblitz.com/edit/effcss-lit-vitejs?file=src%2Fmy-element.ts)
+-   [React SSR](https://stackblitz.com/edit/effcss-react-ssr-vitejs?file=src%2FApp.tsx)
+-   [Svelte SSR](https://stackblitz.com/edit/effcss-svelte-ssr-vitejs?file=src%2FApp.svelte)
+-   [Vue SSR](https://stackblitz.com/edit/effcss-vue-ssr-vitejs?file=src%2FApp.vue)
+-   [Astro SSG](https://stackblitz.com/edit/effcss-ts-astro?file=src%2Fpages%2Findex.astro)
 
 ## Installation
 
@@ -80,7 +76,11 @@ Just call `useStyleProvider` in your code:
 ```jsx
 import { useStyleProvider } from "effcss";
 
-const consumer = useStyleProvider();
+const consumer = useStyleProvider({
+    attrs: {
+        min: true // to create minified selectors
+    }
+});
 
 const root = createRoot(document.getElementById("root"));
 root.render(<App css={consumer} />);
@@ -137,7 +137,7 @@ export interface TCardMaker {
 const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { keyframes }, merge, palette, coef, size }) = {
     // specify selector variants via generic
     const selector = bem<TCardMaker>;
-    // creates unique keyframes identifier
+    // create unique keyframes identifier
     const spin = keyframes({
         from: {
             transform: 'rotate(0deg)',
@@ -146,7 +146,7 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { keyframes }, m
             transform: 'rotate(360deg)',
         },
     });
-    // deeply merges objects
+    // deeply merge objects
     const cardLogoStyles = merge({
         animation: `20s linear infinite ${spin}`,
         [pseudo.h()]: {
