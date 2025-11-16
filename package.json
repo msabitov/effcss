@@ -1,6 +1,6 @@
 {
     "name": "effcss",
-    "version": "4.0.1",
+    "version": "4.1.0",
     "description": "Self-confident CSS-in-JS",
     "type": "module",
     "scripts": {
@@ -12,7 +12,8 @@
         "ui",
         "typescript",
         "css",
-        "css-in-js"
+        "css-in-js",
+        "css-in-ts"
     ],
     "author": "Marat Sabitov",
     "license": "Apache-2.0",

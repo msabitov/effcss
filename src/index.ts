@@ -290,17 +290,17 @@ const createGlobalMaker = ({
             }),
             size && {
                 [getAttrSelector(SIZE_ATTR)]: {
-                    [scope.varName('size')]: size
+                    [scope.varName(SIZE_ATTR)]: size
                 }
             },
             time && {
                 [getAttrSelector(TIME_ATTR)]: {
-                    [scope.varName('time')]: time
+                    [scope.varName(TIME_ATTR)]: time
                 }
             },
             angle && {
                 [getAttrSelector(ANGLE_ATTR)]: {
-                    [scope.varName('angle')]: angle
+                    [scope.varName(ANGLE_ATTR)]: angle
                 }
             }
         );
@@ -478,9 +478,9 @@ const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string 
                     is: TAG_NAME,
                     min: host.getAttribute('min'),
                     mode: host.getAttribute('mode'),
-                    size: host.getAttribute('size'),
-                    time: host.getAttribute('time'),
-                    angle: host.getAttribute('angle')
+                    size: host.getAttribute(SIZE_ATTR),
+                    time: host.getAttribute(TIME_ATTR),
+                    angle: host.getAttribute(ANGLE_ATTR)
                 };
                 if (!noscript) {
                     tag = SCRIPT;

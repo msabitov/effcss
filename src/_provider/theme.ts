@@ -38,6 +38,13 @@ const assign = Object.assign;
 const entries = Object.entries;
 
 const THEME_ATTR = 'theme';
+const ADD = 'add';
+const DELETE = 'delete';
+const UPDATE = 'update';
+const LIGHT = '$light';
+const DARK = '$dark';
+const LIGHTNESS = 'lightness';
+const CHROMA = 'chroma';
 const BASE_HUE = 184;
 const computeHue = (val: number) => Number((0.1 * BASE_HUE + 0.9 * val).toFixed(2));
 const DEFAULT_THEME = {
@@ -87,8 +94,8 @@ const DEFAULT_THEME = {
         war: computeHue(109),
         dan: computeHue(29)
     },
-    $light: {
-        lightness: {
+    [LIGHT]: {
+        [LIGHTNESS]: {
             bg: {
                 xl: 0.98,
                 l: 0.93,
@@ -104,7 +111,7 @@ const DEFAULT_THEME = {
                 xs: 0.48
             }
         },
-        chroma: {
+        [CHROMA]: {
             bg: {
                 gray: 0,
                 pale: 0.01,
@@ -119,8 +126,8 @@ const DEFAULT_THEME = {
             }
         }
     },
-    $dark: {
-        lightness: {
+    [DARK]: {
+        [LIGHTNESS]: {
             bg: {
                 xl: 0.24,
                 l: 0.3,
@@ -136,7 +143,7 @@ const DEFAULT_THEME = {
                 xs: 0.72
             }
         },
-        chroma: {
+        [CHROMA]: {
             bg: {
                 pale: 0.02,
                 base: 0.06,
@@ -182,8 +189,8 @@ export const createThemeController = ({
         }
         return {
             ...parseParams(rest),
-            $light: parseParams($light),
-            $dark: parseParams($dark)
+            [LIGHT]: parseParams($light),
+            [DARK]: parseParams($dark)
         };
     };
     const ctx = {
@@ -192,22 +199,22 @@ export const createThemeController = ({
         },
         add(params: object, name: string) {
             if (!themes[name]) {
-                themes[name] = merge({$light: {}, $dark: {}}, params);
-                actions.push({type: 'add', payload: {params, name} });
+                themes[name] = merge({[LIGHT]: {}, [DARK]: {}}, params);
+                actions.push({type: ADD, payload: {params, name} });
                 onChange?.();
             }
         },
         delete(name: string) {
-            if (!themes[name] || name === '') return;
+            if (!name || !themes[name]) return;
             if (this.current === name) this.switch();
             delete themes[name];
-            actions.push({type: 'delete', payload: {name}});
+            actions.push({type: DELETE, payload: {name}});
             onChange?.();
         },
         update(params: object, name: string = '') {
             if (themes[name]) {
-                themes[name] = merge({$light: {}, $dark: {}}, themes[name], params);
-                actions.push({type: 'update', payload: {params, name} });
+                themes[name] = merge({[LIGHT]: {}, [DARK]: {}}, themes[name], params);
+                actions.push({type: UPDATE, payload: {params, name} });
                 onChange?.();
             }
         },
@@ -216,7 +223,7 @@ export const createThemeController = ({
         },
         vars<T extends TThemeValue>(theme: string = ''): TThemeParams<T> {
             const params = this.get(theme);
-            return params ? getThemeVars<T>(params as TThemeParams<T>) as TThemeParams<T> : {$light: {}, $dark: {}} as TThemeParams<T>;
+            return params ? getThemeVars<T>(params as TThemeParams<T>) as TThemeParams<T> : {[LIGHT]: {}, [DARK]: {}} as TThemeParams<T>;
         },
         get list() {
             const {'': def, ...rest} = themes;
@@ -234,13 +241,13 @@ export const createThemeController = ({
     };
     init?.forEach(({type, payload}) => {
         switch(type) {
-            case 'add':
+            case ADD:
                 ctx.add(payload.params, payload.name);
                 break;
-            case 'delete':
+            case DELETE:
                 ctx.delete(payload.name);
                 break;
-            case 'update':
+            case UPDATE:
                 ctx.update(payload.params, payload.name);
                 break;
         }

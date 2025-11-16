@@ -4,6 +4,7 @@ type TJoinArr = (...val: TStrOrNum[]) => string;
 const assign = Object.assign;
 const entries = Object.entries;
 const isArray = Array.isArray;
+const isObject = (val: any) => typeof val === 'object';
 export const range = (size: number, handler: (k: number) => object): object =>
     Array.from(Array(size).entries()).reduce((acc, [k]) => assign(acc, handler(k + 1)), {});
 export const each = <V extends Record<TStrOrNum, any>>(
@@ -22,8 +23,8 @@ export const merge = (target: Record<string, any>, ...sources: any[]) =>
     !sources.length
         ? target
         : sources.reduce((acc, source) => {
-              if (source && acc && typeof source === 'object') entries(source).forEach(([k, v]) => {
-                  if (v && typeof v === 'object') {
+              if (source && acc && isObject(source)) entries(source).forEach(([k, v]) => {
+                  if (v && isObject(v)) {
                       if (!acc[k]) acc[k] = v;
                       else if (isArray(acc[k]) && isArray(v)) acc[k] = [...acc[k], ...v];
                       else merge(acc[k], v || {});

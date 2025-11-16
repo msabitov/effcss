@@ -1286,7 +1286,7 @@ describe('at-rule makers', () => {
     });
 });
 
-describe('at.$width:', () => {
+describe('at.$width, at.$height, at.$block, at.$inline:', () => {
     test('@media $width.up:', () => {
         const styleString = processor.compile({
             key: 'cust',
@@ -1301,10 +1301,10 @@ describe('at.$width:', () => {
         expect(styleString).toBe('@media (min-width:64rem){.cls{width:100%;}}');
     });
 
-    test('@media $width.down:', () => {
+    test('@media $height.down:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ at: { media, $width: {down} } }) => {
+            maker: ({ at: { media, $height: {down} } }) => {
                 return media.where(down(48))({
                     '.cls': {
                         flexGrow: 1
@@ -1312,7 +1312,7 @@ describe('at.$width:', () => {
                 });
             }
         });
-        expect(styleString).toBe('@media (max-width:48rem){.cls{flex-grow:1;}}');
+        expect(styleString).toBe('@media (max-height:48rem){.cls{flex-grow:1;}}');
     });
 
     test('@media $width.between:', () => {
@@ -1329,10 +1329,10 @@ describe('at.$width:', () => {
         expect(styleString).toBe('@media (min-width:30rem) and (max-width:80rem){.cls{flex-shrink:0;}}');
     });
 
-    test('@media $width.only:', () => {
+    test('@media $height.only:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ at: { media, $width: {only} } }) => {
+            maker: ({ at: { media, $height: {only} } }) => {
                 return media.where(only(30))({
                     '.cls': {
                         flexBasis: '100%'
@@ -1340,13 +1340,13 @@ describe('at.$width:', () => {
                 });
             }
         });
-        expect(styleString).toBe('@media (min-width:30rem) and (max-width:30rem){.cls{flex-basis:100%;}}');
+        expect(styleString).toBe('@media (min-height:30rem) and (max-height:30rem){.cls{flex-basis:100%;}}');
     });
 
-    test('@container $width.up:', () => {
+    test('@container $inline.up:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ at: { container, $width: {up} } }) => {
+            maker: ({ at: { container, $inline: {up} } }) => {
                 return container.where(up(64))({
                     '.cls': {
                         width: '100%'
@@ -1354,13 +1354,13 @@ describe('at.$width:', () => {
                 });
             }
         });
-        expect(styleString).toBe('@container (min-width:64rem){.cls{width:100%;}}');
+        expect(styleString).toBe('@container (min-inline-size:64rem){.cls{width:100%;}}');
     });
 
-    test('@container $width.down:', () => {
+    test('@container $block.down:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ at: { container, $width: {down} } }) => {
+            maker: ({ at: { container, $block: {down} } }) => {
                 return container.where(down(48))({
                     '.cls': {
                         flexGrow: 1
@@ -1368,13 +1368,13 @@ describe('at.$width:', () => {
                 });
             }
         });
-        expect(styleString).toBe('@container (max-width:48rem){.cls{flex-grow:1;}}');
+        expect(styleString).toBe('@container (max-block-size:48rem){.cls{flex-grow:1;}}');
     });
 
-    test('@container $width.between:', () => {
+    test('@container $inline.between:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ at: { container, $width: {between} } }) => {
+            maker: ({ at: { container, $inline: {between} } }) => {
                 return container.where(between(30,80))({
                     '.cls': {
                         flexShrink: 0
@@ -1382,13 +1382,13 @@ describe('at.$width:', () => {
                 });
             }
         });
-        expect(styleString).toBe('@container (min-width:30rem) and (max-width:80rem){.cls{flex-shrink:0;}}');
+        expect(styleString).toBe('@container (min-inline-size:30rem) and (max-inline-size:80rem){.cls{flex-shrink:0;}}');
     });
 
-    test('@container $width.only:', () => {
+    test('@container $block.only:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ at: { container, $width: {only} } }) => {
+            maker: ({ at: { container, $block: {only} } }) => {
                 return container.where(only(30))({
                     '.cls': {
                         flexBasis: '100%'
@@ -1396,7 +1396,7 @@ describe('at.$width:', () => {
                 });
             }
         });
-        expect(styleString).toBe('@container (min-width:30rem) and (max-width:30rem){.cls{flex-basis:100%;}}');
+        expect(styleString).toBe('@container (min-block-size:30rem) and (max-block-size:30rem){.cls{flex-basis:100%;}}');
     });
 
    test('named @container $width.up:', () => {

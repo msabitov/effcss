@@ -88,6 +88,11 @@ type TCreateProcessor = (params: {
     globalKey: string;
 }) => TProcessor;
 
+const pseudo = resolvePseudo();
+const color = resolveColor();
+const units = resolveUnits();
+const multiplier = (val: string | number) => val !== 1 ? val + ' * ' : '';
+
 /**
  * Create style processor
  * @param params - processor params
@@ -96,9 +101,9 @@ export const createProcessor: TCreateProcessor = (params) => {
     const { scope, globalKey } = params;
     const globalScope = scope(globalKey)
     const themeVar = globalScope.varExp;
-    const time = (coef: string | number = 1) => `calc(${coef !== 1 ? coef + ' * ' : ''}${themeVar('time')} * 1ms)`;
-    const angle = (coef: string | number = 1) => `calc(${coef !== 1 ? coef + ' * ' : ''}${themeVar('angle')} * 1deg)`;
-    const size = (coef: string | number = 1) => `calc(${coef !== 1 ? coef + ' * ' : ''}${themeVar('size')} * 1px)`;
+    const time = (coef: string | number = 1) => units.ms(multiplier(coef) + themeVar('time'));
+    const angle = (coef: string | number = 1) => units.deg(multiplier(coef) + themeVar('angle'));
+    const size = (coef: string | number = 1) => units.px(multiplier(coef) + themeVar('size'));
     return {
         compile: ({ key, maker }) => {
             const localScope = scope(key);
@@ -124,15 +129,15 @@ export const createProcessor: TCreateProcessor = (params) => {
                     // BEM selectors
                     bem,
                     // pseudo selectors
-                    pseudo: resolvePseudo(),
+                    pseudo,
                     // color handlers
-                    color: resolveColor(),
+                    color,
                     // palette handlers
                     palette: resolvePalette(themeVar),
                     // coefficient handlers
                     coef: resolveCoef(themeVar),
                     // css units
-                    units: resolveUnits(),
+                    units,
                     // css at-rules
                     at
                 })

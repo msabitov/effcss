@@ -182,10 +182,11 @@ const $logic = () => {
         }
     };
 };
+const logicCondition = $logic();
 
-const $width = () => {
-    const up = (val: string | number) => ({toString: () => `(min-width:${isString(val) ? val : val + 'rem'})`});
-    const down = (val: string | number) =>  ({toString: () => `(max-width:${isString(val) ? val : val + 'rem'})`});
+const getSizeCondition = (property: string) => {
+    const up = (val: string | number) => ({toString: () => `(min-${property}:${isString(val) ? val : val + 'rem'})`});
+    const down = (val: string | number) =>  ({toString: () => `(max-${property}:${isString(val) ? val : val + 'rem'})`});
     const between = (from: string | number, to: string | number) => ({toString: () => `${up(from)} and ${down(to)}`});
     return {
         up,
@@ -194,6 +195,10 @@ const $width = () => {
         only: (val: string | number) => between(val, val)
     };
 };
+const widthCondition = getSizeCondition('width');
+const heightCondition = getSizeCondition('height');
+const isizeCondition = getSizeCondition('inline-size');
+const bsizeCondition = getSizeCondition('block-size');
 
 const prepareCondition = (value?: string | object, nowrap?: boolean) => {
     if (!value) return '';
@@ -255,6 +260,7 @@ const media = (params: {
         }
     }) as TMedia;
 };
+const mediaRule = media({});
 
 /**
  * CSS Supports Rule
@@ -281,6 +287,7 @@ const supports = ({
         }
     }) as TSupports;
 };
+const supportsRule = supports();
 
 /**
  * CSS Starting Style Rule
@@ -341,6 +348,7 @@ const scope = (params: Partial<{
         }
     }) as TScope;
 };
+const scopeRule = scope({});
 
 export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
     const counters = {
@@ -523,7 +531,7 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
          * `@supports` rule maker
          * @param rules - nested rules
          */
-        supports: supports(),
+        supports: supportsRule,
         /**
          * Scoped `@keyframes` rule maker
          * @param config - keyframes
@@ -538,12 +546,12 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
          * `@scope` rule maker
          * @param rules - nested rules
          */
-        scope: scope({}),
+        scope: scopeRule,
         /**
          * `@media` rule maker
          * @param rules - nested rules
          */
-        media: media({}),
+        media: mediaRule,
         /**
          * `@container` rule maker
          * @param rules - nested rules
@@ -557,10 +565,22 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
         /**
          * Complex logic condition maker
          */
-        $logic: $logic(),
+        $logic: logicCondition,
         /**
          * Width condition maker
          */
-        $width: $width()
+        $width: widthCondition,
+        /**
+         * Height condition maker
+         */
+        $height: heightCondition,
+        /**
+         * Block-size condition maker
+         */
+        $block: bsizeCondition,
+        /**
+         * Inline-size condition maker
+         */
+        $inline: isizeCondition
     };
 };
