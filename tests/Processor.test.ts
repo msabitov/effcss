@@ -144,6 +144,16 @@ describe('Base:', () => {
         });
         expect(styleString.includes(`body{padding-top:2rem;border-start-end-radius:4px;}`)).toBeTruthy();
     });
+
+    test('array of property values:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: () => {
+                return { '.cls': { textDecoration: ['underline', 'underline dotted'] } };
+            }
+        });
+        expect(styleString.includes(`.cls{text-decoration:underline;text-decoration:underline dotted;}`)).toBeTruthy();
+    });
 });
 
 describe('Primitive handlers', () => {

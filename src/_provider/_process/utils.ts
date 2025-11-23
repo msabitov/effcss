@@ -8,6 +8,7 @@ const objectReduce = <
 ) => Object.entries(obj).reduce(callback, acc);
 
 const kebabCase = (str: string): string => str.replace(/[A-Z]/g, (v) => '-' + v.toLowerCase());
+const propVal = (prop: string, val: any) => `${kebabCase(prop)}:${'' + val};`
 export const NO_PARSE_SYMBOL: symbol = Symbol('noParse');
 
 /**
@@ -19,6 +20,7 @@ export const NO_PARSE_SYMBOL: symbol = Symbol('noParse');
 const stringify = (key: string, value: object | string | number | undefined | unknown, parent?: string): string => {
     let resKey = '' + key;
     if (value === null || value === undefined) return '';
+    else if (Array.isArray(value)) return value.map((v) => propVal(resKey, v)).join('');
     else if (typeof value === 'object' && !value.hasOwnProperty(NO_PARSE_SYMBOL))
         return (
             (!!parent && !parent.startsWith?.('@') && !resKey.startsWith?.('&') && !resKey.startsWith?.('@')
@@ -28,7 +30,7 @@ const stringify = (key: string, value: object | string | number | undefined | un
             `{${objectReduce(value, (acc, item) => acc + stringify(...item, resKey), '')}}`
         );
     else if (value === '') return resKey + ';';
-    else return `${kebabCase(resKey)}:${'' + value};`;
+    else return propVal(resKey, value);
 };
 
 export const parseStyles = (styles: object): string => objectReduce(styles, (acc, item) => acc + stringify(...item), '');

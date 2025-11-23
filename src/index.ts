@@ -199,6 +199,13 @@ type TUseStylePropviderParams = {
      * Create Style Provider emulation
      */
     emulate?: boolean;
+    /**
+     * Use as global object
+     */
+    global?: boolean;
+};
+type TGlobalThisWithProvider = typeof globalThis & {
+    [PROVIDER_SYMBOL]: IStyleProvider;
 };
 type TUseStyleProvider = {
     (settings?: TUseStylePropviderParams): IStyleProvider;
@@ -502,7 +509,9 @@ const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string 
         }
     });
     Object.assign(host, handlers);
-}
+};
+
+const PROVIDER_SYMBOL = Symbol(TAG_NAME);
 
 /**
  * Define style provider custom element
@@ -758,20 +767,26 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
  * @param settings - provider settings
  */
 export const useStyleProvider: TUseStyleProvider = (params = {}) => {
-    const {emulate, ...settings} = params;
+    const {emulate, global, ...settings} = params;
     const document = globalThis?.document;
-    if (document && !emulate) {
+    let styleProvider: IStyleProvider;
+    const globalProvider = (globalThis as TGlobalThisWithProvider)[PROVIDER_SYMBOL];
+    if (global && globalProvider) styleProvider = globalProvider;
+    else if (document && !emulate) {
         if (useStyleProvider.isDefined === undefined) useStyleProvider.isDefined = defineProvider();
         const provider: IStyleProvider = document.querySelector(`[is=${TAG_NAME}]`) as unknown as IStyleProvider;
-        if (provider) return provider;
-        const script = document.createElement(SCRIPT, {
-            is: TAG_NAME
-        })
-        script.setAttribute('is', TAG_NAME);
-        const attrs = settings?.attrs;
-        if (attrs) Object.entries(attrs).map(([k,v]) => v && DEFAULT_ATTRS[k] !== v && script.setAttribute(k, isBoolean(v) ? '' : v + ''));
-        document.head.appendChild(script);
-        return script as unknown as IStyleProvider;
-    }
-    return emulateProvider(settings);
+        if (provider) styleProvider = provider;
+        else {
+            const script = document.createElement(SCRIPT, {
+                is: TAG_NAME
+            })
+            script.setAttribute('is', TAG_NAME);
+            const attrs = settings?.attrs;
+            if (attrs) Object.entries(attrs).map(([k,v]) => v && DEFAULT_ATTRS[k] !== v && script.setAttribute(k, isBoolean(v) ? '' : v + ''));
+            document.head.appendChild(script);
+            styleProvider = script as unknown as IStyleProvider;
+        }
+    } else styleProvider = emulateProvider(settings);
+    if (global && !globalProvider) (globalThis as TGlobalThisWithProvider)[PROVIDER_SYMBOL] = styleProvider;
+    return styleProvider;
 };
