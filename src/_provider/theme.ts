@@ -51,6 +51,7 @@ const DEFAULT_THEME = {
     time: 200,
     size: 16,
     angle: 30,
+    color: '#2192a7',
     coef: {
         0: 0,
         1: 0.0625,

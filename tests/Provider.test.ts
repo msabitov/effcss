@@ -28,12 +28,15 @@ const SECOND_MAKER: TStyleSheetMaker = ({ bem, units: { px, vh } }) => {
         }
     };
 };
-const THIRD_MAKER: TStyleSheetMaker = ({ time, angle }) => {
+const ANGLE_VAR = '--angle';
+const COLOR_VAR = '--color';
+const THIRD_MAKER: TStyleSheetMaker = ({ time, angle, color }) => {
     return {
         html: {
             transitionDuration: time(),
             rotate: angle(2),
-            '--angle': angle()
+            [ANGLE_VAR]: angle(),
+            [COLOR_VAR]: color.root()
         }
     };
 };
@@ -56,6 +59,7 @@ const defThemeVars = {
     size: 18,
     time: 150,
     angle: 15,
+    color: 'red',
     sz: {
         s: 10,
         m: 20,
@@ -236,7 +240,7 @@ describe('Provider utils:', () => {
         consumer.use(THIRD_MAKER);
         const angle = 60;
         consumer.angle = angle;
-        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--angle')).toBe(`calc(${angle} * 1deg)`);
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(ANGLE_VAR)).toBe(`calc(${angle} * 1deg)`);
     });
 
     test('reset angle attribute', () => {
@@ -245,7 +249,23 @@ describe('Provider utils:', () => {
         consumer.angle = angle;
         consumer.angle = null;
         const defAngle = consumer.theme.get().angle;
-        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--angle')).toBe(`calc(${defAngle} * 1deg)`);
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(ANGLE_VAR)).toBe(`calc(${defAngle} * 1deg)`);
+    });
+
+    test('set color attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const color = 'green';
+        consumer.color = color;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(COLOR_VAR)).toBe(color);
+    });
+
+    test('reset color attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const color = 'green';
+        consumer.color = color;
+        consumer.color = null;
+        const defColor = consumer.theme.get().color;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(COLOR_VAR)).toBe(defColor);
     });
 
     test('custom palette values', () => {

@@ -694,6 +694,33 @@ describe('Coefficient:', () => {
 });
 
 describe('Color:', () => {
+    test('root:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ color }) => {
+                const { root, darken } = color;
+                const first = root();
+                const second = root({
+                    h: 'calc(h + 180)',
+                    a: 0.5
+                });
+                const third = darken(first);
+                return {
+                    '.custom': {
+                        background: second,
+                        color: third
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.custom{' +
+            'background:oklch(from var(--f0-color) l c calc(h + 180) / 0.5);' +
+            'color:oklch(from var(--f0-color) calc(l - 0.1) c h / alpha);' +
+            '}'
+        );
+    });
+
     test('darken/lighten:', () => {
         const styleString = processor.compile({
             key: 'cust',
@@ -711,7 +738,7 @@ describe('Color:', () => {
             }
         });
         expect(styleString).toBe(
-            '.custom{background:oklch(from green calc(l + 0.1) c h / alpha));color:oklch(from green calc(l - 0.1) c h / alpha));}'
+            '.custom{background:oklch(from green calc(l + 0.1) c h / alpha);color:oklch(from green calc(l - 0.1) c h / alpha);}'
         );
     });
 
@@ -732,7 +759,7 @@ describe('Color:', () => {
             }
         });
         expect(styleString).toBe(
-            '.custom{background:oklch(from green l c h / calc(alpha + 0.1)));color:oklch(from green l c h / calc(alpha - 0.1)));}'
+            '.custom{background:oklch(from green l c h / calc(alpha + 0.1));color:oklch(from green l c h / calc(alpha - 0.1));}'
         );
     });
 
@@ -753,7 +780,7 @@ describe('Color:', () => {
             }
         });
         expect(styleString).toBe(
-            '.custom{background:oklch(from green l calc(c + 0.04) h / alpha));color:oklch(from green l calc(c - 0.04) h / alpha));}'
+            '.custom{background:oklch(from green l calc(c + 0.04) h / alpha);color:oklch(from green l calc(c - 0.04) h / alpha);}'
         );
     });
 
@@ -774,7 +801,7 @@ describe('Color:', () => {
             }
         });
         expect(styleString).toBe(
-            '.custom{background:oklch(from green l c calc(h + 30) / alpha));color:oklch(from green l c calc(h + 180) / alpha));}'
+            '.custom{background:oklch(from green l c calc(h + 30) / alpha);color:oklch(from green l c calc(h + 180) / alpha);}'
         );
     });
 });

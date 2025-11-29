@@ -14,6 +14,9 @@ const NTH_CHILD = NTH + CHILD;
 const COLON_AFTER = '::' + AFTER;
 const COLON_BEFORE = '::' + BEFORE;
 const _FOCUS = ':focus';
+const VALID = 'valid';
+const INVALID = 'in' + VALID;
+const USER = ':user-';
 
 const SIMPLE_PSEUDO = {
     // simple
@@ -24,8 +27,10 @@ const SIMPLE_PSEUDO = {
     fv: _FOCUS + '-visible',
     a: ':active',
     v: ':visited',
-    val: ':valid',
-    inv: ':invalid',
+    val: ':' + VALID,
+    inv: ':' + INVALID,
+    uval: USER + VALID,
+    uinv: USER + INVALID,
     e: ':empty',
     d: ':disabled',
     rq: ':required',
@@ -101,6 +106,14 @@ type TPseudo = {
      * :invalid
      */
     inv: TSimplePseudo;
+    /**
+     * :user-valid
+     */
+    uval: TSimplePseudo;
+    /**
+     * :user-invalid
+     */
+    uinv: TSimplePseudo;
     /**
      * :empty
      */

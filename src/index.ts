@@ -44,6 +44,10 @@ export type TProviderAttrs = {
      * Root angle in deg
      */
     angle: number;
+    /**
+     * Root color string
+     */
+    color: string;
 };
 type TAttrKeys = keyof TProviderAttrs;
 type TManagerLite = Pick<TManager, 'pack' | 'status' | 'on' | 'off' | 'get' | 'hydrate' | 'all'>;
@@ -123,6 +127,15 @@ export interface IStyleProvider {
      * @param val - angle value in ms
      */
     set angle(val: number | null);
+    /**
+     * Get root color value
+     */
+    get color(): string | null;
+    /**
+     * Set root color value
+     * @param val - angle value in ms
+     */
+    set color(val: string | null);
 
     // makers handlers
 
@@ -227,6 +240,7 @@ const THEME_ATTR = 'theme';
 const SIZE_ATTR = 'size';
 const TIME_ATTR = 'time';
 const ANGLE_ATTR = 'angle';
+const COLOR_ATTR = 'color';
 const EVENT_NAME = LIBRARY + 'changes';
 const EFFCSS_ATTR = 'data-' + LIBRARY;
 const APP_JSON = 'application/json';
@@ -261,6 +275,7 @@ const createGlobalMaker = ({
         size: number | null;
         time: number | null;
         angle: number | null;
+        color: string | null;
     };
     scope: TScope;
 }): TStyleSheetMaker => {
@@ -269,6 +284,7 @@ const createGlobalMaker = ({
         const size = attrs.size;
         const time = attrs.time;
         const angle = attrs.angle;
+        const color = attrs.color;
         const {$dark = {}, $light = {}, ...root} = theme.vars();
         return merge(
             {
@@ -308,6 +324,11 @@ const createGlobalMaker = ({
             angle && {
                 [getAttrSelector(ANGLE_ATTR)]: {
                     [scope.varName(ANGLE_ATTR)]: angle
+                }
+            },
+            color && {
+                [getAttrSelector(COLOR_ATTR)]: {
+                    [scope.varName(COLOR_ATTR)]: color
                 }
             }
         );
@@ -436,6 +457,14 @@ const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string 
                 return getNumAttr(host, ANGLE_ATTR);
             }
         },
+        color: {
+            set(val: string | null) {
+                setAttr(host, COLOR_ATTR, val);
+            },
+            get() {
+                return host.getAttribute(COLOR_ATTR);
+            }
+        },
     });
     const collector = createCollector({ prefix: host.pre });
     const scope = createScope({
@@ -487,7 +516,8 @@ const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string 
                     mode: host.getAttribute('mode'),
                     size: host.getAttribute(SIZE_ATTR),
                     time: host.getAttribute(TIME_ATTR),
-                    angle: host.getAttribute(ANGLE_ATTR)
+                    angle: host.getAttribute(ANGLE_ATTR),
+                    color: host.getAttribute(COLOR_ATTR)
                 };
                 if (!noscript) {
                     tag = SCRIPT;
@@ -512,6 +542,8 @@ const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string 
 };
 
 const PROVIDER_SYMBOL = Symbol(TAG_NAME);
+const CUST_ATTRS = [SIZE_ATTR, TIME_ATTR, ANGLE_ATTR, COLOR_ATTR];
+const CUST_ATTRS_SET = new Set(CUST_ATTRS);
 
 /**
  * Define style provider custom element
@@ -523,7 +555,7 @@ function defineProvider(): boolean {
     else {
         class StyleProvider extends HTMLScriptElement implements IStyleProvider {
             static get observedAttributes() {
-                return [SIZE_ATTR, TIME_ATTR, ANGLE_ATTR];
+                return CUST_ATTRS;
             }
 
             theme: IStyleProvider['theme'];
@@ -533,6 +565,7 @@ function defineProvider(): boolean {
             size: IStyleProvider['size'];
             angle: IStyleProvider['angle'];
             time: IStyleProvider['time'];
+            color: IStyleProvider['color'];
 
             // maker handlers
 
@@ -583,13 +616,15 @@ function defineProvider(): boolean {
                 const size = this.size;
                 const time = this.time;
                 const angle = this.angle;
+                const color = this.color;
                 // create init stylesheet maker
                 const next = createGlobalMaker({
                     theme: this.theme,
                     attrs: {
                         size,
                         time,
-                        angle
+                        angle,
+                        color
                     },
                     scope: this._s(this._c.key())
                 });
@@ -645,7 +680,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
     } = settings;
     let {
         mode = DEFAULT_ATTRS.mode, min, pre = DEFAULT_ATTRS.prefix,
-        size = null, time = null, angle = null
+        size = null, time = null, angle = null, color = null
     } = attrs;
     class StyleProviderEmulation implements IStyleProvider {
         get tagName(): string {
@@ -658,6 +693,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
             size: size ? size + '' : null,
             time: time ? time + '' : null,
             angle: angle ? angle + '' : null,
+            color: color || null,
             pre,
             mode,
             min: min ? '' : null
@@ -669,7 +705,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         }
         setAttribute(name: TAttrKeys, val: string) {
             this.attributes[name] = (val + '');
-            if (name === SIZE_ATTR || name === TIME_ATTR || name === ANGLE_ATTR) this._customize();
+            if (CUST_ATTRS_SET.has(name)) this._customize();
         }
         removeAttribute(name: keyof typeof this.attributes) {
             delete this.attributes[name];
@@ -684,6 +720,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         size: IStyleProvider['size'];
         angle: IStyleProvider['angle'];
         time: IStyleProvider['time'];
+        color: IStyleProvider['color'];
 
         // maker handlers
 
@@ -732,13 +769,15 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
             const size = this.size;
             const time = this.time;
             const angle = this.angle;
+            const color = this.color;
             // create init stylesheet maker
             const next = createGlobalMaker({
                 theme: this.theme,
                 attrs: {
                     size,
                     time,
-                    angle
+                    angle,
+                    color
                 },
                 scope: this._s(this._c.key())
             });

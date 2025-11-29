@@ -89,7 +89,6 @@ type TCreateProcessor = (params: {
 }) => TProcessor;
 
 const pseudo = resolvePseudo();
-const color = resolveColor();
 const units = resolveUnits();
 const multiplier = (val: string | number) => val !== 1 ? val + ' * ' : '';
 
@@ -131,7 +130,7 @@ export const createProcessor: TCreateProcessor = (params) => {
                     // pseudo selectors
                     pseudo,
                     // color handlers
-                    color,
+                    color: resolveColor(themeVar),
                     // palette handlers
                     palette: resolvePalette(themeVar),
                     // coefficient handlers
