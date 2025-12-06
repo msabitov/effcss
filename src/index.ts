@@ -1,6 +1,6 @@
 
 // types
-import type { IMakerParams, TProcessor } from './_provider/process';
+import type { TProcessor } from './_provider/process';
 import type { TManager } from './_provider/manage';
 import type { TCollector } from './_provider/collect';
 import type { TScope, TScopeResolver } from './_provider/scope';
@@ -48,6 +48,10 @@ export type TProviderAttrs = {
      * Root color string
      */
     color: string;
+    /**
+     * Root easing function
+     */
+    easing: string;
 };
 type TAttrKeys = keyof TProviderAttrs;
 type TManagerLite = Pick<TManager, 'pack' | 'status' | 'on' | 'off' | 'get' | 'hydrate' | 'all'>;
@@ -136,6 +140,15 @@ export interface IStyleProvider {
      * @param val - angle value in ms
      */
     set color(val: string | null);
+    /**
+     * Get root easing function
+     */
+    get easing(): string | null;
+    /**
+     * Set root easing function
+     * @param val - easing function
+     */
+    set easing(val: string | null);
 
     // makers handlers
 
@@ -241,6 +254,7 @@ const SIZE_ATTR = 'size';
 const TIME_ATTR = 'time';
 const ANGLE_ATTR = 'angle';
 const COLOR_ATTR = 'color';
+const EASING_ATTR = 'easing';
 const EVENT_NAME = LIBRARY + 'changes';
 const EFFCSS_ATTR = 'data-' + LIBRARY;
 const APP_JSON = 'application/json';
@@ -276,6 +290,7 @@ const createGlobalMaker = ({
         time: number | null;
         angle: number | null;
         color: string | null;
+        easing: string | null;
     };
     scope: TScope;
 }): TStyleSheetMaker => {
@@ -285,6 +300,7 @@ const createGlobalMaker = ({
         const time = attrs.time;
         const angle = attrs.angle;
         const color = attrs.color;
+        const easing = attrs.easing;
         const {$dark = {}, $light = {}, ...root} = theme.vars();
         return merge(
             {
@@ -329,6 +345,11 @@ const createGlobalMaker = ({
             color && {
                 [getAttrSelector(COLOR_ATTR)]: {
                     [scope.varName(COLOR_ATTR)]: color
+                }
+            },
+            easing && {
+                [getAttrSelector(EASING_ATTR)]: {
+                    [scope.varName(EASING_ATTR)]: easing
                 }
             }
         );
@@ -465,6 +486,14 @@ const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string 
                 return host.getAttribute(COLOR_ATTR);
             }
         },
+        easing: {
+            set(val: string | null) {
+                setAttr(host, EASING_ATTR, val);
+            },
+            get() {
+                return host.getAttribute(EASING_ATTR);
+            }
+        },
     });
     const collector = createCollector({ prefix: host.pre });
     const scope = createScope({
@@ -517,7 +546,8 @@ const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string 
                     size: host.getAttribute(SIZE_ATTR),
                     time: host.getAttribute(TIME_ATTR),
                     angle: host.getAttribute(ANGLE_ATTR),
-                    color: host.getAttribute(COLOR_ATTR)
+                    color: host.getAttribute(COLOR_ATTR),
+                    easing: host.getAttribute(EASING_ATTR)
                 };
                 if (!noscript) {
                     tag = SCRIPT;
@@ -542,7 +572,7 @@ const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string 
 };
 
 const PROVIDER_SYMBOL = Symbol(TAG_NAME);
-const CUST_ATTRS = [SIZE_ATTR, TIME_ATTR, ANGLE_ATTR, COLOR_ATTR];
+const CUST_ATTRS = [SIZE_ATTR, TIME_ATTR, ANGLE_ATTR, COLOR_ATTR, EASING_ATTR];
 const CUST_ATTRS_SET = new Set(CUST_ATTRS);
 
 /**
@@ -566,6 +596,7 @@ function defineProvider(): boolean {
             angle: IStyleProvider['angle'];
             time: IStyleProvider['time'];
             color: IStyleProvider['color'];
+            easing: IStyleProvider['easing'];
 
             // maker handlers
 
@@ -617,6 +648,7 @@ function defineProvider(): boolean {
                 const time = this.time;
                 const angle = this.angle;
                 const color = this.color;
+                const easing = this.easing;
                 // create init stylesheet maker
                 const next = createGlobalMaker({
                     theme: this.theme,
@@ -624,7 +656,8 @@ function defineProvider(): boolean {
                         size,
                         time,
                         angle,
-                        color
+                        color,
+                        easing
                     },
                     scope: this._s(this._c.key())
                 });
@@ -680,7 +713,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
     } = settings;
     let {
         mode = DEFAULT_ATTRS.mode, min, pre = DEFAULT_ATTRS.prefix,
-        size = null, time = null, angle = null, color = null
+        size = null, time = null, angle = null, color = null, easing = null
     } = attrs;
     class StyleProviderEmulation implements IStyleProvider {
         get tagName(): string {
@@ -694,6 +727,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
             time: time ? time + '' : null,
             angle: angle ? angle + '' : null,
             color: color || null,
+            easing: easing || null,
             pre,
             mode,
             min: min ? '' : null
@@ -721,6 +755,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         angle: IStyleProvider['angle'];
         time: IStyleProvider['time'];
         color: IStyleProvider['color'];
+        easing: IStyleProvider['easing'];
 
         // maker handlers
 
@@ -770,6 +805,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
             const time = this.time;
             const angle = this.angle;
             const color = this.color;
+            const easing = this.easing;
             // create init stylesheet maker
             const next = createGlobalMaker({
                 theme: this.theme,
@@ -777,7 +813,8 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
                     size,
                     time,
                     angle,
-                    color
+                    color,
+                    easing
                 },
                 scope: this._s(this._c.key())
             });

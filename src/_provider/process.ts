@@ -19,6 +19,12 @@ import {
 import { parseStyles } from './_process/utils';
 
 type TScope = ReturnType<ReturnType<TCreateScope>>;
+type TBezier = {
+    x1?: number;
+    y1?: number;
+    x2?: number;
+    y2?: number;
+};
 
 export interface IMakerParams {
     dash: typeof dash;
@@ -74,6 +80,10 @@ export interface IMakerParams {
      * Scalable angle value
      */
     angle: (coef?: number | string) => string;
+    /**
+     * Easing function
+     */
+    easing: (bezier?: TBezier) => string;
 }
 
 export type TProcessor = {
@@ -103,6 +113,7 @@ export const createProcessor: TCreateProcessor = (params) => {
     const time = (coef: string | number = 1) => units.ms(multiplier(coef) + themeVar('time'));
     const angle = (coef: string | number = 1) => units.deg(multiplier(coef) + themeVar('angle'));
     const size = (coef: string | number = 1) => units.px(multiplier(coef) + themeVar('size'));
+    const easing = (bezier?: TBezier) => !bezier ? themeVar('easing') : `cubic-bezier(${bezier.x1 || 0},${bezier.y1 || 0},${bezier.x2 || 1},${bezier.y2 || 1})`;
     return {
         compile: ({ key, maker }) => {
             const localScope = scope(key);
@@ -125,6 +136,8 @@ export const createProcessor: TCreateProcessor = (params) => {
                     time,
                     // angle
                     angle,
+                    // easing function
+                    easing,
                     // BEM selectors
                     bem,
                     // pseudo selectors

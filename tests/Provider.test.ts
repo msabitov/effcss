@@ -4,10 +4,7 @@ import { IStyleProvider, IStyleProviderScript, TStyleSheetMaker, useStyleProvide
 import { TAG_NAME } from '../src';
 
 const PROVIDER_ID = 'provider';
-const FIRST_ID = 'first';
-const SECOND_ID = 'second';
-const THIRD_ID = 'third';
-const prefix = 'ff';
+
 const FIRST_MAKER: TStyleSheetMaker = ({ bem, time }) => {
     return {
         [bem('')]: {
@@ -30,13 +27,15 @@ const SECOND_MAKER: TStyleSheetMaker = ({ bem, units: { px, vh } }) => {
 };
 const ANGLE_VAR = '--angle';
 const COLOR_VAR = '--color';
-const THIRD_MAKER: TStyleSheetMaker = ({ time, angle, color }) => {
+const EASING_VAR = '--easing';
+const THIRD_MAKER: TStyleSheetMaker = ({ time, angle, color, easing }) => {
     return {
         html: {
             transitionDuration: time(),
             rotate: angle(2),
             [ANGLE_VAR]: angle(),
-            [COLOR_VAR]: color.root()
+            [COLOR_VAR]: color.root(),
+            [EASING_VAR]: easing()
         }
     };
 };
@@ -60,6 +59,7 @@ const defThemeVars = {
     time: 150,
     angle: 15,
     color: 'red',
+    easing: 'ease-in-out',
     sz: {
         s: 10,
         m: 20,
@@ -266,6 +266,23 @@ describe('Provider utils:', () => {
         consumer.color = null;
         const defColor = consumer.theme.get().color;
         expect(window.getComputedStyle(document.documentElement).getPropertyValue(COLOR_VAR)).toBe(defColor);
+    });
+
+    
+    test('set easing attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const easing = 'cubic-bezier(0.1, -0.6, 0.2, 0)';
+        consumer.easing = easing;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(EASING_VAR)).toBe(easing);
+    });
+
+    test('reset easing attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const easing = 'cubic-bezier(0.1, -0.6, 0.2, 0)';
+        consumer.easing = easing;
+        consumer.easing = null;
+        const defEasing = consumer.theme.get().easing;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(EASING_VAR)).toBe(defEasing);
     });
 
     test('custom palette values', () => {

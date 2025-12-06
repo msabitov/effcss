@@ -83,6 +83,37 @@ describe('Base:', () => {
         expect(styleString).toBe(`.cust{transform:skew(calc(1.5 * var(--f0-angle) * 1deg));}`);
     });
 
+    test('Easing without argument:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ easing }) => {
+                return {
+                    [`.cust`]: {
+                        transitionTimingFunction: easing()
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(`.cust{transition-timing-function:var(--f0-easing);}`);
+    });
+
+    test('Easing with argument:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ easing }) => {
+                return {
+                    [`.cust`]: {
+                        transitionTimingFunction: easing({
+                            x1: 0.42,
+                            x2: 0.58
+                        })
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(`.cust{transition-timing-function:cubic-bezier(0.42,0,0.58,1);}`);
+    });
+
     test('Nested selector:', () => {
         const styleString = processor.compile({
             key: 'cust',

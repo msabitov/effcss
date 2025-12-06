@@ -1,5 +1,5 @@
 type TStrOrNum = string | number;
-type TJoinArr = (...val: TStrOrNum[]) => string;
+type TJoinArr = (...val: any[]) => string;
 
 const assign = Object.assign;
 const entries = Object.entries;

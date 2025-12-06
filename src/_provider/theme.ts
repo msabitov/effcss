@@ -52,6 +52,7 @@ const DEFAULT_THEME = {
     size: 16,
     angle: 30,
     color: '#2192a7',
+    easing: 'linear',
     coef: {
         0: 0,
         1: 0.0625,
