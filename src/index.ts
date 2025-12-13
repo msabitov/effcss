@@ -247,6 +247,7 @@ type TAttrsHandlers = {
 // constants
 const LIBRARY = 'effcss';
 export const TAG_NAME = LIBRARY + '-provider';
+export const TAG_NAME_OVERRIDE = LIBRARY + '-override';
 const SCRIPT = 'script';
 const STYLE = 'style';
 const THEME_ATTR = 'theme';
@@ -280,6 +281,7 @@ const getNumAttr = (self: {
 };
 const setAttr = (self: TAttrsHandlers, name: string, val: string | number | null) => val === null ? self.removeAttribute(name) : self.setAttribute(name, val + '');
 const getAttrSelector = (attr?: string) => `:root:has([is=${TAG_NAME}]${attr ? `[${attr}]` : ''})`;
+const plainVars = (vars: object) => Object.entries(vars).reduce((acc, [p,v]) => acc + p + ':' + v + ';', '');
 
 const createGlobalMaker = ({
     theme, attrs, scope
@@ -575,6 +577,8 @@ const PROVIDER_SYMBOL = Symbol(TAG_NAME);
 const CUST_ATTRS = [SIZE_ATTR, TIME_ATTR, ANGLE_ATTR, COLOR_ATTR, EASING_ATTR];
 const CUST_ATTRS_SET = new Set(CUST_ATTRS);
 
+const queryStyleProvider = () => globalThis?.document.querySelector(`[is=${TAG_NAME}]`) as unknown as IStyleProvider;
+
 /**
  * Define style provider custom element
  */
@@ -702,6 +706,39 @@ function defineProvider(): boolean {
             }
         }
         custom.define(TAG_NAME, StyleProvider, { extends: SCRIPT });
+        class Override extends HTMLElement {
+            static get observedAttributes() {
+                return ['values'];
+            }
+
+            protected _customize() {
+                const provider = queryStyleProvider();
+                if (this.shadowRoot && provider) {
+                    const values = this.getAttribute('values');
+                    const sheet = new CSSStyleSheet();
+                    if (values) {
+                        const {$dark = {}, $light = {}, ...host} = provider.theme.makeThemeVars(JSON.parse(decodeURIComponent(values)));
+                        sheet.replaceSync(
+                            `:host{display:contents;${plainVars(host as object)}}` +
+                            `@media(${LIGHT}){:host{${plainVars($light as object)}}}` +
+                            `@media(${DARK}){:host{${plainVars($dark as object)}}}`
+                        );
+                    } else sheet.replaceSync(`:host{display:contents;}`);
+                    this.shadowRoot.adoptedStyleSheets = [sheet];
+                }
+            }
+
+            attributeChangedCallback() {
+                if (this.isConnected) this._customize();
+            }
+
+            connectedCallback() {
+                const shadowRoot = this.attachShadow({mode: 'open'});
+                shadowRoot.innerHTML = `<slot></slot>`;
+                this._customize();
+            }
+        }
+        custom.define(TAG_NAME_OVERRIDE, Override);
         return true;
     }
 }
@@ -850,7 +887,7 @@ export const useStyleProvider: TUseStyleProvider = (params = {}) => {
     if (global && globalProvider) styleProvider = globalProvider;
     else if (document && !emulate) {
         if (useStyleProvider.isDefined === undefined) useStyleProvider.isDefined = defineProvider();
-        const provider: IStyleProvider = document.querySelector(`[is=${TAG_NAME}]`) as unknown as IStyleProvider;
+        const provider: IStyleProvider = queryStyleProvider();
         if (provider) styleProvider = provider;
         else {
             const script = document.createElement(SCRIPT, {
@@ -866,3 +903,8 @@ export const useStyleProvider: TUseStyleProvider = (params = {}) => {
     if (global && !globalProvider) (globalThis as TGlobalThisWithProvider)[PROVIDER_SYMBOL] = styleProvider;
     return styleProvider;
 };
+/**
+ * Prepare string to override global EffCSS variables
+ * @param values - CSS variables
+ */
+export const prepareOverrideValues = (values: object) => encodeURIComponent(JSON.stringify(values));

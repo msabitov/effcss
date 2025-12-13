@@ -185,6 +185,17 @@ describe('Base:', () => {
         });
         expect(styleString.includes(`.cls{text-decoration:underline;text-decoration:underline dotted;}`)).toBeTruthy();
     });
+
+    test('maker returns string:', () => {
+        const css = '.cls{text-decoration:underline;}';
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: () => {
+                return css;
+            }
+        });
+        expect(styleString.includes(css)).toBeTruthy();
+    });
 });
 
 describe('Primitive handlers', () => {

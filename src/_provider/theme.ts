@@ -28,6 +28,7 @@ export type TThemeController = {
     update(params: TThemeValue, name?: string): void;
     switch(name?: string): void;
     vars<T extends object = object>(theme?: string): TThemeParams<T>;
+    makeThemeVars<T extends object>(params: TThemeParams<T>): TThemeValue;
     get list(): string[];
     get current(): string | '';
     get all(): Record<string, object>;
@@ -179,7 +180,7 @@ export const createThemeController = ({
         '': DEFAULT_THEME
     };
     const actions: TThemeAction[] = [];
-    const getThemeVars = <T extends object>({$light = {}, $dark = {}, ...rest}: TThemeParams<T>): TThemeValue => {
+    const makeThemeVars = <T extends object>({$light = {}, $dark = {}, ...rest}: TThemeParams<T>): TThemeValue => {
         function parseParams(params: object, parents: string[] = []): Record<string, string | number | boolean> {
             return entries(params).reduce((acc, [key, val]) => {
                 if (val && typeof val === 'object') return assign(acc, parseParams(val, [...parents, key]));
@@ -225,8 +226,9 @@ export const createThemeController = ({
         },
         vars<T extends TThemeValue>(theme: string = ''): TThemeParams<T> {
             const params = this.get(theme);
-            return params ? getThemeVars<T>(params as TThemeParams<T>) as TThemeParams<T> : {[LIGHT]: {}, [DARK]: {}} as TThemeParams<T>;
+            return params ? makeThemeVars<T>(params as TThemeParams<T>) as TThemeParams<T> : {[LIGHT]: {}, [DARK]: {}} as TThemeParams<T>;
         },
+        makeThemeVars,
         get list() {
             const {'': def, ...rest} = themes;
             return Object.keys(rest);

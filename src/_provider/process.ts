@@ -91,7 +91,7 @@ export type TProcessor = {
      * Compile stylesheet maker to CSSStylesheet content
      * @param params - params
      */
-    compile(params: { key: string; maker: (params: IMakerParams) => object }): string;
+    compile(params: { key: string; maker: (params: IMakerParams) => object | string }): string;
 };
 type TCreateProcessor = (params: {
     scope: ReturnType<TCreateScope>;
@@ -119,41 +119,41 @@ export const createProcessor: TCreateProcessor = (params) => {
             const localScope = scope(key);
             const bem = localScope.selector;
             const at = resolveAtRules(localScope);
-            return parseStyles(
-                maker({
-                    dash,
-                    comma,
-                    space,
-                    range,
-                    each,
-                    when,
-                    merge,
-                    // theme variable
-                    themeVar,
-                    // size
-                    size,
-                    // time
-                    time,
-                    // angle
-                    angle,
-                    // easing function
-                    easing,
-                    // BEM selectors
-                    bem,
-                    // pseudo selectors
-                    pseudo,
-                    // color handlers
-                    color: resolveColor(themeVar),
-                    // palette handlers
-                    palette: resolvePalette(themeVar),
-                    // coefficient handlers
-                    coef: resolveCoef(themeVar),
-                    // css units
-                    units,
-                    // css at-rules
-                    at
-                })
-            );
+            const styles = maker({
+                dash,
+                comma,
+                space,
+                range,
+                each,
+                when,
+                merge,
+                // theme variable
+                themeVar,
+                // size
+                size,
+                // time
+                time,
+                // angle
+                angle,
+                // easing function
+                easing,
+                // BEM selectors
+                bem,
+                // pseudo selectors
+                pseudo,
+                // color handlers
+                color: resolveColor(themeVar),
+                // palette handlers
+                palette: resolvePalette(themeVar),
+                // coefficient handlers
+                coef: resolveCoef(themeVar),
+                // css units
+                units,
+                // css at-rules
+                at
+            });
+            if (typeof styles === 'string') return styles;
+            return parseStyles(styles);
         }
     };
 };

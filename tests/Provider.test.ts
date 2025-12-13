@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from '@vitest/browser/context';
-import { IStyleProvider, IStyleProviderScript, TStyleSheetMaker, useStyleProvider } from '../src/index';
+import { IStyleProvider, IStyleProviderScript, prepareOverrideValues, TAG_NAME_OVERRIDE, TStyleSheetMaker, useStyleProvider } from '../src/index';
 import { TAG_NAME } from '../src';
 
 const PROVIDER_ID = 'provider';
@@ -498,6 +498,51 @@ describe('useStyleProvider:', () => {
             document.head.innerHTML = (document.head.innerHTML + provider);
             provider = useStyleProvider();
             expect(called).toBe(1);
+        });
+    });
+
+    describe('effcss-override:', () => {
+        const OVER_ID = 'over-id';
+        let inside: HTMLElement | null;
+        let override: HTMLElement | null;
+        const overValues = {
+            size: 24,
+            hue: {
+                pri: 10
+            },
+            $light: {
+                lightness: {
+                    bg: {
+                        xl: 0.95
+                    }
+                }
+            }
+        };
+
+        beforeAll(() => {
+            provider = useStyleProvider();
+            document.body.innerHTML = `<${TAG_NAME_OVERRIDE} values="${prepareOverrideValues(overValues)}"><div id="${OVER_ID}"></div></${TAG_NAME_OVERRIDE}>`;
+            inside = document.querySelector(`#${OVER_ID}`);
+            override = document.querySelector(TAG_NAME_OVERRIDE);
+        });
+
+        test(`override values (top level)`, () => {
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-size')).toBe(overValues.size + '');
+        });
+
+        test(`override values (top nested)`, () => {
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-hue-pri')).toBe(overValues.hue.pri + '');
+        });
+
+        test(`override values (@media $light)`, () => {
+            document.documentElement.style.setProperty('color-scheme', 'light');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-lightness-bg-xl')).toBe(overValues.$light.lightness.bg.xl + '');
+        });
+
+        test(`override values changed:`, () => {
+            const newValue = 28;
+            override?.setAttribute('values', prepareOverrideValues({...overValues, size: newValue}));
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-size')).toBe(newValue + '');
         });
     });
 });
