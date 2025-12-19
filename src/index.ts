@@ -65,9 +65,25 @@ export type TStyleSheetMaker = Parameters<TProcessor['compile']>[0]['maker'];
  */
 export type TStyleSheetUtils = Parameters<TStyleSheetMaker>[0];
 /**
+ * Describe mono block styles
+ */
+export type TMonoBlock<TStyle extends object> = {
+    '': TStyle;
+};
+/**
+ * Describe mono element styles (Atomic CSS)
+ */
+export type TMonoElement<TStyle extends object> = {
+    '': {
+        '': TStyle;
+    }
+};
+/**
  * Style target
  */
 type TStyleTarget = string | TStyleSheetMaker;
+type TNumberOrNull = number | null;
+type TStringOrNull = string | null;
 /**
  * Style provider
  * @description
@@ -107,48 +123,48 @@ export interface IStyleProvider {
     /**
      * Get root size value
      */
-    get size(): number | null;
+    get size(): TNumberOrNull;
     /**
      * Set root size value
      * @param val - rem value in px
      */
-    set size(val: number | null);
+    set size(val: TNumberOrNull);
     /**
      * Get root time value
      */
-    get time(): number | null;
+    get time(): TNumberOrNull;
     /**
      * Set root time value
      * @param val - time value in ms
      */
-    set time(val: number | null);
+    set time(val: TNumberOrNull);
     /**
      * Get root angle value
      */
-    get angle(): number | null;
+    get angle(): TNumberOrNull;
     /**
      * Set root angle value
      * @param val - angle value in ms
      */
-    set angle(val: number | null);
+    set angle(val: TNumberOrNull);
     /**
      * Get root color value
      */
-    get color(): string | null;
+    get color(): TStringOrNull;
     /**
      * Set root color value
      * @param val - angle value in ms
      */
-    set color(val: string | null);
+    set color(val: TStringOrNull);
     /**
      * Get root easing function
      */
-    get easing(): string | null;
+    get easing(): TStringOrNull;
     /**
      * Set root easing function
      * @param val - easing function
      */
-    set easing(val: string | null);
+    set easing(val: TStringOrNull);
 
     // makers handlers
 
@@ -239,10 +255,11 @@ type TUseStyleProvider = {
 }
 
 type TAttrsHandlers = {
-    getAttribute(name: string): string | null;
+    getAttribute(name: string): TStringOrNull;
     removeAttribute(name: string): void;
     setAttribute(name: string, value: string): void
 }
+type THost = IStyleProvider & TAttrsHandlers & {textContent: TStringOrNull;};
 
 // constants
 const LIBRARY = 'effcss';
@@ -269,17 +286,17 @@ export const DEFAULT_ATTRS: Record<string, string> = {
 
 // utils
 const isBoolean = (val: any) => typeof val === 'boolean';
-const numOrNull = (val: string | null | undefined) => typeof val === 'string' ? Number(val) : null;
+const numOrNull = (val: TStringOrNull | undefined) => typeof val === 'string' ? Number(val) : null;
 const getAttr = (self: {
-    getAttribute(qualifiedName: string): string | null;
+    getAttribute(qualifiedName: string): TStringOrNull;
 }, name: keyof TProviderAttrs) => self.getAttribute(name) || DEFAULT_ATTRS[name];
 const getNumAttr = (self: {
-    getAttribute(qualifiedName: string): string | null;
+    getAttribute(qualifiedName: string): TStringOrNull;
 }, name: keyof TProviderAttrs) => {
     const val = getAttr(self, name);
     return numOrNull(val);
 };
-const setAttr = (self: TAttrsHandlers, name: string, val: string | number | null) => val === null ? self.removeAttribute(name) : self.setAttribute(name, val + '');
+const setAttr = (self: TAttrsHandlers, name: string, val: string | TNumberOrNull) => val === null ? self.removeAttribute(name) : self.setAttribute(name, val + '');
 const getAttrSelector = (attr?: string) => `:root:has([is=${TAG_NAME}]${attr ? `[${attr}]` : ''})`;
 const plainVars = (vars: object) => Object.entries(vars).reduce((acc, [p,v]) => acc + p + ':' + v + ';', '');
 
@@ -288,11 +305,11 @@ const createGlobalMaker = ({
 }: {
     theme: TThemeController;
     attrs: {
-        size: number | null;
-        time: number | null;
-        angle: number | null;
-        color: string | null;
-        easing: string | null;
+        size: TNumberOrNull;
+        time: TNumberOrNull;
+        angle: TNumberOrNull;
+        color: TStringOrNull;
+        easing: TStringOrNull;
     };
     scope: TScope;
 }): TStyleSheetMaker => {
@@ -419,7 +436,24 @@ const getHandlers = ({
     };
 }
 
-const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string | null;}, {
+const describeNumAttr = (host: THost, name: keyof TProviderAttrs) => ({
+    set(val: TNumberOrNull) {
+        setAttr(host, name, val);
+    },
+    get() {
+        return getNumAttr(host, name);
+    }
+});
+const describeStringAttr = (host: THost, name: keyof TProviderAttrs) => ({
+    set(val: TStringOrNull) {
+        setAttr(host, name, val);
+    },
+    get() {
+        return host.getAttribute(name);
+    }
+});
+
+const construct = (host: THost, {
     initStyles,
     emulate,
     onChange,
@@ -431,7 +465,7 @@ const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string 
             effcss?: string;
         };
         disabled: boolean;
-        textContent: string | null;
+        textContent: TStringOrNull;
     }[];
     emulate?: boolean;
     onChange: () => void;
@@ -456,46 +490,11 @@ const construct = (host: IStyleProvider & TAttrsHandlers & {textContent: string 
                 return host.getAttribute('min') === '';
             }
         },
-        size: {
-            set(val: number | null) {
-                setAttr(host, SIZE_ATTR, val);
-            },
-            get() {
-                return getNumAttr(host, SIZE_ATTR);
-            }
-        },
-        time: {
-            set(val: number | null) {
-                setAttr(host, TIME_ATTR, val);
-            },
-            get() {
-                return getNumAttr(host, TIME_ATTR);
-            }
-        },
-        angle: {
-            set(val: number | null) {
-                setAttr(host, ANGLE_ATTR, val);
-            },
-            get() {
-                return getNumAttr(host, ANGLE_ATTR);
-            }
-        },
-        color: {
-            set(val: string | null) {
-                setAttr(host, COLOR_ATTR, val);
-            },
-            get() {
-                return host.getAttribute(COLOR_ATTR);
-            }
-        },
-        easing: {
-            set(val: string | null) {
-                setAttr(host, EASING_ATTR, val);
-            },
-            get() {
-                return host.getAttribute(EASING_ATTR);
-            }
-        },
+        size: describeNumAttr(host, SIZE_ATTR),
+        time: describeNumAttr(host, TIME_ATTR),
+        angle: describeNumAttr(host, ANGLE_ATTR),
+        color: describeStringAttr(host, COLOR_ATTR),
+        easing: describeStringAttr(host, EASING_ATTR)
     });
     const collector = createCollector({ prefix: host.pre });
     const scope = createScope({
@@ -681,7 +680,7 @@ function defineProvider(): boolean {
                             effcss?: string;
                         };
                         disabled: boolean;
-                        textContent: string | null;
+                        textContent: TStringOrNull;
                     }[],
                     onChange: this._customize,
                     globalMaker: this._

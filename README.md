@@ -8,10 +8,11 @@
 
 <div align="center">
 
-[![license](https://badgen.net/static/license/Apache%202.0/blue)](https://gitverse.ru/msabitov/effcss/content/master/LICENSE)
+[![license](https://badgen.net/static/license/Apache%202.0/blue)](https://sourcecraft.dev/msabitov/effcss/browse/LICENSE?rev=master)
 [![npm latest package](https://badgen.net/npm/v/effcss)](https://www.npmjs.com/package/effcss)
-![minified size](https://flat-badgen.vercel.app/bundlephobia/min/effcss)
-![minzipped size](https://flat-badgen.vercel.app/bundlephobia/minzip/effcss)
+![minified size](https://badgen.net/bundlephobia/min/effcss)
+![minzipped size](https://badgen.net/bundlephobia/minzip/effcss)
+![install size](https://badgen.net/packagephobia/install/effcss)
 
 </div>
 
@@ -28,8 +29,11 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 ## Links
 
 -   [Docs](https://effnd.tech/css/)
--   [Repository](https://gitverse.ru/msabitov/effcss)
--   [Github mirror](https://github.com/msabitov/effcss)
+-   [SourceCraft](https://sourcecraft.dev/msabitov/effcss)
+-   [GitVerse](https://gitverse.ru/msabitov/effcss)
+-   [GitHub](https://github.com/msabitov/effcss)
+-   [GitLab](https://gitlab.com/msabitov/effcss)
+-   [NPM](https://www.npmjs.com/package/effcss)
 
 ## Devtools
 
@@ -96,7 +100,7 @@ import { IStyleProvider, TStyleSheetMaker } from 'effcss';
 
 // you can describe your styles using BEM notation
 // so that other people can use them via TypeScript generics
-export interface TCardMaker {
+export type TCardMaker = {
     /**
      * Card block
      */
@@ -117,7 +121,12 @@ export interface TCardMaker {
         /**
          * Card logo
          */
-        logo: {},
+        logo: {
+            /**
+             * Logo width
+             */
+            w: 's' | 'l';
+        },
         /**
          * Card footer
          */
@@ -134,10 +143,16 @@ export interface TCardMaker {
     };
 }
 
-const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { keyframes }, merge, palette, coef, size }) = {
+const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { keyframes }, merge, palette, coef, size, units: {px} }) = {
     // specify selector variants via generic
     const selector = bem<TCardMaker>;
-    // create unique keyframes identifier
+    // create property with unique identifier
+    const widthProperty = property({
+        ini: px(200),
+        inh: false,
+        def: px(200) // will be used as fallback value in `var()` expression
+    });
+    // create keyframes with unique identifier
     const spin = keyframes({
         from: {
             transform: 'rotate(0deg)',
@@ -148,6 +163,7 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { keyframes }, m
     });
     // deeply merge objects
     const cardLogoStyles = merge({
+        width: widthProperty,
         animation: `20s linear infinite ${spin}`,
         [pseudo.h()]: {
             filter: "drop-shadow(0 0 2em #61dafbaa)",
@@ -161,9 +177,14 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { keyframes }, m
         }
     });
     return {
+        ...sizeProperty,
         ...spin,
         [selector('card')]: { ... },
         [selector('card.logo')]: cardLogoStyles,
+        [selector('card.logo.w.s')]: {
+            ...widthProperty(px(100))
+        },
+        [selector('card.logo.w.l')]: widthProperty(px(300)),
         [selector('card..rounded')]: { ... },
         [selector('card..h.full')]: { ... },
         [selector('card.footer')]: { ... },

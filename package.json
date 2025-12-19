@@ -1,6 +1,6 @@
 {
     "name": "effcss",
-    "version": "4.5.0",
+    "version": "4.5.1",
     "description": "Self-confident CSS-in-JS",
     "type": "module",
     "scripts": {
@@ -45,7 +45,7 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://gitverse.ru/msabitov/effcss"
+        "url": "https://sourcecraft.dev/msabitov/effcss"
     },
     "homepage": "https://effnd.tech/css/"
 }
