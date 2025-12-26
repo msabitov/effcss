@@ -3,7 +3,7 @@ import { NO_PARSE_SYMBOL } from './utils';
 
 // types
 type TProperty = {
-    (val: string | number | boolean): object;
+    (val: string | number | boolean | object): object;
     /**
      * Use property with fallback value
      */
@@ -428,7 +428,7 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
             }
         }) as TContainer;
     };
-    const property = (config: {
+    const property = (config: string | number | {
         /**
          * Syntax
          */
@@ -444,13 +444,23 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
         /**
          * Default value
          */
-        def?: string | number | boolean;
+        def?: string | number | boolean | object;
     } = {}): TProperty => {
-        const {syn = '"*"', inh = true, ini, def} = config;
+        const ctype = typeof config;
+        let syn = '"*"';
+        let inh = true;
+        let ini;
+        let def;
+        if (typeof config === 'object') ({syn = syn, inh = inh, ini, def} = config);
+        else {
+            def = config;
+            ini = config;
+            inh = false;
+        }
         const name = '--' + ctx.name(['cp', counters.cp++]);
         const value = `var(${name}${def !== undefined ? ',' + def : ''})`;
         const ruleKey = AT_PROPERTY + ' ' + name;
-        const use = (val: string | number | boolean) => {
+        const use = (val: string | number | boolean | object) => {
             return {
                 [name]: val
             };

@@ -41,6 +41,37 @@ type TCustomStyleSheet = {
         };
     };
 };
+
+type TCustomStyles = {
+    w: 's' | 'm';
+    full: '';
+    rad: 12 | 16;
+    header: {};
+    footer: {
+        empty: '';
+        lh: 24 | 28;
+        left: {
+            ext: Record<string, never>;
+        };
+        right: {
+            full: '';
+        }
+    };
+};
+const selectors = [
+    'w:s',
+    'footer',
+    'footer.empty:',
+    'footer.left',
+    'footer.left.ext',
+    'rad:12',
+    'footer.right',
+    'footer.right.full:',
+] as const;
+const listParams = ['w:s', 'footer.empty:', 'footer.left.ext'] as const;
+const listResult = [0, 1, 2, 4];
+const objResultFull = [0, 5, 1, 3, 4, 6, 7];
+const objResult = [0, 5, 4, 6, 7];
 const styleSheetKey = 'cust';
 const attr = `data-${styleSheetKey}`;
 const block = 'block';
@@ -50,6 +81,11 @@ const attrResolver = createScope({ mode: 'a' })(styleSheetKey);
 const clsResolver = createScope({ mode: 'c' })(styleSheetKey);
 const clsMinResolver = createScope({ mode: 'c', min: true })(styleSheetKey);
 const attrMinResolver = createScope({ mode: 'a', min: true })(styleSheetKey);
+
+const uniAttrResolver = createScope({ mode: 'a' })(styleSheetKey);
+const uniAttrMinResolver = createScope({ mode: 'a', min: true })(styleSheetKey);
+const uniClsResolver = createScope({ mode: 'c' })(styleSheetKey);
+const uniClsMinResolver = createScope({ mode: 'c', min: true })(styleSheetKey);
 
 describe('BEM to data-attribute:', () => {
     test('Block object:', () => {
@@ -833,5 +869,160 @@ describe('BEM to minified data-attribute:', () => {
     test('Empty block element modifiers selector:', () => {
         const styleSelector = attrMinResolver.selector<TCustomStyleSheet>('.elem.h.s');
         expect(styleSelector).toBe(`[data-${styleSheetKey}~="h"]`);
+    });
+});
+
+describe('Select data-attribute:', () => {
+    const css = uniAttrResolver.attr;
+    const config = {
+        w: 's',
+        rad: 12,
+        footer: {
+            left: {
+                ext: {}
+            },
+            right: {
+                full: ''
+            }
+        }
+    } as const;
+    test('list:', () => {
+        const styleAttr = css.list<TCustomStyles>(...listParams);
+        expect(styleAttr.$).toBe('w_s footer footer-empty_ footer-left-ext');
+    });
+
+    test('obj:', () => {
+        const styleAttr = css.obj<TCustomStyles>(config);
+        expect(styleAttr.$).toBe(
+            'w_s rad_12 ' +
+            'footer-left-ext footer-right footer-right-full_'
+        );
+    });
+
+    test('obj full:', () => {
+        const styleAttr = css.obj<TCustomStyles>(config, 'full');
+        expect(styleAttr.$).toBe(
+            'w_s rad_12 footer ' +
+            'footer-left footer-left-ext footer-right footer-right-full_'
+        );
+    });
+});
+
+describe('Select minified data-attribute:', () => {
+    const config = {
+        w: 's',
+        rad: 12,
+        footer: {
+            left: {
+                ext: {}
+            },
+            right: {
+                full: ''
+            }
+        }
+    } as const;
+
+    const css = uniAttrMinResolver.attr;
+    const select = uniAttrMinResolver.select;
+    beforeAll(() => {
+        selectors.forEach((item) => select<TCustomStyles>(item))
+    })
+
+    test('list:', () => {
+        const styleAttr = css.list<TCustomStyles>(selectors[0], selectors[2], selectors[4]);
+        expect(styleAttr.$).toBe(listResult.join(' '));
+    });
+
+    test('obj:', () => {
+        const styleAttr = css.obj<TCustomStyles>(config);
+        expect(styleAttr.$).toBe(objResult.join(' '));
+    });
+
+    test('obj full:', () => {
+        const styleAttr = css.obj<TCustomStyles>(config, 'full');
+        expect(styleAttr.$).toBe(objResultFull.join(' '));
+    });
+
+    
+});
+
+describe('Select className:', () => {
+    const css = uniClsResolver.attr;
+    const config = {
+        w: 's',
+        rad: 12,
+        footer: {
+            left: {
+                ext: {}
+            },
+            right: {
+                full: ''
+            }
+        }
+    } as const;
+    test('list:', () => {
+        const styleAttr = css.list<TCustomStyles>('w:s', 'footer.empty:', 'footer.left.ext');
+        expect(styleAttr.$).toBe(`${styleSheetKey}-w_s ${styleSheetKey}-footer ${styleSheetKey}-footer-empty_ ${styleSheetKey}-footer-left-ext`);
+    });
+
+    test('obj:', () => {
+        const styleAttr = css.obj<TCustomStyles>(config);
+        expect(styleAttr.$).toBe(
+            `${styleSheetKey}-w_s ${styleSheetKey}-rad_12 ` +
+            `${styleSheetKey}-footer-left-ext ${styleSheetKey}-footer-right ${styleSheetKey}-footer-right-full_`
+        );
+    });
+
+    test('obj full:', () => {
+        const styleAttr = css.obj<TCustomStyles>(config, 'full');
+        expect(styleAttr.$).toBe(
+            `${styleSheetKey}-w_s ${styleSheetKey}-rad_12 ${styleSheetKey}-footer ` +
+            `${styleSheetKey}-footer-left ${styleSheetKey}-footer-left-ext ${styleSheetKey}-footer-right ${styleSheetKey}-footer-right-full_`
+        );
+    });
+});
+
+describe('Select minified className:', () => {
+    const config = {
+        w: 's',
+        rad: 12,
+        footer: {
+            left: {
+                ext: {}
+            },
+            right: {
+                full: ''
+            }
+        }
+    } as const;
+    const selectors = [
+        'w:s',
+        'footer',
+        'footer.empty:',
+        'footer.left',
+        'footer.left.ext',
+        'rad:12',
+        'footer.right',
+        'footer.right.full:',
+    ] as const;
+    const css = uniClsMinResolver.attr;
+    const select = uniClsMinResolver.select;
+    beforeAll(() => {
+        selectors.forEach((item) => select<TCustomStyles>(item))
+    })
+
+    test('list:', () => {
+        const styleAttr = css.list<TCustomStyles>(...listParams);
+        expect(styleAttr.$).toBe(listResult.map((i) => `${styleSheetKey}-${i}`).join(' '));
+    });
+
+    test('obj:', () => {
+        const styleAttr = css.obj<TCustomStyles>(config);
+        expect(styleAttr.$).toBe(objResult.map((i) => `${styleSheetKey}-${i}`).join(' '));
+    });
+
+    test('obj full:', () => {
+        const styleAttr = css.obj<TCustomStyles>(config, 'full');
+        expect(styleAttr.$).toBe(objResultFull.map((i) => `${styleSheetKey}-${i}`).join(' '));
     });
 });

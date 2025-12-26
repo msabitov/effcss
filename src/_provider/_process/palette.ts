@@ -3,10 +3,10 @@ import type { TCreateScope } from '../../_provider/scope';
 import { NO_PARSE_SYMBOL } from './utils';
 
 // local types
-type THue = 'pri' | 'sec' | 'suc' | 'inf' | 'war' | 'dan';
-type TLightness = 'xs' | 's' | 'm' | 'l' | 'xl';
-type TChroma = 'gray' | 'pale' | 'base' | 'rich';
-type TMode = 'bg' | 'fg';
+export type TPaletteHue = 'pri' | 'sec' | 'suc' | 'inf' | 'war' | 'dan';
+export type TPaletteLightness = 'xs' | 's' | 'm' | 'l' | 'xl';
+export type TPaletteChroma = 'gray' | 'pale' | 'base' | 'rich';
+export type TPaletteMode = 'bg' | 'fg';
 /**
  * Palette generator
  * @description
@@ -14,11 +14,11 @@ type TMode = 'bg' | 'fg';
  */
 export interface IPalette {
     state: {
-        l: TLightness;
-        c: TChroma;
-        h: THue;
-        a: number;
-        m: TMode;
+        l: TPaletteLightness;
+        c: TPaletteChroma;
+        h: TPaletteHue;
+        a: string;
+        m: TPaletteMode;
     }
     /**
      * Returns `xs` lightness color
@@ -43,7 +43,7 @@ export interface IPalette {
     /**
      * Returns lightness color dictionary
      */
-    get lightness(): Record<TLightness, IPalette>;
+    get lightness(): Record<TPaletteLightness, IPalette>;
     /**
      * Returns zero chroma color
      */
@@ -63,7 +63,7 @@ export interface IPalette {
     /**
      * Returns chroma color dictionary
      */
-    get chroma(): Record<TChroma, IPalette>;
+    get chroma(): Record<TPaletteChroma, IPalette>;
     /**
      * Returns primary hue color
      */
@@ -91,11 +91,11 @@ export interface IPalette {
     /**
      * Returns hue color dictionary
      */
-    get hue(): Record<THue, IPalette>;
+    get hue(): Record<TPaletteHue, IPalette>;
     /**
      * Returns specified alpha color
      */
-    alpha(a?: number): IPalette;
+    alpha(a?: number | string | object): IPalette;
     /**
      * Returns background color
      */
@@ -115,7 +115,7 @@ export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['var
             l: 'l',
             c: 'base',
             h: 'pri',
-            a: 1,
+            a: '1',
             m: 'bg'
         };
 
@@ -266,10 +266,10 @@ export const resolvePalette = (varExp: ReturnType<ReturnType<TCreateScope>>['var
 
         // alpha
 
-        alpha(a = 1) {
+        alpha(a: string | number | object = 1) {
             return new Palette({
                 ...this.state,
-                a
+                a: a + ''
             });
         }
 

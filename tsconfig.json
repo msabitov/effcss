@@ -3,7 +3,7 @@
         "outDir": "./dist/",
         "noImplicitAny": true,
         "module": "es2022",
-        "target": "es6",
+        "target": "es2022",
         "jsx": "react",
         "moduleResolution": "node",
         "removeComments": false,

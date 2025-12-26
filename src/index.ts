@@ -1,5 +1,19 @@
 
 // types
+export type {
+    TShortRange,
+    TMainRange,
+    TBaseRange,
+    TLongRange,
+    TFullRange,
+    TSparseRange
+} from './_provider/_process/coef';
+export type {
+    TPaletteHue,
+    TPaletteChroma,
+    TPaletteLightness,
+    TPaletteMode
+} from './_provider/_process/palette';
 import type { TProcessor } from './_provider/process';
 import type { TManager } from './_provider/manage';
 import type { TCollector } from './_provider/collect';

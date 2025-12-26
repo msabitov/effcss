@@ -23,7 +23,7 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 -   zero-dependency,
 -   framework agnostic,
 -   selectors isolation and minification out of the box,
--   BEM based stylesheet types,
+-   flexible stylesheets types that can suggest available selectors (BEM and Atomic CSS compatible),
 -   compatible with any rendering (CSR, SSR, SSG).
 
 ## Links
@@ -98,28 +98,27 @@ Each CSS stylesheet corresponds to a single `Stylesheet maker`. `Stylesheet make
 import { useRef } from 'react';
 import { IStyleProvider, TStyleSheetMaker } from 'effcss';
 
-// you can describe your styles using BEM notation
+// you can describe your styles
 // so that other people can use them via TypeScript generics
 export type TCardMaker = {
     /**
-     * Card block
+     * Font-size utility
+     */
+    fsz: 16 | 20 | 24;
+    /**
+     * Card scope
      */
     card: {
         /**
-         * Card modifiers
+         * Card border radius
          */
-        '': {
-            /**
-             * Card border radius
-             */
-            rounded: '';
-            /**
-             * Card height
-             */
-            h: 'full' | 'half';
-        };
+        rounded: '';
         /**
-         * Card logo
+         * Card height
+         */
+        h: 'full' | 'half';
+        /**
+         * Card logo scope
          */
         logo: {
             /**
@@ -128,7 +127,7 @@ export type TCardMaker = {
             w: 's' | 'l';
         },
         /**
-         * Card footer
+         * Card footer scope
          */
         footer: {
             /**
@@ -143,9 +142,9 @@ export type TCardMaker = {
     };
 }
 
-const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { keyframes }, merge, palette, coef, size, units: {px} }) = {
+const myStyleSheetMaker: TStyleSheetMaker = ({ select, pseudo, at: { keyframes, property }, merge, palette, coef, size, units: {px} }) = {
     // specify selector variants via generic
-    const selector = bem<TCardMaker>;
+    const selector = select<TCardMaker>;
     // create property with unique identifier
     const widthProperty = property({
         ini: px(200),
@@ -179,18 +178,19 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ bem, pseudo, at: { keyframes }, m
     return {
         ...sizeProperty,
         ...spin,
+        [selector('fsz:16')]: { ... },
         [selector('card')]: { ... },
         [selector('card.logo')]: cardLogoStyles,
-        [selector('card.logo.w.s')]: {
+        [selector('card.logo.w:s')]: {
             ...widthProperty(px(100))
         },
-        [selector('card.logo.w.l')]: widthProperty(px(300)),
-        [selector('card..rounded')]: { ... },
-        [selector('card..h.full')]: { ... },
+        [selector('card.logo.w:l')]: widthProperty(px(300)),
+        [selector('card.rounded:')]: { ... },
+        [selector('card.h:full')]: { ... },
         [selector('card.footer')]: { ... },
-        [selector('card.footer.visible')]: { ... },
+        [selector('card.footer.visible:')]: { ... },
         ...each(coef.short, (k, v) => ({
-            [selector(`card.footer.sz.${k}`)]: {
+            [selector(`card.footer.sz:${k}`)]: {
                 height: size(v)
             }
         }))
@@ -203,13 +203,14 @@ export const App = (props: {
     const { css } = props;
     const stylesRef = useRef();
     if (!stylesRef.current) {
-        const [card] = css.use(myStyleSheetMaker)<TCardMaker>;
+        const [card] = css.use(myStyleSheetMaker);
         // thanks to the TCardMaker type,
         // you don't need to look at the implementation - just create the necessary attributes
         stylesRef.current = {
-            card: card('card..rounded'),
-            // element with modifiers
-            footer: card({
+            // apply list of selectors
+            card: card.list<TCardMaker>('card.rounded:', 'fsz:24'),
+            // apply object with selectors
+            footer: card.obj<TCardMaker>({
                 card: {
                     footer: {
                         visible: '',

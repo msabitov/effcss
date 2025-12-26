@@ -5,15 +5,7 @@ export type TMainRange = 'min' | 'm' | 'max';
 export type TBaseRange = 'xs' | TShortRange | 'xl';
 export type TLongRange = 'xxs' | TBaseRange | 'xxl';
 export type TFullRange = 'min' | TLongRange | 'max';
-export type TSparseRange = 'min' | 'xs' | 'm' | 'xl' | 'max';
-export type TRangeConfig = Record<'xxs' | 'xs' | 's' | 'm' | 'l' | 'xl' | 'xxl' | 'xxl', number>;
-export type TCoefConfig = {
-    $0_: TRangeConfig;
-    $1_: TRangeConfig;
-    $2_: TRangeConfig;
-    $16_: TRangeConfig;
-    max: number;
-};
+export type TSparseRange = TMainRange | 'xs' | 'xl';
 
 /**
  * Coefficient generator

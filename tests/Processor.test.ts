@@ -196,6 +196,28 @@ describe('Base:', () => {
         });
         expect(styleString.includes(css)).toBeTruthy();
     });
+
+    test('select:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({select}) => {
+                return {
+                    [select<{block: {
+                        nest: {};
+                    }}>('block.nest')]: {
+                        boxSizing: 'border-box'
+                    },
+                    [select('block.nest.mod:val')]: {
+                        width: '20px'
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '[data-cust~="block-nest"]{box-sizing:border-box;}' +
+            '[data-cust~="block-nest-mod_val"]{width:20px;}'
+        );
+    });
 });
 
 describe('Primitive handlers', () => {
@@ -1031,9 +1053,11 @@ describe('at-rule makers', () => {
                     def: '10px'
                 });
                 const thirdProperty = property();
+                const fourthProperty = property('20px');
                 return {
                     ...firstProperty,
                     ...secondProperty,
+                    ...fourthProperty,
                     '.mod': firstProperty('150px'),
                     '.full': {
                         ...secondProperty('100px'),
@@ -1045,7 +1069,8 @@ describe('at-rule makers', () => {
                         height: `calc(2 * ${secondProperty})`
                     },
                     '.cls2': {
-                        height: `calc(2 * ${secondProperty.fallback('35px')})`
+                        height: `calc(2 * ${secondProperty.fallback('35px')})`,
+                        width: fourthProperty
                     }
                 };
             }
@@ -1053,10 +1078,11 @@ describe('at-rule makers', () => {
         expect(styleString).toBe(
             `@property --cust-cp-1{syntax:"*";inherits:true;}` +
             `@property --cust-cp-2{syntax:"*";inherits:false;initial-value:25px;}` +
+            `@property --cust-cp-4{syntax:"*";inherits:false;initial-value:20px;}` +
             `.mod{--cust-cp-1:150px;}` +
             `.full{--cust-cp-2:100px;--cust-cp-3:red;aspect-ratio:1;}` +
             `.cls{width:var(--cust-cp-1);height:calc(2 * var(--cust-cp-2,10px));}` +
-            `.cls2{height:calc(2 * var(--cust-cp-2,35px));}`
+            `.cls2{height:calc(2 * var(--cust-cp-2,35px));width:var(--cust-cp-4,20px);}`
         );
     });
 

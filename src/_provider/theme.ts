@@ -72,7 +72,7 @@ const DEFAULT_THEME = {
         14: 1.875,
         15: 1.9375,
         16: 2,
-        17: 2.5,
+        17: 3,
         18: 4,
         19: 5,
         20: 7.5,
@@ -100,8 +100,8 @@ const DEFAULT_THEME = {
     [LIGHT]: {
         [LIGHTNESS]: {
             bg: {
-                xl: 0.98,
-                l: 0.93,
+                xl: 1,
+                l: 0.94,
                 m: 0.88,
                 s: 0.83,
                 xs: 0.78
@@ -139,7 +139,7 @@ const DEFAULT_THEME = {
                 xs: 0.48
             },
             fg: {
-                xl: 0.98,
+                xl: 1,
                 l: 0.93,
                 m: 0.86,
                 s: 0.79,

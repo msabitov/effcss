@@ -25,6 +25,7 @@ type TBezier = {
     x2?: number;
     y2?: number;
 };
+type TRelative = (coef?: number | string | object) => string;
 
 export interface IMakerParams {
     dash: typeof dash;
@@ -34,6 +35,7 @@ export interface IMakerParams {
     each: typeof each;
     merge: typeof merge;
     when: typeof when;
+    select: TScope['select'];
     /**
      * BEM selector resolver
      */
@@ -71,15 +73,15 @@ export interface IMakerParams {
     /**
      * Scalable size value
      */
-    size: (coef?: number | string) => string;
+    size: TRelative;
     /**
      * Scalable time value
      */
-    time: (coef?: number | string) => string;
+    time: TRelative;
     /**
      * Scalable angle value
      */
-    angle: (coef?: number | string) => string;
+    angle: TRelative;
     /**
      * Easing function
      */
@@ -100,7 +102,7 @@ type TCreateProcessor = (params: {
 
 const pseudo = resolvePseudo();
 const units = resolveUnits();
-const multiplier = (val: string | number) => val !== 1 ? val + ' * ' : '';
+const multiplier = (val: string | number | object) => val !== 1 ? val + ' * ' : '';
 
 /**
  * Create style processor
@@ -110,14 +112,15 @@ export const createProcessor: TCreateProcessor = (params) => {
     const { scope, globalKey } = params;
     const globalScope = scope(globalKey)
     const themeVar = globalScope.varExp;
-    const time = (coef: string | number = 1) => units.ms(multiplier(coef) + themeVar('time'));
-    const angle = (coef: string | number = 1) => units.deg(multiplier(coef) + themeVar('angle'));
-    const size = (coef: string | number = 1) => units.px(multiplier(coef) + themeVar('size'));
+    const time: TRelative = (coef = 1) => units.ms(multiplier(coef) + themeVar('time'));
+    const angle: TRelative = (coef = 1) => units.deg(multiplier(coef) + themeVar('angle'));
+    const size: TRelative = (coef = 1) => units.px(multiplier(coef) + themeVar('size'));
     const easing = (bezier?: TBezier) => !bezier ? themeVar('easing') : `cubic-bezier(${bezier.x1 || 0},${bezier.y1 || 0},${bezier.x2 || 1},${bezier.y2 || 1})`;
     return {
         compile: ({ key, maker }) => {
             const localScope = scope(key);
             const bem = localScope.selector;
+            const select = localScope.select;
             const at = resolveAtRules(localScope);
             const styles = maker({
                 dash,
@@ -139,6 +142,8 @@ export const createProcessor: TCreateProcessor = (params) => {
                 easing,
                 // BEM selectors
                 bem,
+                // Scoped selectors
+                select,
                 // pseudo selectors
                 pseudo,
                 // color handlers

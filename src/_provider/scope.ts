@@ -36,6 +36,25 @@ type TBEM<T> = TDeepPartial<T> | TStringBEM<T> | TStringBEM<T>[];
 type TStyleSheet = Record<
     string, Record<string, Record<string, string | number>>
 >;
+type TPrimitive<T> = T extends string ? T : T extends number ? T : '';
+type TModifiers<T> = T extends object
+    ? {
+        [K in keyof T]: `${Exclude<K, symbol>}${T[K] extends object
+            ? `.${TModifiers<T[K]>}`
+            : `:${TPrimitive<T[K]>}`}`;
+      }[keyof T]
+    : '';
+type TNodes<T> = T extends object
+    ? {
+        [K in keyof T]: T[K] extends object ?
+            (
+                `${Exclude<K, symbol>}` |
+                `${Exclude<K, symbol>}.${TNodes<T[K]>}`
+            )
+            : never;
+    }[keyof T]
+    : never;
+type TSelectors<T> = TNodes<T> | TModifiers<T>;
 export type Leaves<T> = T extends object
     ? {
           [K in keyof T]: `${Exclude<K, symbol>}${Leaves<T[K]> extends never ? '' : `.${Leaves<T[K]>}`}`;
@@ -66,10 +85,28 @@ export type TMonoResolver<T extends TStyleSheet,
         [key in string]: string;
     };
 }
+type TStyles = {
+    [key in string]: string | number | Record<string, never> | TStyles;
+};
+type TAttrs = {
+    $: string;
+};
+type TSelect = <T extends TStyles>(value: TSelectors<T>) => string;
 type TResolveSelector = <T extends TStyleSheet>(params: TStringBEM<T>) => string;
 type TResolveAttr = {
     <T extends TStyleSheet>(params: TBEM<T>): Record<string, string>;
     <T extends TStyleSheet>(): TMonoResolver<T, "", "">;
+    /**
+     * Use list of selectors
+     * @param args - selectors
+     */
+    list<T extends TStyles>(...args: TSelectors<T>[]): TAttrs;
+    /**
+     * Use selectors from object
+     * @param arg - selectors object
+     * @param type - which selectors to emit. Use `full` to emit all described selectors
+     */
+    obj<T extends TStyles>(arg: TDeepPartial<T>, type?: 'full'): TAttrs;
 };
 type TParts = (string | number)[];
 
@@ -84,11 +121,15 @@ export type TDefaultTheme = {
 };
 export type TScope = {
     /**
+     * Scoped selector resolver
+     */
+    select: TSelect;
+    /**
      * BEM selector resolver
      */
     selector: TResolveSelector;
     /**
-     * BEM attribute resolver
+     * Attribute resolver
      */
     attr: TResolveAttr;
     /**
@@ -134,6 +175,34 @@ const getBase = (b?: string, e?: string) => `${b || ''}${e ? '__' + e : ''}`;
 const parseStr = (val: string) => {
     return val.split('.');
 };
+const parseUniFull = (val: TDeepPartial<object>, prefix: string = '') => {
+    return entries(val).reduce((acc, [key, val]) => {
+        const base = prefix ? `${prefix}-${key}` : key;
+        if (typeof val === 'object') {
+            acc.add(base);
+            acc = acc.union(parseUniFull(val, base))
+        } else {
+            acc.add(base + `_${val}`);
+        }
+        return acc;
+    }, new Set<string>());
+};
+
+const parseUniEdge = (val: TDeepPartial<object>, prefix: string = '') => {
+    return entries(val).reduce((acc, [key, val]) => {
+        const base = prefix ? `${prefix}-${key}` : key;
+        if (typeof val === 'object') {
+            const sub = parseUniEdge(val, base);
+            if (!sub.size) acc.add(base);
+            acc = acc.union(sub);
+        } else {
+            if (prefix) acc.add(prefix);
+            acc.add(base + `_${val}`);
+        }
+        return acc;
+    }, new Set<string>());
+};
+
 const parseObj = (val: object, attr?: boolean) => {
     return entries(val).reduce((accb, [b, bv]) => {
         if (isObject(bv)) {
@@ -244,6 +313,21 @@ export const createScope: TCreateScope = (params = {}) => {
             const [braw, e, m, v] = parseStr(params);
             return makeSelector(styleSheetKey, min(prepareName(braw, e, m, v)));
         };
+        const packVal = (val: string) => defineProperties(
+            { [keyAttr]: val },
+            {
+                toString: {
+                    value: () => `${keyAttr}="${val}"`
+                },
+                $: {
+                    value: val
+                }
+            }
+        ) as TAttrs;
+        const select: TScope['select'] = (arg) => {
+            const value = arg.replaceAll('.', '-').replace(':', '_');
+            return makeSelector(styleSheetKey, prefix(min(value)));
+        };
         const attr: TScope['attr'] = (<T extends TStyleSheet>(params?: TBEM<T>) => {
             if (params === undefined) return resolveMono<T>(attr);
             let b, e, m, v;
@@ -267,19 +351,38 @@ export const createScope: TCreateScope = (params = {}) => {
                         .map(([b, e, m, v]) => prefix(unmin(prepareName(b, e, m, v))))
                         .join(' ');
             }
-            return defineProperties(
-                { [keyAttr]: val },
-                {
-                    toString: {
-                        value: () => `${keyAttr}="${val}"`
-                    },
-                    $: {
-                        value: val
-                    }
-                }
-            );
+            return packVal(val);
         }) as TResolveAttr;
+
+        attr.list = (...args) => {
+            const val = [...args.reduce((acc, arg) => {
+                const [base, mod] = arg.split(':');
+                if (!base) return acc;
+                else if (mod === undefined) {
+                    acc.add(base.replaceAll('.', '-'));
+                    return acc;
+                }
+                const parts = base.split('.');
+                const end = parts.pop();
+                const start = parts.join('-');
+                if (parts.length) {
+                    acc.add(start);
+                    acc.add(start + `-${end}_${mod}`);
+                } else {
+                    acc.add(`${end}_${mod}`);
+                }
+                return acc;
+            },new Set<string>()).keys()].map((i) => prefix(unmin(i))).join(' ');
+            return packVal(val);
+        };
+        attr.obj = (arg, type) => {
+            let parser = parseUniEdge;
+            if (type === 'full') parser = parseUniFull;
+            const val = [...parser(arg).values()].map((i) => prefix(unmin(i))).join(' ');
+            return packVal(val);
+        };
         return {
+            select,
             selector,
             attr,
             name,
