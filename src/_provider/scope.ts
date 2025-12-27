@@ -326,7 +326,7 @@ export const createScope: TCreateScope = (params = {}) => {
         ) as TAttrs;
         const select: TScope['select'] = (arg) => {
             const value = arg.replaceAll('.', '-').replace(':', '_');
-            return makeSelector(styleSheetKey, prefix(min(value)));
+            return makeSelector(styleSheetKey, min(value));
         };
         const attr: TScope['attr'] = (<T extends TStyleSheet>(params?: TBEM<T>) => {
             if (params === undefined) return resolveMono<T>(attr);

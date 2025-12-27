@@ -874,6 +874,7 @@ describe('BEM to minified data-attribute:', () => {
 
 describe('Select data-attribute:', () => {
     const css = uniAttrResolver.attr;
+    const select = uniAttrResolver.select<TCustomStyles>;
     const config = {
         w: 's',
         rad: 12,
@@ -886,6 +887,22 @@ describe('Select data-attribute:', () => {
             }
         }
     } as const;
+
+    test('select object value:', () => {
+        const value = select('footer.left');
+        expect(value).toBe(`[data-${styleSheetKey}~="footer-left"]`);
+    });
+
+    test('select boolean value:', () => {
+        const value = select('footer.empty:');
+        expect(value).toBe(`[data-${styleSheetKey}~="footer-empty_"]`);
+    });
+
+    test('select string value:', () => {
+        const value = select('w:s');
+        expect(value).toBe(`[data-${styleSheetKey}~="w_s"]`);
+    });
+
     test('list:', () => {
         const styleAttr = css.list<TCustomStyles>(...listParams);
         expect(styleAttr.$).toBe('w_s footer footer-empty_ footer-left-ext');
@@ -923,10 +940,28 @@ describe('Select minified data-attribute:', () => {
     } as const;
 
     const css = uniAttrMinResolver.attr;
-    const select = uniAttrMinResolver.select;
+    const select = uniAttrMinResolver.select<TCustomStyles>;
     beforeAll(() => {
-        selectors.forEach((item) => select<TCustomStyles>(item))
+        selectors.forEach((item) => select(item))
     })
+
+    test('select object value:', () => {
+        const key = 'footer.left';
+        const value = select(key);
+        expect(value).toBe(`[data-${styleSheetKey}~="${selectors.indexOf(key)}"]`);
+    });
+
+    test('select boolean value:', () => {
+        const key = 'footer.empty:';
+        const value = select(key);
+        expect(value).toBe(`[data-${styleSheetKey}~="${selectors.indexOf(key)}"]`);
+    });
+
+    test('select string value:', () => {
+        const key = 'w:s';
+        const value = select(key);
+        expect(value).toBe(`[data-${styleSheetKey}~="${selectors.indexOf(key)}"]`);
+    });
 
     test('list:', () => {
         const styleAttr = css.list<TCustomStyles>(selectors[0], selectors[2], selectors[4]);
@@ -948,6 +983,7 @@ describe('Select minified data-attribute:', () => {
 
 describe('Select className:', () => {
     const css = uniClsResolver.attr;
+    const select = uniClsResolver.select<TCustomStyles>;
     const config = {
         w: 's',
         rad: 12,
@@ -960,6 +996,22 @@ describe('Select className:', () => {
             }
         }
     } as const;
+
+    test('select object value:', () => {
+        const value = select('footer.left');
+        expect(value).toBe(`.${styleSheetKey}-footer-left`);
+    });
+
+    test('select boolean value:', () => {
+        const value = select('footer.empty:');
+        expect(value).toBe(`.${styleSheetKey}-footer-empty_`);
+    });
+
+    test('select string value:', () => {
+        const value = select('w:s');
+        expect(value).toBe(`.${styleSheetKey}-w_s`);
+    });
+
     test('list:', () => {
         const styleAttr = css.list<TCustomStyles>('w:s', 'footer.empty:', 'footer.left.ext');
         expect(styleAttr.$).toBe(`${styleSheetKey}-w_s ${styleSheetKey}-footer ${styleSheetKey}-footer-empty_ ${styleSheetKey}-footer-left-ext`);
@@ -1006,10 +1058,28 @@ describe('Select minified className:', () => {
         'footer.right.full:',
     ] as const;
     const css = uniClsMinResolver.attr;
-    const select = uniClsMinResolver.select;
+    const select = uniClsMinResolver.select<TCustomStyles>;
     beforeAll(() => {
-        selectors.forEach((item) => select<TCustomStyles>(item))
+        selectors.forEach((item) => select(item))
     })
+
+    test('select object value:', () => {
+        const key = 'footer.left';
+        const value = select(key);
+        expect(value).toBe(`.${styleSheetKey}-${selectors.indexOf(key)}`);
+    });
+
+    test('select boolean value:', () => {
+        const key = 'footer.empty:';
+        const value = select(key);
+        expect(value).toBe(`.${styleSheetKey}-${selectors.indexOf(key)}`);
+    });
+
+    test('select string value:', () => {
+        const key = 'w:s';
+        const value = select(key);
+        expect(value).toBe(`.${styleSheetKey}-${selectors.indexOf(key)}`);
+    });
 
     test('list:', () => {
         const styleAttr = css.list<TCustomStyles>(...listParams);
