@@ -358,6 +358,18 @@ describe('useStyleProvider:', () => {
             expect(provider.constructor.name).toBe('StyleProvider');
         });
 
+        test(`new global provider after remove:`, () => {
+            const script = useStyleProvider({
+                global: true
+            }) as IStyleProviderScript;
+            script.size = 24;
+            script.remove();
+            const newScript = useStyleProvider({
+                global: true
+            });
+            expect(!document.head.contains(script) && (newScript.size !== script.size)).toBeTruthy();
+        });
+
         test(`check the script inherits:`, () => {
             provider = useStyleProvider();
             expect(provider.tagName).toContain('SCRIPT');
@@ -376,7 +388,9 @@ describe('useStyleProvider:', () => {
             provider.theme.add({}, 'main');
             provider.theme.switch('main');
             expect((provider + '').split('</style>').slice(1).join('</style>')).toBe(
-                `<script is="effcss-provider" min mode="c" size="12" time="250" type="application/json" theme="main">{"theme":[{"type":"add","payload":{"params":{},"name":"main"}}]}</script>`
+                `<script is="effcss-provider" min mode="c" size="12" time="250" type="application/json" theme="main">` +
+                `{"theme":[{"type":"add","payload":{"params":{},"name":"main"}}],"dict":{"eff0":{"_theme_0":"0"}}}` +
+                `</script>`
             );
         });
 

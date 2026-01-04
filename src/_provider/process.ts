@@ -35,6 +35,9 @@ export interface IMakerParams {
     each: typeof each;
     merge: typeof merge;
     when: typeof when;
+    /**
+     * Resolve scoped selector
+     */
     select: TScope['select'];
     /**
      * BEM selector resolver

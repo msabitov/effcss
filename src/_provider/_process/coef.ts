@@ -126,6 +126,7 @@ export interface ICoef {
 const COEF = 'coef';
 
 export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']): ICoef => {
+    const getValue = (self: ICoef, offset: number = 0): string => varExp(`${COEF}.${self.state.center + offset}`);
     /**
      * Coefficient generator
      * @description
@@ -142,40 +143,40 @@ export const resolveCoef = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp
 
         // values
 
-        get min() {
-            return varExp(`${COEF}.${this.state.center - 4}`);
+        get min(): string {
+            return getValue(this, -4);
         }
 
-        get xxs() {
-            return varExp(`${COEF}.${this.state.center - 3}`);
+        get xxs(): string {
+            return getValue(this, -3);
         }
 
-        get xs() {
-            return varExp(`${COEF}.${this.state.center - 2}`);
+        get xs(): string {
+            return getValue(this, -2);
         }
 
-        get s() {
-            return varExp(`${COEF}.${this.state.center - 1}`);
+        get s(): string {
+            return getValue(this, -1);
         }
 
-        get m() {
-            return varExp(`${COEF}.${this.state.center}`);
+        get m(): string {
+            return getValue(this);
         }
 
-        get l() {
-            return varExp(`${COEF}.${this.state.center + 1}`);
+        get l(): string {
+            return getValue(this, 1);
         }
 
-        get xl() {
-            return varExp(`${COEF}.${this.state.center + 2}`);
+        get xl(): string {
+            return getValue(this, 2);
         }
 
-        get xxl() {
-            return varExp(`${COEF}.${this.state.center + 3}`);
+        get xxl(): string {
+            return getValue(this, 3);
         }
 
-        get max() {
-            return varExp(`${COEF}.${this.state.center + 4}`);
+        get max(): string {
+            return getValue(this, 4);
         }
 
         get $xxs() {

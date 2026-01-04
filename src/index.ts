@@ -261,7 +261,7 @@ type TUseStylePropviderParams = {
     global?: boolean;
 };
 type TGlobalThisWithProvider = typeof globalThis & {
-    [PROVIDER_SYMBOL]: IStyleProvider;
+    [PROVIDER_SYMBOL]?: IStyleProvider;
 };
 type TUseStyleProvider = {
     (settings?: TUseStylePropviderParams): IStyleProvider;
@@ -279,6 +279,10 @@ type THost = IStyleProvider & TAttrsHandlers & {textContent: TStringOrNull;};
 const LIBRARY = 'effcss';
 export const TAG_NAME = LIBRARY + '-provider';
 export const TAG_NAME_OVERRIDE = LIBRARY + '-override';
+const VALUES = 'values';
+const HOST = ':host';
+const DIS_CON = 'display:contents;';
+const MEDIA = '@media';
 const SCRIPT = 'script';
 const STYLE = 'style';
 const THEME_ATTR = 'theme';
@@ -571,9 +575,9 @@ const construct = (host: THost, {
                         theme: TThemeController['actions'];
                         dict?: Record<string, object>;
                     } = {
-                        theme: host.theme.actions
+                        theme: host.theme.actions,
+                        dict: scope.dict
                     };
-                    if (host.min && collector.keys.length > 1) params.dict = scope.dict;
                     textContent = JSON.stringify(params);
                 }
                 const attrsContent = Object.entries(attrs).map(([name, value]) => value !== null && value !== undefined && value !== DEFAULT_ATTRS[name] ? (value === '' ? name :  `${name}="${value}"`) : '')
@@ -717,26 +721,30 @@ function defineProvider(): boolean {
                 // register document
                 this._m.register(doc);
             }
+
+            disconnectedCallback() {
+                delete (globalThis as TGlobalThisWithProvider)[PROVIDER_SYMBOL];
+            };
         }
         custom.define(TAG_NAME, StyleProvider, { extends: SCRIPT });
         class Override extends HTMLElement {
             static get observedAttributes() {
-                return ['values'];
+                return [VALUES];
             }
 
             protected _customize() {
                 const provider = queryStyleProvider();
                 if (this.shadowRoot && provider) {
-                    const values = this.getAttribute('values');
+                    const values = this.getAttribute(VALUES);
                     const sheet = new CSSStyleSheet();
                     if (values) {
                         const {$dark = {}, $light = {}, ...host} = provider.theme.makeThemeVars(JSON.parse(decodeURIComponent(values)));
                         sheet.replaceSync(
-                            `:host{display:contents;${plainVars(host as object)}}` +
-                            `@media(${LIGHT}){:host{${plainVars($light as object)}}}` +
-                            `@media(${DARK}){:host{${plainVars($dark as object)}}}`
+                            HOST + `{${DIS_CON + plainVars(host as object)}}` +
+                            MEDIA + `(${LIGHT}){${HOST}{${plainVars($light as object)}}}` +
+                            MEDIA + `(${DARK}){${HOST}{${plainVars($dark as object)}}}`
                         );
-                    } else sheet.replaceSync(`:host{display:contents;}`);
+                    } else sheet.replaceSync(HOST + `{${DIS_CON}}`);
                     this.shadowRoot.adoptedStyleSheets = [sheet];
                 }
             }
