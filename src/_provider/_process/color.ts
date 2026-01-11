@@ -12,6 +12,8 @@ const fadein: TChangeColor = (color, val = 0.1) => oklchFrom(`${color} l c h / c
 const fadeout: TChangeColor = (color, val = 0.1) => oklchFrom(`${color} l c h / calc(alpha - ${val})`);
 const saturate: TChangeColor = (color, val = 0.04) => oklchFrom(`${color} l calc(c + ${val}) h / alpha`);
 const desaturate: TChangeColor = (color, val = 0.04) => oklchFrom(`${color} l calc(c - ${val}) h / alpha`);
+const complement = (color: string | object) => oklchFrom(`${color} l c calc(h + 180) / alpha`);
+const grayscale = (color: string | object) => oklchFrom(`${color} l 0 h / alpha`);
 const spin: TChangeColor = (color, val = 30) =>
     oklchFrom(`${color} l c calc(h${typeof val === 'number' ? (val > 0 ? ' + ' + val : ' - ' + -val) : val}) / alpha`);
 
@@ -59,6 +61,14 @@ export const resolveColor = (varExp: ReturnType<ReturnType<TCreateScope>>['varEx
         /**
          * Rotate color hue
          */
-        spin
+        spin,
+        /**
+         * Get complement color
+         */
+        complement,
+        /**
+         * Get grayscale color
+         */
+        grayscale
     };
 };

@@ -142,7 +142,7 @@ export type TCardMaker = {
     };
 }
 
-const myStyleSheetMaker: TStyleSheetMaker = ({ select, pseudo, at: { keyframes, property }, merge, palette, coef, size, units: {px} }) = {
+const myStyleSheetMaker: TStyleSheetMaker = ({ select, pseudo: {h}, at: { keyframes, property }, merge, palette, coef, size, units: {px} }) = {
     // specify selector variants via generic
     const selector = select<TCardMaker>;
     // create property with unique identifier
@@ -164,16 +164,16 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ select, pseudo, at: { keyframes, 
     const cardLogoStyles = merge({
         width: widthProperty,
         animation: `20s linear infinite ${spin}`,
-        [pseudo.h()]: {
+        ...h({
             filter: "drop-shadow(0 0 2em #61dafbaa)",
-        }
+        })
     }, {
         border: 'none',
         background: palette.pale.xl.alpha(0.8),
         aspectRatio: 1,
-        [pseudo.h()]: {
+        ...h({
             opacity: 0.5
-        }
+        })
     });
     return {
         ...sizeProperty,

@@ -868,6 +868,40 @@ describe('Color:', () => {
             '.custom{background:oklch(from green l c calc(h + 30) / alpha);color:oklch(from green l c calc(h + 180) / alpha);}'
         );
     });
+
+    test('grayscale:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ color }) => {
+                const { grayscale } = color;
+                return {
+                    '.custom': {
+                        background: grayscale('green')
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.custom{background:oklch(from green l 0 h / alpha);}'
+        );
+    });
+
+    test('complement:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ color }) => {
+                const { complement } = color;
+                return {
+                    '.custom': {
+                        background: complement('green')
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.custom{background:oklch(from green l c calc(h + 180) / alpha);}'
+        );
+    });
 });
 
 describe('Pseudo:', () => {
@@ -901,6 +935,21 @@ describe('Pseudo:', () => {
         expect(styleString).toBe('.custom::after:hover{color:transparent;}');
     });
 
+    test('simple with rules:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ pseudo }) => {
+                const { h } = pseudo;
+                return {
+                    [`.custom`]: h({
+                        color: 'transparent'
+                    })
+                };
+            }
+        });
+        expect(styleString).toBe('.custom{&:hover{color:transparent;}}');
+    });
+
     test('complex call:', () => {
         const styleString = processor.compile({
             key: 'cust',
@@ -929,6 +978,23 @@ describe('Pseudo:', () => {
             }
         });
         expect(styleString).toBe('button:is(.custom):has(image){cursor:pointer;}');
+    });
+
+    test('complex with rules:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ pseudo }) => {
+                const { has } = pseudo;
+                return {
+                    button: {
+                        ...has('image', {
+                            cursor: 'pointer'
+                        })
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe('button{&:has(image){cursor:pointer;}}');
     });
 });
 

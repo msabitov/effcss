@@ -17,6 +17,7 @@ const _FOCUS = ':focus';
 const VALID = 'valid';
 const INVALID = 'in' + VALID;
 const USER = ':user-';
+const PH = 'placeholder';
 
 const SIMPLE_PSEUDO = {
     // simple
@@ -37,7 +38,7 @@ const SIMPLE_PSEUDO = {
     o: ':optional',
     m: ':modal',
     l: ':link',
-    ph: ':placeholder',
+    phs: `:${PH}-shown`,
     ch: ':checked',
     po: ':popover-open',
 
@@ -56,7 +57,11 @@ const SIMPLE_PSEUDO = {
 
     bef: COLON_BEFORE,
     aft: COLON_AFTER,
-    bd: '::backdrop'
+    ph: `::${PH}`,
+    bd: '::backdrop',
+    fl: '::first-line',
+    dc: '::details-content',
+    sel: '::selection'
 };
 
 const COMPLEX_PSEUDO = {
@@ -71,8 +76,14 @@ const COMPLEX_PSEUDO = {
     lang: ':lang'
 };
 
-type TSimplePseudo = (val?: string | number) => string;
-type TComplexPseudo = (content: string | number, val?: string | number) => string;
+type TSimplePseudo = {
+    (val?: string | number): string;
+    (val: object): object;
+}
+type TComplexPseudo = {
+    (content: string | number, val?: string | number): string;
+    (content: string | number, val: object): object;
+}
 type TPseudo = {
     /**
      * :root
@@ -139,9 +150,9 @@ type TPseudo = {
      */
     l: TSimplePseudo;
     /**
-     * :placeholder
+     * :placeholder-shown
      */
-    ph: TSimplePseudo;
+    phs: TSimplePseudo;
     /**
      * :checked
      */
@@ -200,6 +211,22 @@ type TPseudo = {
      * ::backdrop
      */
     bd: TSimplePseudo;
+    /**
+     * ::placeholder
+     */
+    ph: TSimplePseudo;
+    /**
+     * ::first-line
+     */
+    fl: TSimplePseudo;
+    /**
+     * ::details-content
+     */
+    dc: TSimplePseudo;
+    /**
+     * ::selection
+     */
+    sel: TSimplePseudo;
 
     // complex
 
@@ -245,7 +272,8 @@ export const resolvePseudo = (): TPseudo =>
     Object.assign(
         fromEntries(
             entries(SIMPLE_PSEUDO).map(([k, v]) => {
-                function transform(val: string = '') {
+                function transform(val: string | object = '') {
+                    if (val && typeof val === 'object') return {[v]: val};
                     return val + v;
                 }
                 transform.toString = () => v;
@@ -254,8 +282,10 @@ export const resolvePseudo = (): TPseudo =>
         ),
         fromEntries(
             entries(COMPLEX_PSEUDO).map(([k, v]) => {
-                function transform(content: string | number, val: string = '') {
-                    return val + v + `(${content})`;
+                function transform(content: string | number, val: string | object = '') {
+                    const key = v + `(${content})`;
+                    if (val && typeof val === 'object') return {[key]: val};
+                    return val + key;
                 }
                 transform.toString = () => v;
                 return [k, transform];
