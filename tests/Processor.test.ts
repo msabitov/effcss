@@ -785,6 +785,56 @@ describe('Color:', () => {
         );
     });
 
+    test('contrast:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ color }) => {
+                const { contrast, darken } = color;
+                const first = contrast();
+                const second = contrast({
+                    h: 'calc(h + 180)',
+                    a: 0.5
+                });
+                const third = darken(first);
+                return {
+                    '.custom': {
+                        background: second,
+                        color: third
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.custom{background:oklch(from var(--f0-contrast) l c calc(h + 180) / 0.5);' +
+            'color:oklch(from var(--f0-contrast) calc(l - 0.1) c h / alpha);}'
+        );
+    });
+
+    test('neutral:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ color }) => {
+                const { neutral, darken } = color;
+                const first = neutral();
+                const second = neutral({
+                    h: 'calc(h + 180)',
+                    a: 0.5
+                });
+                const third = darken(first);
+                return {
+                    '.custom': {
+                        background: second,
+                        color: third
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            '.custom{background:oklch(from var(--f0-neutral) l c calc(h + 180) / 0.5);' +
+            'color:oklch(from var(--f0-neutral) calc(l - 0.1) c h / alpha);}'
+        );
+    });
+
     test('darken/lighten:', () => {
         const styleString = processor.compile({
             key: 'cust',

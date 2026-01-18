@@ -27,6 +27,8 @@ const SECOND_MAKER: TStyleSheetMaker = ({ bem, units: { px, vh } }) => {
 };
 const ANGLE_VAR = '--angle';
 const COLOR_VAR = '--color';
+const CONTRAST_VAR = '--contrast';
+const NEUTRAL_VAR = '--neutral';
 const EASING_VAR = '--easing';
 const THIRD_MAKER: TStyleSheetMaker = ({ time, angle, color, easing }) => {
     return {
@@ -35,6 +37,8 @@ const THIRD_MAKER: TStyleSheetMaker = ({ time, angle, color, easing }) => {
             rotate: angle(2),
             [ANGLE_VAR]: angle(),
             [COLOR_VAR]: color.root(),
+            [CONTRAST_VAR]: color.contrast(),
+            [NEUTRAL_VAR]: color.neutral(),
             [EASING_VAR]: easing()
         }
     };
@@ -268,6 +272,37 @@ describe('Provider utils:', () => {
         expect(window.getComputedStyle(document.documentElement).getPropertyValue(COLOR_VAR)).toBe(defColor);
     });
 
+    test('set contrast attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const color = 'green';
+        consumer.contrast = color;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(CONTRAST_VAR)).toBe(color);
+    });
+
+    test('reset color attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const color = 'green';
+        consumer.contrast = color;
+        consumer.contrast = null;
+        const defColor = consumer.theme.get().contrast;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(CONTRAST_VAR)).toBe(defColor);
+    });
+
+    test('set neutral attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const color = 'green';
+        consumer.neutral = color;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(NEUTRAL_VAR)).toBe(color);
+    });
+
+    test('reset neutral attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const color = 'green';
+        consumer.neutral = color;
+        consumer.neutral = null;
+        const defColor = consumer.theme.get().neutral;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(NEUTRAL_VAR)).toBe(defColor);
+    });
     
     test('set easing attribute', () => {
         consumer.use(THIRD_MAKER);
@@ -521,6 +556,11 @@ describe('useStyleProvider:', () => {
         let override: HTMLElement | null;
         const overValues = {
             size: 24,
+            time: 165,
+            angle: 27,
+            color: 'purple',
+            contrast: 'cyan',
+            neutral: 'grey',
             hue: {
                 pri: 10
             },
@@ -532,6 +572,7 @@ describe('useStyleProvider:', () => {
                 }
             }
         };
+        const newSizeValue = 28;
 
         beforeAll(() => {
             provider = useStyleProvider();
@@ -554,9 +595,74 @@ describe('useStyleProvider:', () => {
         });
 
         test(`override values changed:`, () => {
-            const newValue = 28;
-            override?.setAttribute('values', prepareOverrideValues({...overValues, size: newValue}));
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-size')).toBe(newValue + '');
+            override?.setAttribute('values', prepareOverrideValues({...overValues, size: newSizeValue}));
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-size')).toBe(newSizeValue + '');
+        });
+
+        test('set size attribute', () => {
+            const rem = '24';
+            override?.setAttribute('size', rem);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-size')).toBe(rem);
+        });
+
+        test('reset size attribute', () => {
+            override?.removeAttribute('size');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-size')).toBe(newSizeValue + '');
+        });
+
+        test('set time attribute', () => {
+            const time = '550';
+            override?.setAttribute('time', time);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-time')).toBe(time);
+        });
+
+        test('reset time attribute', () => {
+            override?.removeAttribute('time');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-time')).toBe(overValues.time + '');
+        });
+
+        test('set angle attribute', () => {
+            const angle = '550';
+            override?.setAttribute('angle', angle);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-angle')).toBe(angle);
+        });
+
+        test('reset angle attribute', () => {
+            override?.removeAttribute('angle');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-angle')).toBe(overValues.angle + '');
+        });
+
+        test('set color attribute', () => {
+            const color = '#aa5e5eff';
+            override?.setAttribute('color', color);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-color')).toBe(color);
+        });
+
+        test('reset color attribute', () => {
+            override?.removeAttribute('color');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-color')).toBe(overValues.color + '');
+        });
+
+        test('set contrast attribute', () => {
+            const color = '#c0c7c2ff';
+            override?.setAttribute('contrast', color);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-contrast')).toBe(color);
+        });
+
+        test('reset contrast attribute', () => {
+            override?.removeAttribute('contrast');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-contrast')).toBe(overValues.contrast + '');
+        });
+
+        test('set neutral attribute', () => {
+            const color = '#5eaa6fff';
+            override?.setAttribute('neutral', color);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-neutral')).toBe(color);
+        });
+
+        test('reset neutral attribute', () => {
+            override?.removeAttribute('neutral');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-neutral')).toBe(overValues.neutral + '');
         });
     });
 });

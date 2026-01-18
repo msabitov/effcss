@@ -1,11 +1,32 @@
 import type { TCreateScope } from '../../_provider/scope';
 
+type TOKLCH = {
+    /**
+     * Lightness
+     */
+    l?: string | number;
+    /**
+     * Chroma
+     */
+    c?: string | number;
+    /**
+     * Hue
+     */
+    h?: string | number;
+    /**
+     * Alpha
+     */
+    a?: string | number;
+};
 type TChangeStr = (val: string) => string;
 type TChangeColor = (color: string | object, val?: number | string) => string;
 
 const OKLCH = 'oklch';
 const oklch: TChangeStr = (val) => OKLCH + `(${val})`;
 const oklchFrom: TChangeStr = (val) => oklch(`from ${val}`);
+const oklchFromParams = (rel: string) => (params?: TOKLCH) => params ? oklchFrom(
+    rel + ` ${params.l || 'l'} ${params.c || 'c'} ${params.h || 'h'} / ${params.a || '1'}`
+) : rel;
 const lighten: TChangeColor = (color, val = 0.1) => oklchFrom(`${color} calc(l + ${val}) c h / alpha`);
 const darken: TChangeColor = (color, val = 0.1) => oklchFrom(`${color} calc(l - ${val}) c h / alpha`);
 const fadein: TChangeColor = (color, val = 0.1) => oklchFrom(`${color} l c h / calc(alpha + ${val})`);
@@ -19,17 +40,24 @@ const spin: TChangeColor = (color, val = 30) =>
 
 export const resolveColor = (varExp: ReturnType<ReturnType<TCreateScope>>['varExp']) => {
     const rootColor = varExp('color');
+    const contrastColor = varExp('contrast');
+    const neutralColor = varExp('neutral');
     return {
         /**
-         * Root color
-         * @param p - oklch params
+         * Theme root color
+         * @param params - oklch params
          */
-        root: (p?: {
-            l?: string | number;
-            c?: string | number;
-            h?: string | number;
-            a?: string | number;
-        }) => p ? oklchFrom(rootColor + ` ${p.l || 'l'} ${p.c || 'c'} ${p.h || 'h'} / ${p.a || '1'}`) : rootColor,
+        root: oklchFromParams(rootColor),
+        /**
+         * Theme contrast color
+         * @param params - oklch params
+         */
+        contrast: oklchFromParams(contrastColor),
+        /**
+         * Theme neutral color
+         * @param params - oklch params
+         */
+        neutral: oklchFromParams(neutralColor),
         /**
          * oklch()
          */

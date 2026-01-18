@@ -53,6 +53,8 @@ const DEFAULT_THEME = {
     size: 16,
     angle: 30,
     color: '#2192a7',
+    contrast: 'light-dark(black, white)',
+    neutral: 'light-dark(white, #1b1f1f)',
     easing: 'linear',
     coef: {
         0: 0,

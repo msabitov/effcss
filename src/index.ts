@@ -59,13 +59,21 @@ export type TProviderAttrs = {
      */
     angle: number;
     /**
-     * Root color string
+     * Root color
      */
     color: string;
     /**
      * Root easing function
      */
     easing: string;
+    /**
+     * Root contrast color
+     */
+    contrast: string;
+    /**
+     * Root neutral color
+     */
+    neutral: string;
 };
 type TAttrKeys = keyof TProviderAttrs;
 type TManagerLite = Pick<TManager, 'pack' | 'status' | 'on' | 'off' | 'get' | 'hydrate' | 'all'>;
@@ -162,14 +170,32 @@ export interface IStyleProvider {
      */
     set angle(val: TNumberOrNull);
     /**
-     * Get root color value
+     * Get brand color value
      */
     get color(): TStringOrNull;
     /**
-     * Set root color value
-     * @param val - angle value in ms
+     * Set brand color value
+     * @param val - color string
      */
     set color(val: TStringOrNull);
+    /**
+     * Get neutral color value
+     */
+    get neutral(): TStringOrNull;
+    /**
+     * Set neutral color value
+     * @param val - color string
+     */
+    set neutral(val: TStringOrNull);
+    /**
+     * Get contrast color value
+     */
+    get contrast(): TStringOrNull;
+    /**
+     * Set contrast color value
+     * @param val - color string
+     */
+    set contrast(val: TStringOrNull);
     /**
      * Get root easing function
      */
@@ -290,6 +316,8 @@ const SIZE_ATTR = 'size';
 const TIME_ATTR = 'time';
 const ANGLE_ATTR = 'angle';
 const COLOR_ATTR = 'color';
+const CONTRAST_ATTR = 'contrast';
+const NEUTRAL_ATTR = 'neutral';
 const EASING_ATTR = 'easing';
 const EVENT_NAME = LIBRARY + 'changes';
 const EFFCSS_ATTR = 'data-' + LIBRARY;
@@ -328,6 +356,8 @@ const createGlobalMaker = ({
         angle: TNumberOrNull;
         color: TStringOrNull;
         easing: TStringOrNull;
+        contrast: TStringOrNull;
+        neutral: TStringOrNull;
     };
     scope: TScope;
 }): TStyleSheetMaker => {
@@ -338,6 +368,8 @@ const createGlobalMaker = ({
         const angle = attrs.angle;
         const color = attrs.color;
         const easing = attrs.easing;
+        const contrast = attrs.contrast;
+        const neutral = attrs.neutral;
         const {$dark = {}, $light = {}, ...root} = theme.vars();
         return merge(
             {
@@ -387,6 +419,16 @@ const createGlobalMaker = ({
             easing && {
                 [getAttrSelector(EASING_ATTR)]: {
                     [scope.varName(EASING_ATTR)]: easing
+                }
+            },
+            contrast && {
+                [getAttrSelector(CONTRAST_ATTR)]: {
+                    [scope.varName(CONTRAST_ATTR)]: contrast
+                }
+            },
+            neutral && {
+                [getAttrSelector(NEUTRAL_ATTR)]: {
+                    [scope.varName(NEUTRAL_ATTR)]: neutral
                 }
             }
         );
@@ -512,7 +554,9 @@ const construct = (host: THost, {
         time: describeNumAttr(host, TIME_ATTR),
         angle: describeNumAttr(host, ANGLE_ATTR),
         color: describeStringAttr(host, COLOR_ATTR),
-        easing: describeStringAttr(host, EASING_ATTR)
+        easing: describeStringAttr(host, EASING_ATTR),
+        contrast: describeStringAttr(host, CONTRAST_ATTR),
+        neutral: describeStringAttr(host, NEUTRAL_ATTR)
     });
     const collector = createCollector({ prefix: host.pre });
     const scope = createScope({
@@ -566,7 +610,9 @@ const construct = (host: THost, {
                     time: host.getAttribute(TIME_ATTR),
                     angle: host.getAttribute(ANGLE_ATTR),
                     color: host.getAttribute(COLOR_ATTR),
-                    easing: host.getAttribute(EASING_ATTR)
+                    easing: host.getAttribute(EASING_ATTR),
+                    contrast: host.getAttribute(CONTRAST_ATTR),
+                    neutral: host.getAttribute(NEUTRAL_ATTR)
                 };
                 if (!noscript) {
                     tag = SCRIPT;
@@ -591,7 +637,7 @@ const construct = (host: THost, {
 };
 
 const PROVIDER_SYMBOL = Symbol(TAG_NAME);
-const CUST_ATTRS = [SIZE_ATTR, TIME_ATTR, ANGLE_ATTR, COLOR_ATTR, EASING_ATTR];
+const CUST_ATTRS = [SIZE_ATTR, TIME_ATTR, ANGLE_ATTR, COLOR_ATTR, EASING_ATTR, CONTRAST_ATTR, NEUTRAL_ATTR];
 const CUST_ATTRS_SET = new Set(CUST_ATTRS);
 
 const queryStyleProvider = () => globalThis?.document.querySelector(`[is=${TAG_NAME}]`) as unknown as IStyleProvider;
@@ -618,6 +664,8 @@ function defineProvider(): boolean {
             time: IStyleProvider['time'];
             color: IStyleProvider['color'];
             easing: IStyleProvider['easing'];
+            contrast: IStyleProvider['contrast'];
+            neutral: IStyleProvider['neutral'];
 
             // maker handlers
 
@@ -670,6 +718,8 @@ function defineProvider(): boolean {
                 const angle = this.angle;
                 const color = this.color;
                 const easing = this.easing;
+                const contrast = this.contrast;
+                const neutral = this.neutral;
                 // create init stylesheet maker
                 const next = createGlobalMaker({
                     theme: this.theme,
@@ -678,7 +728,9 @@ function defineProvider(): boolean {
                         time,
                         angle,
                         color,
-                        easing
+                        easing,
+                        contrast,
+                        neutral
                     },
                     scope: this._s(this._c.key())
                 });
@@ -729,7 +781,7 @@ function defineProvider(): boolean {
         custom.define(TAG_NAME, StyleProvider, { extends: SCRIPT });
         class Override extends HTMLElement {
             static get observedAttributes() {
-                return [VALUES];
+                return [VALUES, ...CUST_ATTRS];
             }
 
             protected _customize() {
@@ -737,14 +789,17 @@ function defineProvider(): boolean {
                 if (this.shadowRoot && provider) {
                     const values = this.getAttribute(VALUES);
                     const sheet = new CSSStyleSheet();
-                    if (values) {
-                        const {$dark = {}, $light = {}, ...host} = provider.theme.makeThemeVars(JSON.parse(decodeURIComponent(values)));
-                        sheet.replaceSync(
-                            HOST + `{${DIS_CON + plainVars(host as object)}}` +
-                            MEDIA + `(${LIGHT}){${HOST}{${plainVars($light as object)}}}` +
-                            MEDIA + `(${DARK}){${HOST}{${plainVars($dark as object)}}}`
-                        );
-                    } else sheet.replaceSync(HOST + `{${DIS_CON}}`);
+                    const vars = values ? JSON.parse(decodeURIComponent(values)) : {};
+                    CUST_ATTRS.forEach((name) => {
+                        const value =  this.getAttribute(name);
+                        if (value) vars[name] = value;
+                    });
+                    const {$dark = {}, $light = {}, ...host} = provider.theme.makeThemeVars(vars);
+                    sheet.replaceSync(
+                        HOST + `{${DIS_CON + plainVars(host as object)}}` +
+                        MEDIA + `(${LIGHT}){${HOST}{${plainVars($light as object)}}}` +
+                        MEDIA + `(${DARK}){${HOST}{${plainVars($dark as object)}}}`
+                    );
                     this.shadowRoot.adoptedStyleSheets = [sheet];
                 }
             }
@@ -771,7 +826,8 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
     } = settings;
     let {
         mode = DEFAULT_ATTRS.mode, min, pre = DEFAULT_ATTRS.prefix,
-        size = null, time = null, angle = null, color = null, easing = null
+        size = null, time = null, angle = null, color = null, easing = null,
+        contrast = null, neutral = null
     } = attrs;
     class StyleProviderEmulation implements IStyleProvider {
         get tagName(): string {
@@ -786,6 +842,8 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
             angle: angle ? angle + '' : null,
             color: color || null,
             easing: easing || null,
+            contrast: contrast || null,
+            neutral: neutral || null,
             pre,
             mode,
             min: min ? '' : null
@@ -814,6 +872,8 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         time: IStyleProvider['time'];
         color: IStyleProvider['color'];
         easing: IStyleProvider['easing'];
+        contrast: IStyleProvider['contrast'];
+        neutral: IStyleProvider['neutral'];
 
         // maker handlers
 
@@ -864,6 +924,8 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
             const angle = this.angle;
             const color = this.color;
             const easing = this.easing;
+            const contrast = this.contrast;
+            const neutral = this.neutral;
             // create init stylesheet maker
             const next = createGlobalMaker({
                 theme: this.theme,
@@ -872,7 +934,9 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
                     time,
                     angle,
                     color,
-                    easing
+                    easing,
+                    contrast,
+                    neutral
                 },
                 scope: this._s(this._c.key())
             });
