@@ -26,26 +26,10 @@ import { createCollector } from './_provider/collect';
 import { createScope } from './_provider/scope';
 import { createThemeController } from './_provider/theme';
 
-
 /**
- * Provider attributes
+ * EffCSS core attributes
  */
-export type TProviderAttrs = {
-    /**
-     * Stylesheet key prefix
-     */
-    pre: string;
-    /**
-     * BEM selector generation mode
-     * @description
-     * `a` - data-attributes
-     * `c` - classes
-     */
-    mode: 'a' | 'c';
-    /**
-     * BEM selectors minification
-     */
-    min: boolean;
+type TAttrs = {
     /**
      * Root font size in px
      */
@@ -75,6 +59,39 @@ export type TProviderAttrs = {
      */
     neutral: string;
 };
+/**
+ * Provider attributes
+ */
+export type TProviderAttrs = {
+    /**
+     * Stylesheet key prefix
+     */
+    pre: string;
+    /**
+     * Scoped selector generation mode
+     * @description
+     * `a` - data-attributes
+     * `c` - classes
+     */
+    mode: 'a' | 'c';
+    /**
+     * Scoped selectors minification
+     */
+    min: boolean;
+} & TAttrs;
+/**
+ * Override element attributes
+ */
+export type TOverrideAttrs = {
+    /**
+     * EffCSS variable values encoded string
+     */
+    values: string;
+    /**
+     * Color-scheme
+     */
+    scheme: 'light' | 'dark';
+} & TAttrs;
 type TAttrKeys = keyof TProviderAttrs;
 type TManagerLite = Pick<TManager, 'pack' | 'status' | 'on' | 'off' | 'get' | 'hydrate' | 'all'>;
 type TResolveAttr = ReturnType<TScopeResolver>['attr'];
@@ -795,10 +812,14 @@ function defineProvider(): boolean {
                         if (value) vars[name] = value;
                     });
                     const {$dark = {}, $light = {}, ...host} = provider.theme.makeThemeVars(vars);
+                    const lightVars = plainVars($light as object);
+                    const darkVars = plainVars($dark as object);
                     sheet.replaceSync(
                         HOST + `{${DIS_CON + plainVars(host as object)}}` +
-                        MEDIA + `(${LIGHT}){${HOST}{${plainVars($light as object)}}}` +
-                        MEDIA + `(${DARK}){${HOST}{${plainVars($dark as object)}}}`
+                        HOST + `([scheme=light]){color-scheme:light;${lightVars}}` +
+                        HOST + `([scheme=dark]){color-scheme:dark;${darkVars}}` +
+                        MEDIA + `(${LIGHT}){${HOST}{${lightVars}}}` +
+                        MEDIA + `(${DARK}){${HOST}{${darkVars}}}`
                     );
                     this.shadowRoot.adoptedStyleSheets = [sheet];
                 }

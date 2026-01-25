@@ -41,6 +41,8 @@ export interface IMakerParams {
     select: TScope['select'];
     /**
      * BEM selector resolver
+     * @deprecated
+     * Will be deleted in the next major version. Use `select` utility instead
      */
     bem: TScope['selector'];
     /**

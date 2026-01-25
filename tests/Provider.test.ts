@@ -570,6 +570,13 @@ describe('useStyleProvider:', () => {
                         xl: 0.95
                     }
                 }
+            },
+            $dark: {
+                lightness: {
+                    bg: {
+                        xl: 0.15
+                    }
+                }
             }
         };
         const newSizeValue = 28;
@@ -589,9 +596,14 @@ describe('useStyleProvider:', () => {
             expect(inside && getComputedStyle(inside).getPropertyValue('--f0-hue-pri')).toBe(overValues.hue.pri + '');
         });
 
-        test(`override values (@media $light)`, () => {
-            document.documentElement.style.setProperty('color-scheme', 'light');
+        test(`override values with scheme=light`, () => {
+            override?.setAttribute('scheme', 'light');
             expect(inside && getComputedStyle(inside).getPropertyValue('--f0-lightness-bg-xl')).toBe(overValues.$light.lightness.bg.xl + '');
+        });
+
+        test(`override values with scheme=dark`, () => {
+            override?.setAttribute('scheme', 'dark');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-lightness-bg-xl')).toBe(overValues.$dark.lightness.bg.xl + '');
         });
 
         test(`override values changed:`, () => {
