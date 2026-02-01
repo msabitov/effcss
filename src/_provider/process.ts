@@ -98,7 +98,7 @@ export type TProcessor = {
      * Compile stylesheet maker to CSSStylesheet content
      * @param params - params
      */
-    compile(params: { key: string; maker: (params: IMakerParams) => object | string }): string;
+    compile(params: { key: string; maker: (params: IMakerParams) => object | string; mode?: 'a' | 'c'; }): string;
 };
 type TCreateProcessor = (params: {
     scope: ReturnType<TCreateScope>;
@@ -122,8 +122,8 @@ export const createProcessor: TCreateProcessor = (params) => {
     const size: TRelative = (coef = 1) => units.px(multiplier(coef) + themeVar('size'));
     const easing = (bezier?: TBezier) => !bezier ? themeVar('easing') : `cubic-bezier(${bezier.x1 || 0},${bezier.y1 || 0},${bezier.x2 || 1},${bezier.y2 || 1})`;
     return {
-        compile: ({ key, maker }) => {
-            const localScope = scope(key);
+        compile: ({ key, maker, mode }) => {
+            const localScope = scope(key, mode);
             const bem = localScope.selector;
             const select = localScope.select;
             const at = resolveAtRules(localScope);

@@ -85,7 +85,7 @@ export type TMonoResolver<T extends TStyleSheet,
         [key in string]: string;
     };
 }
-type TStyles = {
+export type TStyles = {
     [key in string]: string | number | Record<string, never> | TStyles;
 };
 type TAttrs = {
@@ -108,6 +108,11 @@ type TResolveAttr = {
      */
     obj<T extends TStyles>(arg: TDeepPartial<T>, type?: 'full'): TAttrs;
 };
+
+/**
+ * Design details
+ */
+export type TDetails<T> =  TDeepPartial<T> | TSelectors<T>[];
 type TParts = (string | number)[];
 
 export type TDefaultTheme = {
@@ -150,7 +155,7 @@ export type TScope = {
  * Style scope resolver
  */
 export type TScopeResolver = {
-    (key: string): TScope;
+    (key: string, mode?: 'a' | 'c'): TScope;
     dict?: Record<string, Record<string, string>>;
 };
 
@@ -287,10 +292,10 @@ const repeat = (val: string) => val || '';
  */
 export const createScope: TCreateScope = (params = {}) => {
     const { mode, min, dict = {} } = params;
-    let makeSelector;
-    if (mode === 'a') makeSelector = makeAttr;
-    else makeSelector = makeCls;
-    const scope: TScopeResolver = (styleSheetKey: string) => {
+    const scope: TScopeResolver = (styleSheetKey: string, localMode: string | null | undefined = mode) => {
+        let makeSelector;
+        if (localMode === 'a') makeSelector = makeAttr;
+        else makeSelector = makeCls;
         let ind: number = 0;
         let min = repeat;
         let unmin = repeat;
@@ -303,7 +308,7 @@ export const createScope: TCreateScope = (params = {}) => {
         let name: TScope['name'] = (parts) => [styleSheetKey, ...(isString(parts) ? parts.split('.') : parts)].filter(Boolean).join('-');
         let keyAttr = 'class';
         let prefix = (val: string) => val ? styleSheetKey + (val.startsWith('_') ? '' : '-') + val : (val === undefined ? undefined : styleSheetKey);
-        if (mode === 'a') {
+        if (localMode === 'a') {
             keyAttr = 'data-' + styleSheetKey;
             prefix = repeat;
         }

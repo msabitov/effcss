@@ -1,5 +1,10 @@
 
 // types
+import type { TProcessor } from './_provider/process';
+import type { TManager } from './_provider/manage';
+import type { TCollector } from './_provider/collect';
+import type { TDetails, TScope, TScopeResolver, TStyles } from './_provider/scope';
+import type { TThemeController } from './_provider/theme';
 export type {
     TShortRange,
     TMainRange,
@@ -14,11 +19,7 @@ export type {
     TPaletteLightness,
     TPaletteMode
 } from './_provider/_process/palette';
-import type { TProcessor } from './_provider/process';
-import type { TManager } from './_provider/manage';
-import type { TCollector } from './_provider/collect';
-import type { TScope, TScopeResolver } from './_provider/scope';
-import type { TThemeController } from './_provider/theme';
+export type { TDetails };
 // functions
 import { createProcessor } from './_provider/process';
 import { createManager } from './_provider/manage';
@@ -241,7 +242,19 @@ export interface IStyleProvider {
      * @param maker - stylesheet maker
      * @param key - stylesheet key
      */
-    css(maker: TStyleSheetMaker, key: string): string;
+    css(maker: TStyleSheetMaker, key: string, mode?: 'a' | 'c'): string;
+    /**
+     * ClassNames expression
+     * @param maker - stylesheet maker
+     * @param details - design details
+     */
+    cx<T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>): string;
+    /**
+     * Data attributes expression
+     * @param maker - stylesheet maker
+     * @param details - design details
+     */
+    dx<T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>): Record<string, string>;
 
     // stylesheet handlers
 
@@ -464,20 +477,21 @@ const getHandlers = ({
     manager: TManagerLite;
     processor: TProcessor;
     globalMaker: TStyleSheetMaker;
-}): Pick<IStyleProvider,'use' | 'remake' | 'css' | 'status' | 'on' | 'off' | 'stylesheets'> => {
+}): Pick<IStyleProvider,'use' | 'remake' | 'css' | 'cx' | 'dx' | 'status' | 'on' | 'off' | 'stylesheets'> => {
     const key = (param: TStyleTarget) => (typeof param === 'string' ? param : collector.key(param));
-    const resolve = (key: string) => scope(key || collector.key()).attr;
-    const css: IStyleProvider['css'] = (maker, key) =>
+    const resolve = (key: string, mode?: 'a' | 'c') => scope(key || collector.key(), mode).attr;
+    const css: IStyleProvider['css'] = (maker, key, mode) =>
         processor.compile({
             key,
-            maker
+            maker,
+            mode
         });
-    const useSingle = (maker: TStyleSheetMaker) => {
+    const useSingle = (maker: TStyleSheetMaker, mode?: 'a' | 'c') => {
         let k = collector.use(maker);
         if (manager && !manager.get(k)) {
-            manager.pack(k, manager.hydrate(k) || css(maker, k));
+            manager.pack(k, manager.hydrate(k) || css(maker, k, mode));
         }
-        return resolve(k);
+        return resolve(k, mode);
     };
     
     const use: IStyleProvider['use'] = (...styles: TStyleSheetMaker[]) => {
@@ -493,6 +507,16 @@ const getHandlers = ({
         }
         return use(maker)[0];
     };
+    const cx = <T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>) => {
+        const resolver = useSingle(maker, 'c');
+        if (Array.isArray(details)) return resolver.list<T>(...details).$;
+        return resolver.obj<T>(details).$;
+    };
+    const dx = <T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>) => {
+        const resolver = useSingle(maker, 'a');
+        if (Array.isArray(details)) return resolver.list<T>(...details);
+        return resolver.obj<T>(details);
+    };
     const status: IStyleProvider['status'] = (target) => {
         const source = key(target);
         return !!source && manager.status(source);
@@ -505,6 +529,8 @@ const getHandlers = ({
         use,
         remake,
         css,
+        cx,
+        dx,
         // stylesheet handlers
         status,
         on,
@@ -689,6 +715,9 @@ function defineProvider(): boolean {
             use: IStyleProvider['use'];
             remake: IStyleProvider['remake'];
             css: IStyleProvider['css'];
+            cx: IStyleProvider['cx'];
+            dx: IStyleProvider['dx'];
+
             get makers() {
                 return this._c.makers;
             }
@@ -901,6 +930,9 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         use: IStyleProvider['use'];
         remake: IStyleProvider['remake'];
         css: IStyleProvider['css'];
+        cx: IStyleProvider['cx'];
+        dx: IStyleProvider['dx'];
+
         get makers() {
             return this._c.makers;
         }

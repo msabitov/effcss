@@ -58,6 +58,30 @@ const FOURTH_MAKER: TStyleSheetMaker = ({ bem, time }) => {
     };
 };
 
+type TMaker = {
+    sz: 's' | 'm';
+    rounded: '';
+    card: {
+        bg: 'pri' | 'sec';
+        inv: '';
+        footer: Record<string, never>;
+    }
+};
+const FIFTH_MAKER: TStyleSheetMaker = ({ select }) => {
+    const selector = select<TMaker>;
+    return {
+        [selector('sz:s')]: {
+            width: '10px'
+        },
+        [selector('card.inv:')]: {
+            width: '50%'
+        },
+        [selector('card.footer')]: {
+            height: '32px'
+        }
+    };
+};
+
 const defThemeVars = {
     size: 18,
     time: 150,
@@ -199,6 +223,40 @@ describe('Provider utils:', () => {
         expect(attrs).toEqual({
             'data-f1': '_',
             'data-f2': '_'
+        });
+    });
+
+    test('`cx` with object', () => {
+        const classNames = consumer.cx<TMaker>(FIFTH_MAKER, {
+            sz: 's',
+            card: {
+                footer: {}
+            }
+        });
+        expect(classNames).toEqual('f1-sz_s f1-card-footer');
+    });
+
+    test('`cx` with array', () => {
+        const classNames = consumer.cx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        expect(classNames).toEqual('f1-sz_s f1-card-footer');
+    });
+
+    test('`dx` with object', () => {
+        const classNames = consumer.dx<TMaker>(FIFTH_MAKER, {
+            sz: 's',
+            card: {
+                footer: {}
+            }
+        });
+        expect(classNames).toEqual({
+            'data-f1': 'sz_s card-footer'
+        });
+    });
+
+    test('`dx` with array', () => {
+        const classNames = consumer.dx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        expect(classNames).toEqual({
+            'data-f1': 'sz_s card-footer'
         });
     });
 
@@ -376,6 +434,40 @@ describe('Provider with `min` mode:', () => {
         const [resolve] = consumer.use(FOURTH_MAKER);
         const attrs = resolve('..animated');
         expect(attrs + '').toBe(`class="f1-0 "`);
+    });
+
+    test('`cx` with object', () => {
+        const classNames = consumer.cx(FIFTH_MAKER, {
+            sz: 's',
+            card: {
+                footer: {}
+            }
+        });
+        expect(classNames).toEqual('f2-0 f2-2');
+    });
+
+    test('`cx` with array', () => {
+        const classNames = consumer.cx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        expect(classNames).toEqual('f2-0 f2-2');
+    });
+
+    test('`dx` with object', () => {
+        const classNames = consumer.dx<TMaker>(FIFTH_MAKER, {
+            sz: 's',
+            card: {
+                footer: {}
+            }
+        });
+        expect(classNames).toEqual({
+            'data-f2': '0 2'
+        });
+    });
+
+    test('`dx` with array', () => {
+        const classNames = consumer.dx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        expect(classNames).toEqual({
+            'data-f2': '0 2'
+        });
     });
 });
 
