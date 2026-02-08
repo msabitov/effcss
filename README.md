@@ -90,17 +90,16 @@ const root = createRoot(document.getElementById("root"));
 root.render(<App css={consumer} />);
 ```
 
-Each CSS stylesheet corresponds to a single `Stylesheet maker`. `Stylesheet maker` is a JS function that should return object with style rules:
+Each CSS stylesheet corresponds to a single `Stylesheet maker`. `Stylesheet maker` is a JS function that should return object or string with style rules:
 
-**App.tsx**
+**maker.ts**
 
-```tsx
-import { useRef } from 'react';
-import { IStyleProvider, TStyleSheetMaker } from 'effcss';
+```ts
+import { TStyleSheetMaker } from 'effcss';
 
 // you can describe your styles
 // so that other people can use them via TypeScript generics
-export type TCardMaker = {
+export type TMyMaker = {
     /**
      * Font-size utility
      */
@@ -142,7 +141,7 @@ export type TCardMaker = {
     };
 }
 
-const myStyleSheetMaker: TStyleSheetMaker = ({ select, pseudo: {h}, at: { keyframes, property }, merge, palette, coef, size, units: {px} }) = {
+export const myMaker: TStyleSheetMaker = ({ select, pseudo: {h}, at: { keyframes, property }, merge, palette, coef, size, units: {px} }) = {
     // specify selector variants via generic
     const selector = select<TCardMaker>;
     // create property with unique identifier
@@ -196,21 +195,33 @@ const myStyleSheetMaker: TStyleSheetMaker = ({ select, pseudo: {h}, at: { keyfra
         }))
     };
 };
+```
+
+To use `Stylesheet maker` just pass it to `cx` (creates classnames string) or `dx` (creates data attributes object) methods of `Style provider`:
+
+**App.tsx**
+
+```tsx
+import { useRef } from 'react';
+import { useStyleProvider } from 'effcss';
+import type { TMyMaker } from './maker';
+import { myMaker } from './maker';
 
 export const App = (props: {
     css: IStyleProvider;
 }) => {
-    const { css } = props;
+    const styleProvider = useStyleProvider();
     const stylesRef = useRef();
+    // put it inside ref to avoid recalculations
     if (!stylesRef.current) {
         const [card] = css.use(myStyleSheetMaker);
-        // thanks to the TCardMaker type,
+        // thanks to the TMyMaker type,
         // you don't need to look at the implementation - just create the necessary attributes
         stylesRef.current = {
-            // apply list of selectors
-            card: card.list<TCardMaker>('card.rounded:', 'fsz:24'),
-            // apply object with selectors
-            footer: card.obj<TCardMaker>({
+            // you can apply list of selectors
+            card: styleProvider.dx<TMyMaker>('card.rounded:', 'fsz:24'),
+            // or you can apply object with selectors
+            footer: styleProvider.dx<TMyMaker>({
                 card: {
                     footer: {
                         visible: '',

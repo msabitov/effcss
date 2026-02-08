@@ -73,6 +73,9 @@ export type TProviderAttrs = {
      * @description
      * `a` - data-attributes
      * `c` - classes
+     * @deprecated
+     * Will be deleted in the next major version.
+     * Use `dx` and `cx` methods to to explicitly create selectors in form of data attributes or classnames respectively
      */
     mode: 'a' | 'c';
     /**
@@ -124,6 +127,39 @@ export type TMonoElement<TStyle extends object> = {
 type TStyleTarget = string | TStyleSheetMaker;
 type TNumberOrNull = number | null;
 type TStringOrNull = string | null;
+
+/**
+ * Classname expression
+ */
+type CX = {
+    /**
+     * Resolve classnames
+     * @param maker - stylesheet maker
+     * @param details - design details
+     */
+    <T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>): string;
+    /**
+     * Join expressions
+     * @param args - arguments
+     */
+    join(...args: (string | false | null | undefined)[]): string;
+};
+/**
+ * Data attribute expression
+ */
+type DX = {
+    /**
+     * Resolve data attributes
+     * @param maker - stylesheet maker
+     * @param details - design details
+     */
+    <T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>): Record<string, string>;
+    /**
+     * Join expressions
+     * @param args - arguments
+     */
+    join(...args: (Record<string, string> | false | null | undefined)[]): Record<string, string>;
+};
 /**
  * Style provider
  * @description
@@ -244,17 +280,13 @@ export interface IStyleProvider {
      */
     css(maker: TStyleSheetMaker, key: string, mode?: 'a' | 'c'): string;
     /**
-     * ClassNames expression
-     * @param maker - stylesheet maker
-     * @param details - design details
+     * Classnames expression resolver
      */
-    cx<T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>): string;
+    cx: CX;
     /**
-     * Data attributes expression
-     * @param maker - stylesheet maker
-     * @param details - design details
+     * Data attributes expression resolver
      */
-    dx<T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>): Record<string, string>;
+    dx: DX;
 
     // stylesheet handlers
 
@@ -512,10 +544,23 @@ const getHandlers = ({
         if (Array.isArray(details)) return resolver.list<T>(...details).$;
         return resolver.obj<T>(details).$;
     };
+    cx.join = (...args: (string | false | null | undefined)[]): string => {
+        return args.reduce((acc, arg) => {
+            if (!arg) return acc;
+            else if (!acc) return arg || '';
+            return acc + ' ' + arg;
+        }, '') as string;
+    };
     const dx = <T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>) => {
         const resolver = useSingle(maker, 'a');
         if (Array.isArray(details)) return resolver.list<T>(...details);
         return resolver.obj<T>(details);
+    };
+    dx.join = (...args: (Record<string, string> | false | null | undefined)[]): Record<string, string> => {
+        return args.reduce((acc, arg) => {
+            if (!arg) return acc;
+            return {...acc, ...arg};
+        }, {} as Record<string, string>) as Record<string, string>;
     };
     const status: IStyleProvider['status'] = (target) => {
         const source = key(target);
