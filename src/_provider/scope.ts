@@ -148,7 +148,7 @@ export type TScope = {
     /**
      * Var expression
      */
-    varExp: <T extends Record<string, object | number | string | boolean> = TDefaultTheme>(name: TLeaves<T>, fallback?: string | number) => string;
+    varExp: <T extends Record<string, object | number | string | boolean>>(name: TLeaves<T>, fallback?: string | number) => string;
 };
 
 /**

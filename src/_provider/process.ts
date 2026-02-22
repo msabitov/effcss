@@ -17,6 +17,7 @@ import {
     merge
 } from './utils';
 import { parseStyles } from './_process/utils';
+import { scalableVariable, simpleVariable } from './_process/vars';
 
 type TScope = ReturnType<ReturnType<TCreateScope>>;
 type TBezier = {
@@ -26,6 +27,8 @@ type TBezier = {
     y2?: number;
 };
 type TRelative = (coef?: number | string | object) => string;
+type TProxyNumVar = ReturnType<typeof scalableVariable>;
+type TProxyStrVar = ReturnType<typeof simpleVariable>;
 
 export interface IMakerParams {
     dash: typeof dash;
@@ -73,24 +76,73 @@ export interface IMakerParams {
      * Resolve theme variable
      * @param name - name
      * @param fallback - fallback value
+     * @deprecated
+     * Will be deleted in the next major version. Use `theme.variable` utility instead
      */
     themeVar: TScope['varExp'];
     /**
      * Scalable size value
+     * @deprecated
+     * Will be deleted in the next major version. Use `theme.size` utility instead
      */
     size: TRelative;
     /**
      * Scalable time value
+     * @deprecated
+     * Will be deleted in the next major version. Use `theme.time` utility instead
      */
     time: TRelative;
     /**
      * Scalable angle value
+     * @deprecated
+     * Will be deleted in the next major version. Use `theme.angle` utility instead
      */
     angle: TRelative;
     /**
      * Easing function
+     * @deprecated
+     * Will be deleted in the next major version. Use `theme.easing` utility instead
      */
     easing: (bezier?: TBezier) => string;
+    /**
+     * Theme utils
+     */
+    theme: {
+        /**
+         * Resolve theme variable
+         * @param name - name
+         * @param fallback - fallback value
+         */
+        variable: TScope['varExp'];
+        /**
+         * Size variable
+         */
+        size: TProxyNumVar;
+        /**
+         * Time variable
+         */
+        time: TProxyNumVar;
+        /**
+         * Angle variable 
+         */
+        angle: TProxyNumVar;
+        /**
+         * Easing function variable
+         */
+        easing: TProxyStrVar;
+        /**
+         * Base color variable
+         */
+        color: TProxyStrVar;
+        /**
+         * Contrast color variable
+         */
+        contrast: TProxyStrVar;
+        /**
+         * Neutral color variable
+         */
+        neutral: TProxyStrVar;
+    }
 }
 
 export type TProcessor = {
@@ -121,6 +173,16 @@ export const createProcessor: TCreateProcessor = (params) => {
     const angle: TRelative = (coef = 1) => units.deg(multiplier(coef) + themeVar('angle'));
     const size: TRelative = (coef = 1) => units.px(multiplier(coef) + themeVar('size'));
     const easing = (bezier?: TBezier) => !bezier ? themeVar('easing') : `cubic-bezier(${bezier.x1 || 0},${bezier.y1 || 0},${bezier.x2 || 1},${bezier.y2 || 1})`;
+    const theme = {
+        variable: themeVar,
+        time: scalableVariable('time', themeVar, 'ms'),
+        angle: scalableVariable('angle', themeVar, 'deg'),
+        size: scalableVariable('size', themeVar, 'px'),
+        easing: simpleVariable('easing', themeVar),
+        color: simpleVariable('color', themeVar),
+        contrast: simpleVariable('contrast', themeVar),
+        neutral: simpleVariable('neutral', themeVar)
+    };
     return {
         compile: ({ key, maker, mode }) => {
             const localScope = scope(key, mode);
@@ -135,6 +197,8 @@ export const createProcessor: TCreateProcessor = (params) => {
                 each,
                 when,
                 merge,
+                // group of theme utils
+                theme,
                 // theme variable
                 themeVar,
                 // size

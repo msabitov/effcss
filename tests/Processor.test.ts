@@ -97,7 +97,7 @@ describe('Base:', () => {
         expect(styleString).toBe(`.cust{transition-timing-function:var(--f0-easing);}`);
     });
 
-    test('Easing with argument:', () => {
+    test('Easing with object argument:', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ easing }) => {
@@ -216,6 +216,78 @@ describe('Base:', () => {
         expect(styleString).toBe(
             '[data-cust~="block-nest"]{box-sizing:border-box;}' +
             '[data-cust~="block-nest-mod_val"]{width:20px;}'
+        );
+    });
+
+    test('Theme proxy variables:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ theme: {size, angle, time, easing, neutral, color, contrast, variable} }) => {
+                return {
+                    '.base': {
+                        background: neutral,
+                        borderColor: contrast,
+                        color,
+                        width: size,
+                        transform: `skew(${angle})`,
+                        transitionDuration: time,
+                        transitionTimingFunction: easing
+                    },
+                    '.scalable': {
+                        opacity: variable('opacity.main', 0.5),
+                        width: size(10),
+                        transform: `skew(${angle(2)})`,
+                        transitionDuration: time(1.5)
+                    },
+                    '.indexed': {
+                        background: neutral[2],
+                        borderColor: contrast[5],
+                        color: color[3],
+                        width: size[5],
+                        transform: `skew(${angle[1]})`,
+                        transitionDuration: time[8],
+                        transitionTimingFunction: easing[2]
+                    },
+                    '.scalable-indexed': {
+                        opacity: variable('opacity.main.2', variable('opacity.main', 1)),
+                        width: size[5](10),
+                        transform: `skew(${angle[1](5)})`,
+                        transitionDuration: time[8](3)
+                    },
+                };
+            }
+        });
+        expect(styleString).toBe(
+            `.base{` +
+                `background:var(--f0-neutral);` +
+                `border-color:var(--f0-contrast);` +
+                `color:var(--f0-color);` +
+                `width:calc(var(--f0-size) * 1px);` +
+                `transform:skew(calc(var(--f0-angle) * 1deg));` +
+                `transition-duration:calc(var(--f0-time) * 1ms);` +
+                `transition-timing-function:var(--f0-easing);` +
+            `}` +
+            `.scalable{` +
+                `opacity:var(--f0-opacity-main,0.5);` +
+                `width:calc(var(--f0-size) * 10px);` +
+                `transform:skew(calc(var(--f0-angle) * 2deg));` +
+                `transition-duration:calc(var(--f0-time) * 1.5ms);` +
+            `}` +
+            `.indexed{` +
+                `background:var(--f0-neutral-2,var(--f0-neutral));` +
+                `border-color:var(--f0-contrast-5,var(--f0-contrast));` +
+                `color:var(--f0-color-3,var(--f0-color));` +
+                `width:calc(var(--f0-size-5,var(--f0-size)) * 1px);` +
+                `transform:skew(calc(var(--f0-angle-1,var(--f0-angle)) * 1deg));` +
+                `transition-duration:calc(var(--f0-time-8,var(--f0-time)) * 1ms);` +
+                `transition-timing-function:var(--f0-easing-2,var(--f0-easing));` +
+            `}` +
+            `.scalable-indexed{` +
+                `opacity:var(--f0-opacity-main-2,var(--f0-opacity-main,1));` +
+                `width:calc(var(--f0-size-5,var(--f0-size)) * 10px);` +
+                `transform:skew(calc(var(--f0-angle-1,var(--f0-angle)) * 5deg));` +
+                `transition-duration:calc(var(--f0-time-8,var(--f0-time)) * 3ms);` +
+            `}`
         );
     });
 });
@@ -950,6 +1022,46 @@ describe('Color:', () => {
         });
         expect(styleString).toBe(
             '.custom{background:oklch(from green l c calc(h + 180) / alpha);}'
+        );
+    });
+
+    test('oklch:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ color }) => {
+                const { oklch } = color;
+                return {
+                    '.custom': {
+                        // string
+                        background: oklch('from green l c calc(h + 180) / alpha'),
+                        // modifiers
+                        color: oklch({
+                            h: 'calc(h + 45)',
+                            c: 'calc(c + 0.04)'
+                        }),
+                        // origin with modifiers
+                        borderColor: oklch({
+                            from: 'black',
+                            c: 'calc(c - 0.04)',
+                            a: 0.5
+                        }),
+                        // base params without origin
+                        outlineColor: oklch({
+                            h: 45,
+                            c: 0.04,
+                            l: 0.2
+                        }),
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            `.custom{` +
+            `background:oklch(from green l c calc(h + 180) / alpha);` +
+            `color:oklch(from currentColor l calc(c + 0.04) calc(h + 45) / 1);` +
+            `border-color:oklch(from black l calc(c - 0.04) h / 0.5);` +
+            `outline-color:oklch(0.2 0.04 45 / 1);` +
+            `}`
         );
     });
 });

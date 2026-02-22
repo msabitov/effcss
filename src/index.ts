@@ -125,8 +125,8 @@ export type TMonoElement<TStyle extends object> = {
  * Style target
  */
 type TStyleTarget = string | TStyleSheetMaker;
-type TNumberOrNull = number | null;
-type TStringOrNull = string | null;
+type TNumberAttr = number[] | number | null;
+type TStringAttr = string[] | string | null;
 
 /**
  * Classname expression
@@ -199,66 +199,66 @@ export interface IStyleProvider {
     /**
      * Get root size value
      */
-    get size(): TNumberOrNull;
+    get size(): TNumberAttr;
     /**
      * Set root size value
      * @param val - rem value in px
      */
-    set size(val: TNumberOrNull);
+    set size(val: TNumberAttr);
     /**
      * Get root time value
      */
-    get time(): TNumberOrNull;
+    get time(): TNumberAttr;
     /**
      * Set root time value
      * @param val - time value in ms
      */
-    set time(val: TNumberOrNull);
+    set time(val: TNumberAttr);
     /**
      * Get root angle value
      */
-    get angle(): TNumberOrNull;
+    get angle(): TNumberAttr;
     /**
      * Set root angle value
      * @param val - angle value in ms
      */
-    set angle(val: TNumberOrNull);
+    set angle(val: TNumberAttr);
     /**
      * Get brand color value
      */
-    get color(): TStringOrNull;
+    get color(): TStringAttr;
     /**
      * Set brand color value
      * @param val - color string
      */
-    set color(val: TStringOrNull);
+    set color(val: TStringAttr);
     /**
      * Get neutral color value
      */
-    get neutral(): TStringOrNull;
+    get neutral(): TStringAttr;
     /**
      * Set neutral color value
      * @param val - color string
      */
-    set neutral(val: TStringOrNull);
+    set neutral(val: TStringAttr);
     /**
      * Get contrast color value
      */
-    get contrast(): TStringOrNull;
+    get contrast(): TStringAttr;
     /**
      * Set contrast color value
      * @param val - color string
      */
-    set contrast(val: TStringOrNull);
+    set contrast(val: TStringAttr);
     /**
      * Get root easing function
      */
-    get easing(): TStringOrNull;
+    get easing(): TStringAttr;
     /**
      * Set root easing function
      * @param val - easing function
      */
-    set easing(val: TStringOrNull);
+    set easing(val: TStringAttr);
 
     // makers handlers
 
@@ -357,11 +357,11 @@ type TUseStyleProvider = {
 }
 
 type TAttrsHandlers = {
-    getAttribute(name: string): TStringOrNull;
+    getAttribute(name: string): string | null;
     removeAttribute(name: string): void;
     setAttribute(name: string, value: string): void
 }
-type THost = IStyleProvider & TAttrsHandlers & {textContent: TStringOrNull;};
+type THost = IStyleProvider & TAttrsHandlers & {textContent: string | null;};
 
 // constants
 const LIBRARY = 'effcss';
@@ -392,46 +392,42 @@ export const DEFAULT_ATTRS: Record<string, string> = {
     pre: 'f',
 };
 
+const ATTR_VAL_SEPARATOR = ';';
 // utils
 const isBoolean = (val: any) => typeof val === 'boolean';
-const numOrNull = (val: TStringOrNull | undefined) => typeof val === 'string' ? Number(val) : null;
+const numOrNull = (val: TStringAttr | undefined) => typeof val === 'string' ? Number(val) : null;
 const getAttr = (self: {
-    getAttribute(qualifiedName: string): TStringOrNull;
+    getAttribute(qualifiedName: string): string | null;
 }, name: keyof TProviderAttrs) => self.getAttribute(name) || DEFAULT_ATTRS[name];
 const getNumAttr = (self: {
-    getAttribute(qualifiedName: string): TStringOrNull;
+    getAttribute(qualifiedName: string): string | null;
 }, name: keyof TProviderAttrs) => {
     const val = getAttr(self, name);
-    return numOrNull(val);
+    if (!val) return numOrNull(val);
+    const arr = val.split(ATTR_VAL_SEPARATOR);
+    return arr.length > 1 ? arr.map(numOrNull) : numOrNull(val);
 };
-const setAttr = (self: TAttrsHandlers, name: string, val: string | TNumberOrNull) => val === null ? self.removeAttribute(name) : self.setAttribute(name, val + '');
+const setAttr = (self: TAttrsHandlers, name: string, val: TNumberAttr | TStringAttr) => val === null ? self.removeAttribute(name) : self.setAttribute(name, Array.isArray(val) ? val.join(ATTR_VAL_SEPARATOR) : val + '');
 const getAttrSelector = (attr?: string) => `:root:has([is=${TAG_NAME}]${attr ? `[${attr}]` : ''})`;
 const plainVars = (vars: object) => Object.entries(vars).reduce((acc, [p,v]) => acc + p + ':' + v + ';', '');
+const posVal = (prefix: string, ind: number) => prefix + (+ind ? '-' + ind : '');
 
 const createGlobalMaker = ({
     theme, attrs, scope
 }: {
     theme: TThemeController;
     attrs: {
-        size: TNumberOrNull;
-        time: TNumberOrNull;
-        angle: TNumberOrNull;
-        color: TStringOrNull;
-        easing: TStringOrNull;
-        contrast: TStringOrNull;
-        neutral: TStringOrNull;
+        size: TNumberAttr;
+        time: TNumberAttr;
+        angle: TNumberAttr;
+        color: TStringAttr;
+        easing: TStringAttr;
+        contrast: TStringAttr;
+        neutral: TStringAttr;
     };
     scope: TScope;
 }): TStyleSheetMaker => {
     return ({ bem, each, themeVar, merge, pseudo: {r}, at: { media }, units: {px} }) => {
-        // manual setted attributes
-        const size = attrs.size;
-        const time = attrs.time;
-        const angle = attrs.angle;
-        const color = attrs.color;
-        const easing = attrs.easing;
-        const contrast = attrs.contrast;
-        const neutral = attrs.neutral;
         const {$dark = {}, $light = {}, ...root} = theme.vars();
         return merge(
             {
@@ -458,41 +454,13 @@ const createGlobalMaker = ({
                     [bem<TBaseStyleSheetMaker>(`..theme.${k}`)]: value
                 }
             }),
-            size && {
-                [getAttrSelector(SIZE_ATTR)]: {
-                    [scope.varName(SIZE_ATTR)]: size
-                }
-            },
-            time && {
-                [getAttrSelector(TIME_ATTR)]: {
-                    [scope.varName(TIME_ATTR)]: time
-                }
-            },
-            angle && {
-                [getAttrSelector(ANGLE_ATTR)]: {
-                    [scope.varName(ANGLE_ATTR)]: angle
-                }
-            },
-            color && {
-                [getAttrSelector(COLOR_ATTR)]: {
-                    [scope.varName(COLOR_ATTR)]: color
-                }
-            },
-            easing && {
-                [getAttrSelector(EASING_ATTR)]: {
-                    [scope.varName(EASING_ATTR)]: easing
-                }
-            },
-            contrast && {
-                [getAttrSelector(CONTRAST_ATTR)]: {
-                    [scope.varName(CONTRAST_ATTR)]: contrast
-                }
-            },
-            neutral && {
-                [getAttrSelector(NEUTRAL_ATTR)]: {
-                    [scope.varName(NEUTRAL_ATTR)]: neutral
-                }
-            }
+            ...Object.entries(attrs).map(([name, val]) => val && ({
+                [getAttrSelector(name)]: each(
+                    Array.isArray(val) ? val : [val], (ind, curVal) => ({
+                        [scope.varName(posVal(name, +ind))]: curVal
+                    }))
+                })
+            )
         );
     };
 };
@@ -585,7 +553,7 @@ const getHandlers = ({
 }
 
 const describeNumAttr = (host: THost, name: keyof TProviderAttrs) => ({
-    set(val: TNumberOrNull) {
+    set(val: TNumberAttr) {
         setAttr(host, name, val);
     },
     get() {
@@ -593,11 +561,14 @@ const describeNumAttr = (host: THost, name: keyof TProviderAttrs) => ({
     }
 });
 const describeStringAttr = (host: THost, name: keyof TProviderAttrs) => ({
-    set(val: TStringOrNull) {
+    set(val: TStringAttr) {
         setAttr(host, name, val);
     },
-    get() {
-        return host.getAttribute(name);
+    get(): TStringAttr {
+        const val = host.getAttribute(name);
+        if (!val) return val;
+        const arr = val.split(ATTR_VAL_SEPARATOR);
+        return arr.length > 1 ? arr : val;
     }
 });
 
@@ -613,7 +584,7 @@ const construct = (host: THost, {
             effcss?: string;
         };
         disabled: boolean;
-        textContent: TStringOrNull;
+        textContent: string | null;
     }[];
     emulate?: boolean;
     onChange: () => void;
@@ -841,7 +812,7 @@ function defineProvider(): boolean {
                             effcss?: string;
                         };
                         disabled: boolean;
-                        textContent: TStringOrNull;
+                        textContent: string | null;
                     }[],
                     onChange: this._customize,
                     globalMaker: this._
@@ -882,8 +853,10 @@ function defineProvider(): boolean {
                     const sheet = new CSSStyleSheet();
                     const vars = values ? JSON.parse(decodeURIComponent(values)) : {};
                     CUST_ATTRS.forEach((name) => {
-                        const value =  this.getAttribute(name);
-                        if (value) vars[name] = value;
+                        const value = this.getAttribute(name);
+                        if (value) value.split(ATTR_VAL_SEPARATOR).forEach((part, index) => {
+                            vars[posVal(name, index)] = part;
+                        })
                     });
                     const {$dark = {}, $light = {}, ...host} = provider.theme.makeThemeVars(vars);
                     const lightVars = plainVars($light as object);

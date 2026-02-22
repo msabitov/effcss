@@ -30,6 +30,7 @@ EffCSS is a self-confident CSS-in-JS library based only on the browser APIs. Use
 
 -   [Docs](https://effnd.tech/css/)
 -   [SourceCraft](https://sourcecraft.dev/msabitov/effcss)
+-   [GitFlic](https://gitflic.ru/project/msabitov/effcss)
 -   [GitVerse](https://gitverse.ru/msabitov/effcss)
 -   [GitHub](https://github.com/msabitov/effcss)
 -   [GitLab](https://gitlab.com/msabitov/effcss)
@@ -141,7 +142,19 @@ export type TMyMaker = {
     };
 }
 
-export const myMaker: TStyleSheetMaker = ({ select, pseudo: {h}, at: { keyframes, property }, merge, palette, coef, size, units: {px} }) = {
+const HEIGHT_COEFS = {
+    s: 1,
+    m: 2,
+    l: 4
+};
+
+export const myMaker: TStyleSheetMaker = ({
+    select, merge,
+    pseudo: {h},
+    at: { keyframes, property },
+    theme: { neutral, size },
+    units: { px }
+}) = {
     // specify selector variants via generic
     const selector = select<TCardMaker>;
     // create property with unique identifier
@@ -168,7 +181,7 @@ export const myMaker: TStyleSheetMaker = ({ select, pseudo: {h}, at: { keyframes
         })
     }, {
         border: 'none',
-        background: palette.pale.xl.alpha(0.8),
+        background: neutral,
         aspectRatio: 1,
         ...h({
             opacity: 0.5
@@ -188,7 +201,7 @@ export const myMaker: TStyleSheetMaker = ({ select, pseudo: {h}, at: { keyframes
         [selector('card.h:full')]: { ... },
         [selector('card.footer')]: { ... },
         [selector('card.footer.visible:')]: { ... },
-        ...each(coef.short, (k, v) => ({
+        ...each(HEIGHT_COEFS, (k, v) => ({
             [selector(`card.footer.sz:${k}`)]: {
                 height: size(v)
             }

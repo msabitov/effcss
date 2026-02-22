@@ -127,6 +127,7 @@ const defThemeVars = {
     hue: {
         sec: 220,
     },
+    offset: [16, 24, 32],
     $light: {
         lightness: {
             bg: {
@@ -375,6 +376,13 @@ describe('Provider utils:', () => {
         expect(window.getComputedStyle(document.documentElement).getPropertyValue(COLOR_VAR)).toBe(defColor);
     });
 
+    test('set array color attribute', () => {
+        const colors = ['grey', 'white'];
+        consumer.color = colors;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--f0-color')).toBe(colors[0]);
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--f0-color-1')).toBe(colors[1]);
+    });
+
     test('set contrast attribute', () => {
         consumer.use(THIRD_MAKER);
         const color = 'green';
@@ -382,7 +390,7 @@ describe('Provider utils:', () => {
         expect(window.getComputedStyle(document.documentElement).getPropertyValue(CONTRAST_VAR)).toBe(color);
     });
 
-    test('reset color attribute', () => {
+    test('reset contrast attribute', () => {
         consumer.use(THIRD_MAKER);
         const color = 'green';
         consumer.contrast = color;
@@ -446,6 +454,19 @@ describe('Provider utils:', () => {
             1: defThemeVars.coef[1] + '',
             15: defThemeVars.coef[15] + '',
             32: defThemeVars.coef[32] + ''
+        });
+    });
+
+    test('theme values as array', () => {
+        const custom = {
+            0: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-offset'),
+            1: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-offset-1'),
+            2: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-offset-2')
+        };
+        expect(custom).toEqual({
+            0: defThemeVars.offset[0] + '',
+            1: defThemeVars.offset[1] + '',
+            2: defThemeVars.offset[2] + ''
         });
     });
 });
@@ -717,6 +738,7 @@ describe('useStyleProvider:', () => {
             color: 'purple',
             contrast: 'cyan',
             neutral: 'grey',
+            custom: ['12px', '16px'],
             hue: {
                 pri: 10
             },
@@ -831,6 +853,18 @@ describe('useStyleProvider:', () => {
         test('reset neutral attribute', () => {
             override?.removeAttribute('neutral');
             expect(inside && getComputedStyle(inside).getPropertyValue('--f0-neutral')).toBe(overValues.neutral + '');
+        });
+
+        test('set mutivalue easing attribute', () => {
+            const easing = ['cubic-bezier(0.1, -0.6, 0.2, 0)', 'ease-in'];
+            override?.setAttribute('easing', easing.join(';'));
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-easing')).toBe(easing[0]);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-easing-1')).toBe(easing[1]);
+        });
+
+        test('use indexed value of theme array property', () => {
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-custom')).toBe(overValues.custom[0]);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-custom-1')).toBe(overValues.custom[1]);
         });
     });
 });

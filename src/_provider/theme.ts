@@ -19,7 +19,7 @@ type TThemeAction = {
 };
 
 export type TThemeValue = {
-    [key in (string | number)]: string | number | boolean | TThemeValue;
+    [key in (string | number)]: string | number | boolean | (string|number)[] | TThemeValue;
 };
 export type TThemeController = {
     get(name?: string): TThemeValue;
@@ -185,7 +185,12 @@ export const createThemeController = ({
     const makeThemeVars = <T extends object>({$light = {}, $dark = {}, ...rest}: TThemeParams<T>): TThemeValue => {
         function parseParams(params: object, parents: string[] = []): Record<string, string | number | boolean> {
             return entries(params).reduce((acc, [key, val]) => {
-                if (val && typeof val === 'object') return assign(acc, parseParams(val, [...parents, key]));
+                if (Array.isArray(val)) {
+                    val.forEach((v, i) => {
+                        acc[scope.varName([...parents, key, i])] = v;
+                    })
+                    return acc;
+                } else if (val && typeof val === 'object') return assign(acc, parseParams(val, key ? [...parents, key] : parents));
                 else {
                     acc[scope.varName([...parents, key])] = val;
                     return acc;
