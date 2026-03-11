@@ -2,14 +2,23 @@ import { describe, expect, test } from 'vitest';
 import { createProcessor } from '../src/_provider/process';
 import { createScope } from '../src/_provider/scope';
 
+const prefix = 'f';
+
 const processor = createProcessor({
     scope: createScope({ mode: 'a' }),
-    globalKey: 'f0'
+    prefix
 });
 
 const key = 'key';
 
 type TGlobals = { sz: { m: string; l: string } };
+
+type TMakerTunings = {
+    size: number;
+    card: {
+        color: string;
+    }
+};
 
 describe('Base:', () => {
 
@@ -24,7 +33,7 @@ describe('Base:', () => {
                 };
             }
         });
-        expect(styleString).toBe(`.cust{width:var(--f0-sz-m);}`);
+        expect(styleString).toBe(`.cust{width:var(--f-sz-m);}`);
     });
 
     test('themeVar with fallback:', () => {
@@ -38,7 +47,7 @@ describe('Base:', () => {
                 };
             }
         });
-        expect(styleString).toBe(`.cust{width:var(--f0-sz-m,100px);}`);
+        expect(styleString).toBe(`.cust{width:var(--f-sz-m,100px);}`);
     });
 
     test('Time:', () => {
@@ -52,7 +61,7 @@ describe('Base:', () => {
                 };
             }
         });
-        expect(styleString).toBe(`.cust{transition-duration:calc(2 * var(--f0-time) * 1ms);}`);
+        expect(styleString).toBe(`.cust{transition-duration:calc(2 * var(--f-time) * 1ms);}`);
     });
 
     test('Size:', () => {
@@ -66,7 +75,7 @@ describe('Base:', () => {
                 };
             }
         });
-        expect(styleString).toBe(`.cust{width:calc(2 * var(--f0-size) * 1px);}`);
+        expect(styleString).toBe(`.cust{width:calc(2 * var(--f-size) * 1px);}`);
     });
 
     test('Angle:', () => {
@@ -80,7 +89,7 @@ describe('Base:', () => {
                 };
             }
         });
-        expect(styleString).toBe(`.cust{transform:skew(calc(1.5 * var(--f0-angle) * 1deg));}`);
+        expect(styleString).toBe(`.cust{transform:skew(calc(1.5 * var(--f-angle) * 1deg));}`);
     });
 
     test('Easing without argument:', () => {
@@ -94,7 +103,7 @@ describe('Base:', () => {
                 };
             }
         });
-        expect(styleString).toBe(`.cust{transition-timing-function:var(--f0-easing);}`);
+        expect(styleString).toBe(`.cust{transition-timing-function:var(--f-easing);}`);
     });
 
     test('Easing with object argument:', () => {
@@ -222,13 +231,16 @@ describe('Base:', () => {
     test('Theme proxy variables:', () => {
         const styleString = processor.compile({
             key: 'cust',
-            maker: ({ theme: {size, angle, time, easing, neutral, color, contrast, variable} }) => {
+            maker: ({ theme: {
+                size, space, angle, time, easing, neutral, color, contrast, variable
+            } }) => {
                 return {
                     '.base': {
                         background: neutral,
                         borderColor: contrast,
                         color,
                         width: size,
+                        padding: space,
                         transform: `skew(${angle})`,
                         transitionDuration: time,
                         transitionTimingFunction: easing
@@ -236,6 +248,7 @@ describe('Base:', () => {
                     '.scalable': {
                         opacity: variable('opacity.main', 0.5),
                         width: size(10),
+                        padding: space(2),
                         transform: `skew(${angle(2)})`,
                         transitionDuration: time(1.5)
                     },
@@ -244,6 +257,7 @@ describe('Base:', () => {
                         borderColor: contrast[5],
                         color: color[3],
                         width: size[5],
+                        padding: space[2],
                         transform: `skew(${angle[1]})`,
                         transitionDuration: time[8],
                         transitionTimingFunction: easing[2]
@@ -251,6 +265,7 @@ describe('Base:', () => {
                     '.scalable-indexed': {
                         opacity: variable('opacity.main.2', variable('opacity.main', 1)),
                         width: size[5](10),
+                        padding: space[2](3),
                         transform: `skew(${angle[1](5)})`,
                         transitionDuration: time[8](3)
                     },
@@ -259,34 +274,61 @@ describe('Base:', () => {
         });
         expect(styleString).toBe(
             `.base{` +
-                `background:var(--f0-neutral);` +
-                `border-color:var(--f0-contrast);` +
-                `color:var(--f0-color);` +
-                `width:calc(var(--f0-size) * 1px);` +
-                `transform:skew(calc(var(--f0-angle) * 1deg));` +
-                `transition-duration:calc(var(--f0-time) * 1ms);` +
-                `transition-timing-function:var(--f0-easing);` +
+                `background:var(--f-neutral);` +
+                `border-color:var(--f-contrast);` +
+                `color:var(--f-color);` +
+                `width:calc(var(--f-size) * 1px);` +
+                `padding:calc(var(--f-space) * 1px);` +
+                `transform:skew(calc(var(--f-angle) * 1deg));` +
+                `transition-duration:calc(var(--f-time) * 1ms);` +
+                `transition-timing-function:var(--f-easing);` +
             `}` +
             `.scalable{` +
-                `opacity:var(--f0-opacity-main,0.5);` +
-                `width:calc(var(--f0-size) * 10px);` +
-                `transform:skew(calc(var(--f0-angle) * 2deg));` +
-                `transition-duration:calc(var(--f0-time) * 1.5ms);` +
+                `opacity:var(--f-opacity-main,0.5);` +
+                `width:calc(var(--f-size) * 10px);` +
+                `padding:calc(var(--f-space) * 2px);` +
+                `transform:skew(calc(var(--f-angle) * 2deg));` +
+                `transition-duration:calc(var(--f-time) * 1.5ms);` +
             `}` +
             `.indexed{` +
-                `background:var(--f0-neutral-2,var(--f0-neutral));` +
-                `border-color:var(--f0-contrast-5,var(--f0-contrast));` +
-                `color:var(--f0-color-3,var(--f0-color));` +
-                `width:calc(var(--f0-size-5,var(--f0-size)) * 1px);` +
-                `transform:skew(calc(var(--f0-angle-1,var(--f0-angle)) * 1deg));` +
-                `transition-duration:calc(var(--f0-time-8,var(--f0-time)) * 1ms);` +
-                `transition-timing-function:var(--f0-easing-2,var(--f0-easing));` +
+                `background:var(--f-neutral-2,var(--f-neutral));` +
+                `border-color:var(--f-contrast-5,var(--f-contrast));` +
+                `color:var(--f-color-3,var(--f-color));` +
+                `width:calc(var(--f-size-5,var(--f-size)) * 1px);` +
+                `padding:calc(var(--f-space-2,var(--f-space)) * 1px);` +
+                `transform:skew(calc(var(--f-angle-1,var(--f-angle)) * 1deg));` +
+                `transition-duration:calc(var(--f-time-8,var(--f-time)) * 1ms);` +
+                `transition-timing-function:var(--f-easing-2,var(--f-easing));` +
             `}` +
             `.scalable-indexed{` +
-                `opacity:var(--f0-opacity-main-2,var(--f0-opacity-main,1));` +
-                `width:calc(var(--f0-size-5,var(--f0-size)) * 10px);` +
-                `transform:skew(calc(var(--f0-angle-1,var(--f0-angle)) * 5deg));` +
-                `transition-duration:calc(var(--f0-time-8,var(--f0-time)) * 3ms);` +
+                `opacity:var(--f-opacity-main-2,var(--f-opacity-main,1));` +
+                `width:calc(var(--f-size-5,var(--f-size)) * 10px);` +
+                `padding:calc(var(--f-space-2,var(--f-space)) * 3px);` +
+                `transform:skew(calc(var(--f-angle-1,var(--f-angle)) * 5deg));` +
+                `transition-duration:calc(var(--f-time-8,var(--f-time)) * 3ms);` +
+            `}`
+        );
+    });
+
+    test('Stylesheet tuning:', () => {
+        const styleString = processor.compile({
+            key: 'cust',
+            maker: ({ theme: {
+                tuning
+            }, units: {px} }) => {
+                const tune = tuning<TMakerTunings>
+                return {
+                    '.card': {
+                        background: tune('card.color', 'aqua'),
+                        width: px(tune('size', 16)),
+                    }
+                };
+            }
+        });
+        expect(styleString).toBe(
+            `.card{` +
+                `background:var(--cust-card-color,aqua);` +
+                `width:calc(var(--cust-size,16) * 1px);` +
             `}`
         );
     });
@@ -490,12 +532,12 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.color-pri{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
-            '.color-sec{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-sec) / 1);}' +
-            '.color-suc{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-suc) / 1);}' +
-            '.color-inf{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-inf) / 1);}' +
-            '.color-war{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-war) / 1);}' +
-            '.color-dan{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-dan) / 1);}'
+            '.color-pri{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-base) var(--f-hue-pri) / 1);}' +
+            '.color-sec{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-base) var(--f-hue-sec) / 1);}' +
+            '.color-suc{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-base) var(--f-hue-suc) / 1);}' +
+            '.color-inf{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-base) var(--f-hue-inf) / 1);}' +
+            '.color-war{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-base) var(--f-hue-war) / 1);}' +
+            '.color-dan{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-base) var(--f-hue-dan) / 1);}'
         );
     });
 
@@ -511,10 +553,10 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.color-gray{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-gray) var(--f0-hue-pri) / 1);}' +
-            '.color-pale{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-pale) var(--f0-hue-pri) / 1);}' + 
-            '.color-base{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
-            '.color-rich{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-rich) var(--f0-hue-pri) / 1);}'
+            '.color-gray{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-gray) var(--f-hue-pri) / 1);}' +
+            '.color-pale{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-pale) var(--f-hue-pri) / 1);}' + 
+            '.color-base{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-base) var(--f-hue-pri) / 1);}' +
+            '.color-rich{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-rich) var(--f-hue-pri) / 1);}'
         );
     });
 
@@ -530,11 +572,11 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.color-xs{color:oklch(var(--f0-lightness-bg-xs) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
-            '.color-s{color:oklch(var(--f0-lightness-bg-s) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
-            '.color-m{color:oklch(var(--f0-lightness-bg-m) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
-            '.color-l{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}' +
-            '.color-xl{color:oklch(var(--f0-lightness-bg-xl) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}'
+            '.color-xs{color:oklch(var(--f-lightness-bg-xs) var(--f-chroma-bg-base) var(--f-hue-pri) / 1);}' +
+            '.color-s{color:oklch(var(--f-lightness-bg-s) var(--f-chroma-bg-base) var(--f-hue-pri) / 1);}' +
+            '.color-m{color:oklch(var(--f-lightness-bg-m) var(--f-chroma-bg-base) var(--f-hue-pri) / 1);}' +
+            '.color-l{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-base) var(--f-hue-pri) / 1);}' +
+            '.color-xl{color:oklch(var(--f-lightness-bg-xl) var(--f-chroma-bg-base) var(--f-hue-pri) / 1);}'
         );
     });
 
@@ -550,7 +592,7 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.color-half{color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 0.5);}'
+            '.color-half{color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-base) var(--f-hue-pri) / 0.5);}'
         );
     });
 
@@ -567,8 +609,8 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.color-half{color:oklch(var(--f0-lightness-fg-l) var(--f0-chroma-fg-base) var(--f0-hue-pri) / 1);' +
-            'background-color:oklch(var(--f0-lightness-bg-l) var(--f0-chroma-bg-base) var(--f0-hue-pri) / 1);}'
+            '.color-half{color:oklch(var(--f-lightness-fg-l) var(--f-chroma-fg-base) var(--f-hue-pri) / 1);' +
+            'background-color:oklch(var(--f-lightness-bg-l) var(--f-chroma-bg-base) var(--f-hue-pri) / 1);}'
         );
     });
 
@@ -586,9 +628,9 @@ describe('Palette:', () => {
             }
         });
         expect(styleString).toBe(
-            '.chromaomplex{color:oklch(var(--f0-lightness-fg-l) var(--f0-chroma-fg-gray) var(--f0-hue-inf) / 1);' +
-            'background-color:oklch(var(--f0-lightness-bg-xl) var(--f0-chroma-bg-pale) var(--f0-hue-sec) / 1);' +
-            'border-color:oklch(var(--f0-lightness-fg-xs) var(--f0-chroma-fg-rich) var(--f0-hue-suc) / 0.75);}'
+            '.chromaomplex{color:oklch(var(--f-lightness-fg-l) var(--f-chroma-fg-gray) var(--f-hue-inf) / 1);' +
+            'background-color:oklch(var(--f-lightness-bg-xl) var(--f-chroma-bg-pale) var(--f-hue-sec) / 1);' +
+            'border-color:oklch(var(--f-lightness-fg-xs) var(--f-chroma-fg-rich) var(--f-hue-suc) / 0.75);}'
         );
     });
 });
@@ -606,9 +648,9 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-s{width:calc(var(--f0-coef-7) * var(--f0-size) * 1px);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
-            '.size-l{width:calc(var(--f0-coef-9) * var(--f0-size) * 1px);}'
+            '.size-s{width:calc(var(--f-coef-7) * var(--f-size) * 1px);}' +
+            '.size-m{width:calc(var(--f-coef-8) * var(--f-size) * 1px);}' +
+            '.size-l{width:calc(var(--f-coef-9) * var(--f-size) * 1px);}'
         );
     });
 
@@ -624,11 +666,11 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-xs{width:calc(var(--f0-coef-6) * var(--f0-size) * 1px);}' +
-            '.size-s{width:calc(var(--f0-coef-7) * var(--f0-size) * 1px);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
-            '.size-l{width:calc(var(--f0-coef-9) * var(--f0-size) * 1px);}' +
-            '.size-xl{width:calc(var(--f0-coef-10) * var(--f0-size) * 1px);}'
+            '.size-xs{width:calc(var(--f-coef-6) * var(--f-size) * 1px);}' +
+            '.size-s{width:calc(var(--f-coef-7) * var(--f-size) * 1px);}' +
+            '.size-m{width:calc(var(--f-coef-8) * var(--f-size) * 1px);}' +
+            '.size-l{width:calc(var(--f-coef-9) * var(--f-size) * 1px);}' +
+            '.size-xl{width:calc(var(--f-coef-10) * var(--f-size) * 1px);}'
         );
     });
 
@@ -644,13 +686,13 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-xxs{width:calc(var(--f0-coef-5) * var(--f0-size) * 1px);}' +
-            '.size-xs{width:calc(var(--f0-coef-6) * var(--f0-size) * 1px);}' +
-            '.size-s{width:calc(var(--f0-coef-7) * var(--f0-size) * 1px);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
-            '.size-l{width:calc(var(--f0-coef-9) * var(--f0-size) * 1px);}' +
-            '.size-xl{width:calc(var(--f0-coef-10) * var(--f0-size) * 1px);}' +
-            '.size-xxl{width:calc(var(--f0-coef-11) * var(--f0-size) * 1px);}'
+            '.size-xxs{width:calc(var(--f-coef-5) * var(--f-size) * 1px);}' +
+            '.size-xs{width:calc(var(--f-coef-6) * var(--f-size) * 1px);}' +
+            '.size-s{width:calc(var(--f-coef-7) * var(--f-size) * 1px);}' +
+            '.size-m{width:calc(var(--f-coef-8) * var(--f-size) * 1px);}' +
+            '.size-l{width:calc(var(--f-coef-9) * var(--f-size) * 1px);}' +
+            '.size-xl{width:calc(var(--f-coef-10) * var(--f-size) * 1px);}' +
+            '.size-xxl{width:calc(var(--f-coef-11) * var(--f-size) * 1px);}'
         );
     });
 
@@ -666,15 +708,15 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-min{width:calc(var(--f0-coef-4) * var(--f0-size) * 1px);}' +
-            '.size-xxs{width:calc(var(--f0-coef-5) * var(--f0-size) * 1px);}' +
-            '.size-xs{width:calc(var(--f0-coef-6) * var(--f0-size) * 1px);}' +
-            '.size-s{width:calc(var(--f0-coef-7) * var(--f0-size) * 1px);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
-            '.size-l{width:calc(var(--f0-coef-9) * var(--f0-size) * 1px);}' +
-            '.size-xl{width:calc(var(--f0-coef-10) * var(--f0-size) * 1px);}' +
-            '.size-xxl{width:calc(var(--f0-coef-11) * var(--f0-size) * 1px);}' +
-            '.size-max{width:calc(var(--f0-coef-12) * var(--f0-size) * 1px);}'
+            '.size-min{width:calc(var(--f-coef-4) * var(--f-size) * 1px);}' +
+            '.size-xxs{width:calc(var(--f-coef-5) * var(--f-size) * 1px);}' +
+            '.size-xs{width:calc(var(--f-coef-6) * var(--f-size) * 1px);}' +
+            '.size-s{width:calc(var(--f-coef-7) * var(--f-size) * 1px);}' +
+            '.size-m{width:calc(var(--f-coef-8) * var(--f-size) * 1px);}' +
+            '.size-l{width:calc(var(--f-coef-9) * var(--f-size) * 1px);}' +
+            '.size-xl{width:calc(var(--f-coef-10) * var(--f-size) * 1px);}' +
+            '.size-xxl{width:calc(var(--f-coef-11) * var(--f-size) * 1px);}' +
+            '.size-max{width:calc(var(--f-coef-12) * var(--f-size) * 1px);}'
         );
     });
 
@@ -690,11 +732,11 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-min{width:calc(var(--f0-coef-4) * var(--f0-size) * 1px);}' +
-            '.size-xs{width:calc(var(--f0-coef-6) * var(--f0-size) * 1px);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
-            '.size-xl{width:calc(var(--f0-coef-10) * var(--f0-size) * 1px);}' +
-            '.size-max{width:calc(var(--f0-coef-12) * var(--f0-size) * 1px);}'
+            '.size-min{width:calc(var(--f-coef-4) * var(--f-size) * 1px);}' +
+            '.size-xs{width:calc(var(--f-coef-6) * var(--f-size) * 1px);}' +
+            '.size-m{width:calc(var(--f-coef-8) * var(--f-size) * 1px);}' +
+            '.size-xl{width:calc(var(--f-coef-10) * var(--f-size) * 1px);}' +
+            '.size-max{width:calc(var(--f-coef-12) * var(--f-size) * 1px);}'
         );
     });
 
@@ -710,9 +752,9 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size-min{width:calc(var(--f0-coef-4) * var(--f0-size) * 1px);}' +
-            '.size-m{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}' +
-            '.size-max{width:calc(var(--f0-coef-12) * var(--f0-size) * 1px);}'
+            '.size-min{width:calc(var(--f-coef-4) * var(--f-size) * 1px);}' +
+            '.size-m{width:calc(var(--f-coef-8) * var(--f-size) * 1px);}' +
+            '.size-max{width:calc(var(--f-coef-12) * var(--f-size) * 1px);}'
         );
     });
 
@@ -728,7 +770,7 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-4) * var(--f0-size) * 1px);}'
+            '.size{width:calc(var(--f-coef-4) * var(--f-size) * 1px);}'
         );
     });
 
@@ -744,7 +786,7 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-8) * var(--f0-size) * 1px);}'
+            '.size{width:calc(var(--f-coef-8) * var(--f-size) * 1px);}'
         );
     });
 
@@ -760,7 +802,7 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-12) * var(--f0-size) * 1px);}'
+            '.size{width:calc(var(--f-coef-12) * var(--f-size) * 1px);}'
         );
     });
 
@@ -776,7 +818,7 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-16) * var(--f0-size) * 1px);}'
+            '.size{width:calc(var(--f-coef-16) * var(--f-size) * 1px);}'
         );
     });
 
@@ -792,7 +834,7 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-20) * var(--f0-size) * 1px);}'
+            '.size{width:calc(var(--f-coef-20) * var(--f-size) * 1px);}'
         );
     });
 
@@ -808,7 +850,7 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-24) * var(--f0-size) * 1px);}'
+            '.size{width:calc(var(--f-coef-24) * var(--f-size) * 1px);}'
         );
     });
 
@@ -824,7 +866,7 @@ describe('Coefficient:', () => {
             }
         });
         expect(styleString).toBe(
-            '.size{width:calc(var(--f0-coef-28) * var(--f0-size) * 1px);}'
+            '.size{width:calc(var(--f-coef-28) * var(--f-size) * 1px);}'
         );
     });
 });
@@ -851,8 +893,8 @@ describe('Color:', () => {
         });
         expect(styleString).toBe(
             '.custom{' +
-            'background:oklch(from var(--f0-color) l c calc(h + 180) / 0.5);' +
-            'color:oklch(from var(--f0-color) calc(l - 0.1) c h / alpha);' +
+            'background:oklch(from var(--f-color) l c calc(h + 180) / 0.5);' +
+            'color:oklch(from var(--f-color) calc(l - 0.1) c h / alpha);' +
             '}'
         );
     });
@@ -877,8 +919,8 @@ describe('Color:', () => {
             }
         });
         expect(styleString).toBe(
-            '.custom{background:oklch(from var(--f0-contrast) l c calc(h + 180) / 0.5);' +
-            'color:oklch(from var(--f0-contrast) calc(l - 0.1) c h / alpha);}'
+            '.custom{background:oklch(from var(--f-contrast) l c calc(h + 180) / 0.5);' +
+            'color:oklch(from var(--f-contrast) calc(l - 0.1) c h / alpha);}'
         );
     });
 
@@ -902,8 +944,8 @@ describe('Color:', () => {
             }
         });
         expect(styleString).toBe(
-            '.custom{background:oklch(from var(--f0-neutral) l c calc(h + 180) / 0.5);' +
-            'color:oklch(from var(--f0-neutral) calc(l - 0.1) c h / alpha);}'
+            '.custom{background:oklch(from var(--f-neutral) l c calc(h + 180) / 0.5);' +
+            'color:oklch(from var(--f-neutral) calc(l - 0.1) c h / alpha);}'
         );
     });
 

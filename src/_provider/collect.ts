@@ -51,10 +51,10 @@ const createKeyMaker = ({
     let count = 0;
     return {
         get initial() {
-            return prefix + 0;
+            return prefix;
         },
         get current() {
-            return prefix + count;
+            return prefix + (count || '');
         },
         next() {
             count++;

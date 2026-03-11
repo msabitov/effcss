@@ -115,9 +115,19 @@ export interface IMakerParams {
          */
         variable: TScope['varExp'];
         /**
+         * Get tuning value
+         * @param name - name
+         * @param fallback - fallback value
+         */
+        tuning: TScope['varExp'];
+        /**
          * Size variable
          */
         size: TProxyNumVar;
+        /**
+         * Space variable
+         */
+        space: TProxyNumVar;
         /**
          * Time variable
          */
@@ -154,7 +164,7 @@ export type TProcessor = {
 };
 type TCreateProcessor = (params: {
     scope: ReturnType<TCreateScope>;
-    globalKey: string;
+    prefix: string;
 }) => TProcessor;
 
 const pseudo = resolvePseudo();
@@ -166,18 +176,20 @@ const multiplier = (val: string | number | object) => val !== 1 ? val + ' * ' : 
  * @param params - processor params
  */
 export const createProcessor: TCreateProcessor = (params) => {
-    const { scope, globalKey } = params;
-    const globalScope = scope(globalKey)
+    const { scope, prefix } = params;
+    const globalScope = scope(prefix)
     const themeVar = globalScope.varExp;
     const time: TRelative = (coef = 1) => units.ms(multiplier(coef) + themeVar('time'));
     const angle: TRelative = (coef = 1) => units.deg(multiplier(coef) + themeVar('angle'));
     const size: TRelative = (coef = 1) => units.px(multiplier(coef) + themeVar('size'));
     const easing = (bezier?: TBezier) => !bezier ? themeVar('easing') : `cubic-bezier(${bezier.x1 || 0},${bezier.y1 || 0},${bezier.x2 || 1},${bezier.y2 || 1})`;
-    const theme = {
+    const theme: IMakerParams['theme'] = {
         variable: themeVar,
+        tuning: themeVar,
         time: scalableVariable('time', themeVar, 'ms'),
         angle: scalableVariable('angle', themeVar, 'deg'),
         size: scalableVariable('size', themeVar, 'px'),
+        space: scalableVariable('space', themeVar, 'px'),
         easing: simpleVariable('easing', themeVar),
         color: simpleVariable('color', themeVar),
         contrast: simpleVariable('contrast', themeVar),
@@ -186,6 +198,7 @@ export const createProcessor: TCreateProcessor = (params) => {
     return {
         compile: ({ key, maker, mode }) => {
             const localScope = scope(key, mode);
+            theme.tuning = localScope.varExp;
             const bem = localScope.selector;
             const select = localScope.select;
             const at = resolveAtRules(localScope);

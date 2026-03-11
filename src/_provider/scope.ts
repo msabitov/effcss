@@ -7,7 +7,7 @@ type Paths<T> = T extends object
     : T extends string
     ? T
     : never;
-type TDeepPartial<T> = T extends object
+export type TDeepPartial<T> = T extends object
     ? {
           [P in keyof T]?: TDeepPartial<T[P]>;
       }

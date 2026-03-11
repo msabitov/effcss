@@ -3,6 +3,7 @@
 import type { TProcessor } from './_provider/process';
 import type { TManager } from './_provider/manage';
 import type { TCollector } from './_provider/collect';
+import type { TDeepPartial } from './_provider/scope';
 import type { TDetails, TScope, TScopeResolver, TStyles } from './_provider/scope';
 import type { TThemeController } from './_provider/theme';
 export type {
@@ -35,6 +36,10 @@ type TAttrs = {
      * Root font size in px
      */
     size: number;
+    /**
+     * Root space variable in px
+     */
+    space: number;
     /**
      * Root time in ms
      */
@@ -202,9 +207,18 @@ export interface IStyleProvider {
     get size(): TNumberAttr;
     /**
      * Set root size value
-     * @param val - rem value in px
+     * @param val - variable value in px
      */
     set size(val: TNumberAttr);
+    /**
+     * Get root space value
+     */
+    get space(): TNumberAttr;
+    /**
+     * Set root space value
+     * @param val - variable value in px
+     */
+    set space(val: TNumberAttr);
     /**
      * Get root time value
      */
@@ -287,6 +301,12 @@ export interface IStyleProvider {
      * Data attributes expression resolver
      */
     dx: DX;
+    /**
+     * Tune stylesheet
+     * @param maker - stylesheet maker
+     * @param tunings - tunings object
+     */
+    tune<T extends object>(tunings: TDeepPartial<T>, maker?: TStyleSheetMaker): object;
 
     // stylesheet handlers
 
@@ -375,6 +395,7 @@ const SCRIPT = 'script';
 const STYLE = 'style';
 const THEME_ATTR = 'theme';
 const SIZE_ATTR = 'size';
+const SPACE_ATTR = 'space';
 const TIME_ATTR = 'time';
 const ANGLE_ATTR = 'angle';
 const COLOR_ATTR = 'color';
@@ -418,6 +439,7 @@ const createGlobalMaker = ({
     theme: TThemeController;
     attrs: {
         size: TNumberAttr;
+        space: TNumberAttr;
         time: TNumberAttr;
         angle: TNumberAttr;
         color: TStringAttr;
@@ -477,7 +499,7 @@ const getHandlers = ({
     manager: TManagerLite;
     processor: TProcessor;
     globalMaker: TStyleSheetMaker;
-}): Pick<IStyleProvider,'use' | 'remake' | 'css' | 'cx' | 'dx' | 'status' | 'on' | 'off' | 'stylesheets'> => {
+}): Pick<IStyleProvider,'use' | 'remake' | 'css' | 'cx' | 'dx' | 'tune' | 'status' | 'on' | 'off' | 'stylesheets'> => {
     const key = (param: TStyleTarget) => (typeof param === 'string' ? param : collector.key(param));
     const resolve = (key: string, mode?: 'a' | 'c') => scope(key || collector.key(), mode).attr;
     const css: IStyleProvider['css'] = (maker, key, mode) =>
@@ -530,6 +552,21 @@ const getHandlers = ({
             return {...acc, ...arg};
         }, {} as Record<string, string>) as Record<string, string>;
     };
+    const tune = <T extends object>(tuning: TDeepPartial<T>, maker?: TStyleSheetMaker) => {
+        const makerKey = collector.key(maker);
+        let result: Record<string, string | number> = {};
+        if (makerKey) {
+            const localScope = scope(makerKey);
+            function parse(key: string, val: string | number | object) {
+                if (typeof val !== 'object') result[localScope.varName(key)] = val;
+                else Object.entries(val).map(([ekey, evalue]) => {
+                    parse(ekey && key ? key + '-' + ekey : key || ekey, evalue);
+                });
+            }
+            parse('', tuning);
+        }
+        return result;
+    }
     const status: IStyleProvider['status'] = (target) => {
         const source = key(target);
         return !!source && manager.status(source);
@@ -544,6 +581,7 @@ const getHandlers = ({
         css,
         cx,
         dx,
+        tune,
         // stylesheet handlers
         status,
         on,
@@ -610,6 +648,7 @@ const construct = (host: THost, {
             }
         },
         size: describeNumAttr(host, SIZE_ATTR),
+        space: describeNumAttr(host, SPACE_ATTR),
         time: describeNumAttr(host, TIME_ATTR),
         angle: describeNumAttr(host, ANGLE_ATTR),
         color: describeStringAttr(host, COLOR_ATTR),
@@ -617,7 +656,8 @@ const construct = (host: THost, {
         contrast: describeStringAttr(host, CONTRAST_ATTR),
         neutral: describeStringAttr(host, NEUTRAL_ATTR)
     });
-    const collector = createCollector({ prefix: host.pre });
+    const prefix = host.pre;
+    const collector = createCollector({ prefix });
     const scope = createScope({
         mode: host.mode,
         min: host.min,
@@ -626,7 +666,7 @@ const construct = (host: THost, {
     const globalScope = scope(collector.key());
     const processor = createProcessor({
         scope,
-        globalKey: collector.key()
+        prefix
     });
     const manager = createManager({initStyles, emulate});
     host.theme = createThemeController({
@@ -666,6 +706,7 @@ const construct = (host: THost, {
                     min: host.getAttribute('min'),
                     mode: host.getAttribute('mode'),
                     size: host.getAttribute(SIZE_ATTR),
+                    space: host.getAttribute(SPACE_ATTR),
                     time: host.getAttribute(TIME_ATTR),
                     angle: host.getAttribute(ANGLE_ATTR),
                     color: host.getAttribute(COLOR_ATTR),
@@ -696,7 +737,7 @@ const construct = (host: THost, {
 };
 
 const PROVIDER_SYMBOL = Symbol(TAG_NAME);
-const CUST_ATTRS = [SIZE_ATTR, TIME_ATTR, ANGLE_ATTR, COLOR_ATTR, EASING_ATTR, CONTRAST_ATTR, NEUTRAL_ATTR];
+const CUST_ATTRS = [SIZE_ATTR, SPACE_ATTR, TIME_ATTR, ANGLE_ATTR, COLOR_ATTR, EASING_ATTR, CONTRAST_ATTR, NEUTRAL_ATTR];
 const CUST_ATTRS_SET = new Set(CUST_ATTRS);
 
 const queryStyleProvider = () => globalThis?.document.querySelector(`[is=${TAG_NAME}]`) as unknown as IStyleProvider;
@@ -719,6 +760,7 @@ function defineProvider(): boolean {
             mode: IStyleProvider['mode'];
             min: IStyleProvider['min'];
             size: IStyleProvider['size'];
+            space: IStyleProvider['space'];
             angle: IStyleProvider['angle'];
             time: IStyleProvider['time'];
             color: IStyleProvider['color'];
@@ -733,6 +775,7 @@ function defineProvider(): boolean {
             css: IStyleProvider['css'];
             cx: IStyleProvider['cx'];
             dx: IStyleProvider['dx'];
+            tune: IStyleProvider['tune'];
 
             get makers() {
                 return this._c.makers;
@@ -776,6 +819,7 @@ function defineProvider(): boolean {
 
             protected _customize = () => {
                 const size = this.size;
+                const space = this.space;
                 const time = this.time;
                 const angle = this.angle;
                 const color = this.color;
@@ -787,6 +831,7 @@ function defineProvider(): boolean {
                     theme: this.theme,
                     attrs: {
                         size,
+                        space,
                         time,
                         angle,
                         color,
@@ -894,8 +939,8 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
     } = settings;
     let {
         mode = DEFAULT_ATTRS.mode, min, pre = DEFAULT_ATTRS.prefix,
-        size = null, time = null, angle = null, color = null, easing = null,
-        contrast = null, neutral = null
+        size = null, space = null, time = null, angle = null, easing = null,
+        color = null, contrast = null, neutral = null
     } = attrs;
     class StyleProviderEmulation implements IStyleProvider {
         get tagName(): string {
@@ -906,6 +951,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         }
         attributes = {
             size: size ? size + '' : null,
+            space: space ? space + '' : null,
             time: time ? time + '' : null,
             angle: angle ? angle + '' : null,
             color: color || null,
@@ -936,6 +982,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         mode: IStyleProvider['mode'];
         min: IStyleProvider['min'];
         size: IStyleProvider['size'];
+        space: IStyleProvider['space'];
         angle: IStyleProvider['angle'];
         time: IStyleProvider['time'];
         color: IStyleProvider['color'];
@@ -950,6 +997,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         css: IStyleProvider['css'];
         cx: IStyleProvider['cx'];
         dx: IStyleProvider['dx'];
+        tune: IStyleProvider['tune'];
 
         get makers() {
             return this._c.makers;
@@ -991,6 +1039,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
 
         protected _customize = () => {
             const size = this.size;
+            const space = this.space;
             const time = this.time;
             const angle = this.angle;
             const color = this.color;
@@ -1002,6 +1051,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
                 theme: this.theme,
                 attrs: {
                     size,
+                    space,
                     time,
                     angle,
                     color,

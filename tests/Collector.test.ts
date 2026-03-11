@@ -6,7 +6,7 @@ const FIRST_MAKER = () => ({div: { height: '100vh' }});
 const SECOND_MAKER = () => ({div: { width: '300px' }});
 
 const PREFIX = 'pre';
-const GLOBAL_KEY = PREFIX + 0;
+const GLOBAL_KEY = PREFIX;
 const FIRST_KEY = PREFIX + 1;
 const SECOND_KEY = PREFIX + 2;
 

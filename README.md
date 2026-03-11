@@ -80,15 +80,16 @@ Just call `useStyleProvider` in your code:
 
 ```jsx
 import { useStyleProvider } from "effcss";
+import { App } from "./App.tsx";
 
-const consumer = useStyleProvider({
+const styleProvider = useStyleProvider({
     attrs: {
         min: true // to create minified selectors
     }
 });
 
 const root = createRoot(document.getElementById("root"));
-root.render(<App css={consumer} />);
+root.render(<App styleProvider={styleProvider} />);
 ```
 
 Each CSS stylesheet corresponds to a single `Stylesheet maker`. `Stylesheet maker` is a JS function that should return object or string with style rules:
@@ -117,36 +118,8 @@ export type TMyMaker = {
          * Card height
          */
         h: 'full' | 'half';
-        /**
-         * Card logo scope
-         */
-        logo: {
-            /**
-             * Logo width
-             */
-            w: 's' | 'l';
-        },
-        /**
-         * Card footer scope
-         */
-        footer: {
-            /**
-             * Footer visibility
-             */
-            visible: '';
-            /**
-             * Footer size
-             */
-            sz: 's' | 'm' | 'l';
-        };
     };
 }
-
-const HEIGHT_COEFS = {
-    s: 1,
-    m: 2,
-    l: 4
-};
 
 export const myMaker: TStyleSheetMaker = ({
     select, merge,
@@ -188,24 +161,24 @@ export const myMaker: TStyleSheetMaker = ({
         })
     });
     return {
+        // add @property rule
         ...sizeProperty,
+        // add @keyframes rule
         ...spin,
-        [selector('fsz:16')]: { ... },
-        [selector('card')]: { ... },
-        [selector('card.logo')]: cardLogoStyles,
-        [selector('card.logo.w:s')]: {
-            ...widthProperty(px(100))
+        // add rules according to the TMyMaker contract
+        [selector('fsz:16')]: {
+            // rule content
         },
-        [selector('card.logo.w:l')]: widthProperty(px(300)),
-        [selector('card.rounded:')]: { ... },
-        [selector('card.h:full')]: { ... },
-        [selector('card.footer')]: { ... },
-        [selector('card.footer.visible:')]: { ... },
-        ...each(HEIGHT_COEFS, (k, v) => ({
-            [selector(`card.footer.sz:${k}`)]: {
-                height: size(v)
-            }
-        }))
+        [selector('card')]: {
+            // rule content
+        },
+        [selector('card.rounded:')]: {
+            // rule content
+        },
+        [selector('card.h:full')]: {
+            // rule content
+        },
+        // ... and so on
     };
 };
 ```
@@ -221,25 +194,21 @@ import type { TMyMaker } from './maker';
 import { myMaker } from './maker';
 
 export const App = (props: {
-    css: IStyleProvider;
+    styleProvider: IStyleProvider;
 }) => {
-    const styleProvider = useStyleProvider();
     const stylesRef = useRef();
     // put it inside ref to avoid recalculations
     if (!stylesRef.current) {
-        const [card] = css.use(myStyleSheetMaker);
-        // thanks to the TMyMaker type,
-        // you don't need to look at the implementation - just create the necessary attributes
+        // thanks to the TMyMaker contract type,
+        // you don't need to look at the implementation - just pass the necessary selectors
         stylesRef.current = {
             // you can apply list of selectors
-            card: styleProvider.dx<TMyMaker>('card.rounded:', 'fsz:24'),
+            card: styleProvider.dx<TMyMaker>(myMaker, ['card.h:full', 'fsz:16']),
             // or you can apply object with selectors
-            footer: styleProvider.dx<TMyMaker>({
+            another: styleProvider.dx<TMyMaker>(myMaker, {
+                fsz: 16,
                 card: {
-                    footer: {
-                        visible: '',
-                        size: 'm'
-                    }
+                    h: 'full'
                 }
             })
         };
@@ -248,7 +217,7 @@ export const App = (props: {
     // just apply attributes to appropriate elements
     return (
         <div {...styles.card}>
-            <div {...styles.footer}>...</div>
+            <div {...styles.another}>...</div>
         </div>
     );
 };

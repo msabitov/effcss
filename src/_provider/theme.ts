@@ -25,7 +25,7 @@ export type TThemeController = {
     get(name?: string): TThemeValue;
     add(params: TThemeValue, name: string): void;
     delete(name: string): void;
-    update(params: TThemeValue, name?: string): void;
+    update(params: TThemeValue | ((prev: object) => object), name?: string): void;
     switch(name?: string): void;
     vars<T extends object = object>(theme?: string): TThemeParams<T>;
     makeThemeVars<T extends object>(params: TThemeParams<T>): TThemeValue;
@@ -51,6 +51,7 @@ const computeHue = (val: number) => Number((0.1 * BASE_HUE + 0.9 * val).toFixed(
 const DEFAULT_THEME = {
     time: 200,
     size: 16,
+    space: 12,
     angle: 30,
     color: '#2192a7',
     contrast: 'light-dark(black, white)',
@@ -221,9 +222,13 @@ export const createThemeController = ({
             actions.push({type: DELETE, payload: {name}});
             onChange?.();
         },
-        update(params: object, name: string = '') {
-            if (themes[name]) {
-                themes[name] = merge({[LIGHT]: {}, [DARK]: {}}, themes[name], params);
+        update(params: object | ((prev: object) => object), name: string = '') {
+            const prevConfig = themes[name];
+            if (prevConfig) {
+                let nextConfig: object;
+                if (typeof params === 'function') nextConfig = params(prevConfig);
+                else nextConfig = params;
+                themes[name] = merge({[LIGHT]: {}, [DARK]: {}}, prevConfig, nextConfig);
                 actions.push({type: UPDATE, payload: {params, name} });
                 onChange?.();
             }

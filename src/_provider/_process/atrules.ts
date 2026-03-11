@@ -446,7 +446,6 @@ export const resolveAtRules = (ctx: ReturnType<ReturnType<TCreateScope>>) => {
          */
         def?: string | number | boolean | object;
     } = {}): TProperty => {
-        const ctype = typeof config;
         let syn = '"*"';
         let inh = true;
         let ini;

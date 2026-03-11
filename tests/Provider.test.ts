@@ -30,9 +30,11 @@ const COLOR_VAR = '--color';
 const CONTRAST_VAR = '--contrast';
 const NEUTRAL_VAR = '--neutral';
 const EASING_VAR = '--easing';
-const THIRD_MAKER: TStyleSheetMaker = ({ time, angle, color, easing }) => {
+const SPACE_VAR = '--space';
+const THIRD_MAKER: TStyleSheetMaker = ({ time, angle, color, easing, theme }) => {
     return {
         html: {
+            [SPACE_VAR]: theme.space,
             transitionDuration: time(),
             rotate: angle(2),
             [ANGLE_VAR]: angle(),
@@ -67,8 +69,19 @@ type TMaker = {
         footer: Record<string, never>;
     }
 };
-const FIFTH_MAKER: TStyleSheetMaker = ({ select }) => {
+
+type TMakerTunings = {
+    size: number;
+    card: {
+        color: string;
+    }
+};
+
+const DEF_TUNING_VAL = 'rgb(82, 119, 119)'
+
+const FIFTH_MAKER: TStyleSheetMaker = ({ select, theme: { tuning } }) => {
     const selector = select<TMaker>;
+    const tuningVar = tuning<TMakerTunings>
     return {
         [selector('sz:s')]: {
             width: '10px'
@@ -84,6 +97,9 @@ const FIFTH_MAKER: TStyleSheetMaker = ({ select }) => {
         },
         [selector('rounded:')]: {
             borderRadius: '10px'
+        },
+        body: {
+            background: tuningVar('card.color', DEF_TUNING_VAL)
         }
     };
 };
@@ -110,6 +126,7 @@ const SIX_MAKER: TStyleSheetMaker = ({ select }) => {
 
 const defThemeVars = {
     size: 18,
+    space: 10,
     time: 150,
     angle: 15,
     color: 'red',
@@ -311,6 +328,13 @@ describe('Provider utils:', () => {
         expect(consumer.theme.list).toContain('custom');
     });
 
+    test('update theme with function', () => {
+        consumer.theme.add(customThemeVars, 'custom');
+        const angle = 45;
+        consumer.theme.update((prev) => ({...prev, angle}), 'custom');
+        expect(consumer.theme.get('custom').angle).toBe(angle);
+    });
+
     test('get provider makers', () => {
         consumer.use(FIRST_MAKER);
         expect(Object.values(consumer.makers)).toContain(FIRST_MAKER);
@@ -327,6 +351,21 @@ describe('Provider utils:', () => {
         consumer.size = rem;
         consumer.size = null;
         expect(getComputedStyle(document.documentElement).fontSize).toBe(defThemeVars.size + 'px');
+    });
+
+    test('set space attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const space = 24;
+        consumer.space = space;
+        expect(getComputedStyle(document.documentElement).getPropertyValue(SPACE_VAR)).toBe(`calc(${space} * 1px)`);
+    });
+
+    test('reset space attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const space = 24;
+        consumer.space = space;
+        consumer.space = null;
+        expect(getComputedStyle(document.documentElement).getPropertyValue(SPACE_VAR)).toBe(`calc(${defThemeVars.space} * 1px)`);
     });
 
     test('set time attribute', () => {
@@ -379,8 +418,8 @@ describe('Provider utils:', () => {
     test('set array color attribute', () => {
         const colors = ['grey', 'white'];
         consumer.color = colors;
-        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--f0-color')).toBe(colors[0]);
-        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--f0-color-1')).toBe(colors[1]);
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--f-color')).toBe(colors[0]);
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue('--f-color-1')).toBe(colors[1]);
     });
 
     test('set contrast attribute', () => {
@@ -433,9 +472,9 @@ describe('Provider utils:', () => {
 
     test('custom palette values', () => {
         const custom = {
-            sec: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-hue-sec'),
-            s: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-lightness-bg-s'),
-            rich: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-chroma-fg-rich')
+            sec: window.getComputedStyle(document.documentElement).getPropertyValue('--f-hue-sec'),
+            s: window.getComputedStyle(document.documentElement).getPropertyValue('--f-lightness-bg-s'),
+            rich: window.getComputedStyle(document.documentElement).getPropertyValue('--f-chroma-fg-rich')
         };
         expect(custom).toEqual({
             sec: defThemeVars.hue.sec + '',
@@ -446,9 +485,9 @@ describe('Provider utils:', () => {
 
     test('custom coef values', () => {
         const custom = {
-            1: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-coef-1'),
-            15: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-coef-15'),
-            32: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-coef-32'),
+            1: window.getComputedStyle(document.documentElement).getPropertyValue('--f-coef-1'),
+            15: window.getComputedStyle(document.documentElement).getPropertyValue('--f-coef-15'),
+            32: window.getComputedStyle(document.documentElement).getPropertyValue('--f-coef-32'),
         };
         expect(custom).toEqual({
             1: defThemeVars.coef[1] + '',
@@ -459,9 +498,9 @@ describe('Provider utils:', () => {
 
     test('theme values as array', () => {
         const custom = {
-            0: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-offset'),
-            1: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-offset-1'),
-            2: window.getComputedStyle(document.documentElement).getPropertyValue('--f0-offset-2')
+            0: window.getComputedStyle(document.documentElement).getPropertyValue('--f-offset'),
+            1: window.getComputedStyle(document.documentElement).getPropertyValue('--f-offset-1'),
+            2: window.getComputedStyle(document.documentElement).getPropertyValue('--f-offset-2')
         };
         expect(custom).toEqual({
             0: defThemeVars.offset[0] + '',
@@ -486,7 +525,7 @@ describe('Provider with `min` mode:', () => {
     test('stylesheet content', () => {
         const rules = consumer.stylesheets([FOURTH_MAKER])[0]?.cssRules || []
         expect([...rules].map(s=>s.cssText).join('')).toBe(
-            '.f1-0 { width: 100%; flex-shrink: 0; }.f1-1 { width: 50%; }.f1-2 { transition-duration: calc(var(--f0-time) * 1ms); }'
+            '.f1-0 { width: 100%; flex-shrink: 0; }.f1-1 { width: 50%; }.f1-2 { transition-duration: calc(var(--f-time) * 1ms); }'
         );
     });
 
@@ -554,6 +593,55 @@ describe('Provider with `min` mode:', () => {
             'visible': ''
         });
     });
+
+    test('tune specific stylesheet', () => {
+        const vars = consumer.tune<TMakerTunings>({
+            size: 32,
+            card: {
+                color: 'green'
+            }
+        }, FIFTH_MAKER);
+        expect(vars).toEqual({
+            '--f2-card-color': 'green',
+            '--f2-size': 32
+        });
+    });
+
+    test('check default tuning value', () => {
+        consumer.dx<TMaker>(FIFTH_MAKER, []);
+        expect(getComputedStyle(document.body).backgroundColor).toEqual(DEF_TUNING_VAL);
+    });
+
+    test('check updated tuning value', () => {
+        const UPD_TUNING_VAL = 'oklch(0.85 0.02 196.66)';
+        consumer.dx<TMaker>(FIFTH_MAKER, []);
+        const vars = consumer.tune<TMakerTunings>({
+            card: {
+                color: UPD_TUNING_VAL
+            }
+        }, FIFTH_MAKER);
+        Object.entries(vars).forEach(([k, v]) => document.body.style.setProperty(k,v));
+        expect(getComputedStyle(document.body).backgroundColor).toEqual(UPD_TUNING_VAL);
+    });
+
+    test('tune global stylesheet', () => {
+        const vars = consumer.tune<TMakerTunings>({
+            card: {
+                color: 'green'
+            }
+        });
+        expect(vars).toEqual({
+            '--f-card-color': 'green',
+        });
+    });
+
+    test('tune unknown stylesheet', () => {
+        const maker = () => `.block{width:100%;}`
+        const vars = consumer.tune<TMakerTunings>({
+            size: 32
+        }, maker);
+        expect(vars).toEqual({});
+    });
 });
 
 describe('useStyleProvider:', () => {
@@ -601,7 +689,7 @@ describe('useStyleProvider:', () => {
             provider.theme.switch('main');
             expect((provider + '').split('</style>').slice(1).join('</style>')).toBe(
                 `<script is="effcss-provider" min mode="c" size="12" time="250" type="application/json" theme="main">` +
-                `{"theme":[{"type":"add","payload":{"params":{},"name":"main"}}],"dict":{"eff0":{"_theme_0":"0"}}}` +
+                `{"theme":[{"type":"add","payload":{"params":{},"name":"main"}}],"dict":{"eff":{"_theme_0":"0"}}}` +
                 `</script>`
             );
         });
@@ -665,11 +753,11 @@ describe('useStyleProvider:', () => {
             provider.use(FIRST_MAKER, SECOND_MAKER);
             provider.off(SECOND_MAKER);
             expect((provider + '').split('</style>').slice(1).join('</style>')).toBe(
-                `<style data-effcss="f1">.f1-0{width:100%;flex-shrink:0;}.f1-1{width:50%;}.f1-2{transition-duration:calc(var(--f0-time) * 1ms);}</style>` +
-                `<style data-effcss="f2">.f2-0{width:100%;flex-shrink:0;}html{transition-duration:calc(var(--f0-time) * 1ms);}</style>` +
+                `<style data-effcss="f1">.f1-0{width:100%;flex-shrink:0;}.f1-1{width:50%;}.f1-2{transition-duration:calc(var(--f-time) * 1ms);}</style>` +
+                `<style data-effcss="f2">.f2-0{width:100%;flex-shrink:0;}html{transition-duration:calc(var(--f-time) * 1ms);}</style>` +
                 `<script is="effcss-provider" min mode="c" size="12" time="250" type="application/json" theme="custom">` +
                 `{"theme":[{"type":"add","payload":{"params":{"size":18,"time":150,"angle":15,"mySize":{"s":10,"m":20,"l":30},"coef":{"1":0.05,"15":1.9,"32":220},"hue":{"sec":220},"lightness":{"bg":{"s":0.785}},"chroma":{"fg":{"rich":0.145}}},"name":"custom"}}],` +
-                `"dict":{"f0":{"_theme_0":"0"},"f1":{"_":"0","__element":"1","__element_animated":"2"},"f2":{"_":"0"},"f3":{"_":"0"}}}</script>`
+                `"dict":{"f":{"_theme_0":"0"},"f1":{"_":"0","__element":"1","__element_animated":"2"},"f2":{"_":"0"},"f3":{"_":"0"}}}</script>`
             );
         });
 
@@ -688,8 +776,8 @@ describe('useStyleProvider:', () => {
             provider.use(FIRST_MAKER, SECOND_MAKER);
             provider.off(SECOND_MAKER);
             expect((provider + '').split('</style>').slice(1).join('</style>')).toBe(
-                `<style data-effcss="f1">.f1-0{width:100%;flex-shrink:0;}.f1-1{width:50%;}.f1-2{transition-duration:calc(var(--f0-time) * 1ms);}</style>` +
-                `<style data-effcss="f2">.f2-0{width:100%;flex-shrink:0;}html{transition-duration:calc(var(--f0-time) * 1ms);}</style>` +
+                `<style data-effcss="f1">.f1-0{width:100%;flex-shrink:0;}.f1-1{width:50%;}.f1-2{transition-duration:calc(var(--f-time) * 1ms);}</style>` +
+                `<style data-effcss="f2">.f2-0{width:100%;flex-shrink:0;}html{transition-duration:calc(var(--f-time) * 1ms);}</style>` +
                 `<style is="effcss-provider" min mode="c" theme="custom"></style>`
             );
         });
@@ -758,6 +846,7 @@ describe('useStyleProvider:', () => {
             }
         };
         const newSizeValue = 28;
+        const newSpaceValue = 20;
 
         beforeAll(() => {
             provider = useStyleProvider();
@@ -767,104 +856,115 @@ describe('useStyleProvider:', () => {
         });
 
         test(`override values (top level)`, () => {
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-size')).toBe(overValues.size + '');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-size')).toBe(overValues.size + '');
         });
 
         test(`override values (top nested)`, () => {
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-hue-pri')).toBe(overValues.hue.pri + '');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-hue-pri')).toBe(overValues.hue.pri + '');
         });
 
         test(`override values with scheme=light`, () => {
             override?.setAttribute('scheme', 'light');
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-lightness-bg-xl')).toBe(overValues.$light.lightness.bg.xl + '');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-lightness-bg-xl')).toBe(overValues.$light.lightness.bg.xl + '');
         });
 
         test(`override values with scheme=dark`, () => {
             override?.setAttribute('scheme', 'dark');
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-lightness-bg-xl')).toBe(overValues.$dark.lightness.bg.xl + '');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-lightness-bg-xl')).toBe(overValues.$dark.lightness.bg.xl + '');
         });
 
         test(`override values changed:`, () => {
-            override?.setAttribute('values', prepareOverrideValues({...overValues, size: newSizeValue}));
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-size')).toBe(newSizeValue + '');
+            override?.setAttribute('values', prepareOverrideValues({...overValues, size: newSizeValue, space: newSpaceValue}));
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-size')).toBe(newSizeValue + '');
         });
 
         test('set size attribute', () => {
             const rem = '24';
             override?.setAttribute('size', rem);
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-size')).toBe(rem);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-size')).toBe(rem);
         });
 
         test('reset size attribute', () => {
             override?.removeAttribute('size');
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-size')).toBe(newSizeValue + '');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-size')).toBe(newSizeValue + '');
+        });
+
+        test('set space attribute', () => {
+            const rem = '24';
+            override?.setAttribute('space', rem);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-space')).toBe(rem);
+        });
+
+        test('reset space attribute', () => {
+            override?.removeAttribute('space');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-space')).toBe(newSpaceValue + '');
         });
 
         test('set time attribute', () => {
             const time = '550';
             override?.setAttribute('time', time);
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-time')).toBe(time);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-time')).toBe(time);
         });
 
         test('reset time attribute', () => {
             override?.removeAttribute('time');
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-time')).toBe(overValues.time + '');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-time')).toBe(overValues.time + '');
         });
 
         test('set angle attribute', () => {
             const angle = '550';
             override?.setAttribute('angle', angle);
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-angle')).toBe(angle);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-angle')).toBe(angle);
         });
 
         test('reset angle attribute', () => {
             override?.removeAttribute('angle');
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-angle')).toBe(overValues.angle + '');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-angle')).toBe(overValues.angle + '');
         });
 
         test('set color attribute', () => {
             const color = '#aa5e5eff';
             override?.setAttribute('color', color);
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-color')).toBe(color);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-color')).toBe(color);
         });
 
         test('reset color attribute', () => {
             override?.removeAttribute('color');
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-color')).toBe(overValues.color + '');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-color')).toBe(overValues.color + '');
         });
 
         test('set contrast attribute', () => {
             const color = '#c0c7c2ff';
             override?.setAttribute('contrast', color);
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-contrast')).toBe(color);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-contrast')).toBe(color);
         });
 
         test('reset contrast attribute', () => {
             override?.removeAttribute('contrast');
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-contrast')).toBe(overValues.contrast + '');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-contrast')).toBe(overValues.contrast + '');
         });
 
         test('set neutral attribute', () => {
             const color = '#5eaa6fff';
             override?.setAttribute('neutral', color);
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-neutral')).toBe(color);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-neutral')).toBe(color);
         });
 
         test('reset neutral attribute', () => {
             override?.removeAttribute('neutral');
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-neutral')).toBe(overValues.neutral + '');
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-neutral')).toBe(overValues.neutral + '');
         });
 
         test('set mutivalue easing attribute', () => {
             const easing = ['cubic-bezier(0.1, -0.6, 0.2, 0)', 'ease-in'];
             override?.setAttribute('easing', easing.join(';'));
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-easing')).toBe(easing[0]);
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-easing-1')).toBe(easing[1]);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-easing')).toBe(easing[0]);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-easing-1')).toBe(easing[1]);
         });
 
         test('use indexed value of theme array property', () => {
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-custom')).toBe(overValues.custom[0]);
-            expect(inside && getComputedStyle(inside).getPropertyValue('--f0-custom-1')).toBe(overValues.custom[1]);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-custom')).toBe(overValues.custom[0]);
+            expect(inside && getComputedStyle(inside).getPropertyValue('--f-custom-1')).toBe(overValues.custom[1]);
         });
     });
 });
