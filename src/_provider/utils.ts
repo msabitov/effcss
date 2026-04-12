@@ -25,9 +25,10 @@ export const merge = (target: Record<string, any>, ...sources: any[]) =>
         : sources.reduce((acc, source) => {
               if (source && acc && isObject(source)) entries(source).forEach(([k, v]) => {
                   if (v && isObject(v)) {
-                      if (!acc[k]) acc[k] = v;
-                      else if (isArray(acc[k]) && isArray(v)) acc[k] = [...acc[k], ...v];
-                      else merge(acc[k], v || {});
+                        if (!acc[k]) acc[k] = v;
+                        else if (isArray(acc[k]) && isArray(v)) acc[k] = [...acc[k], ...v];
+                        else if (isObject(acc[k])) merge(acc[k], v || {});
+                        else acc[k] = v || {};
                   } else acc[k] = v;
               });
               return acc;

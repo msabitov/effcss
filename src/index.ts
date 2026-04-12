@@ -35,35 +35,51 @@ type TAttrs = {
     /**
      * Root font size in px
      */
-    size: number;
+    size: TNumberAttr;
     /**
      * Root space variable in px
      */
-    space: number;
+    space: TNumberAttr;
+    /**
+     * Root radius variable in px
+     */
+    radius: TNumberAttr;
     /**
      * Root time in ms
      */
-    time: number;
+    time: TNumberAttr;
     /**
      * Root angle in deg
      */
-    angle: number;
+    angle: TNumberAttr;
     /**
      * Root color
      */
-    color: string;
+    color: TStringAttr;
     /**
      * Root easing function
      */
-    easing: string;
+    easing: TStringAttr;
     /**
      * Root contrast color
      */
-    contrast: string;
+    contrast: TStringAttr;
     /**
      * Root neutral color
      */
-    neutral: string;
+    neutral: TStringAttr;
+    /**
+     * Sans-serif font family
+     */
+    sans: TStringAttr;
+    /**
+     * Serif font family
+     */
+    serif: TStringAttr;
+    /**
+     * Monospace font family
+     */
+    mono: TStringAttr;
 };
 /**
  * Provider attributes
@@ -87,6 +103,10 @@ export type TProviderAttrs = {
      * Scoped selectors minification
      */
     min: boolean;
+    /**
+     * Color scheme
+     */
+    scheme: 'light' | 'dark';
 } & TAttrs;
 /**
  * Override element attributes
@@ -170,7 +190,7 @@ type DX = {
  * @description
  * Basic interface for style provider component.
  */
-export interface IStyleProvider {
+export interface IStyleProvider extends TAttrs {
     // getters
 
     /**
@@ -200,79 +220,6 @@ export interface IStyleProvider {
      * Theme controller
      */
     theme: TThemeController;
-
-    /**
-     * Get root size value
-     */
-    get size(): TNumberAttr;
-    /**
-     * Set root size value
-     * @param val - variable value in px
-     */
-    set size(val: TNumberAttr);
-    /**
-     * Get root space value
-     */
-    get space(): TNumberAttr;
-    /**
-     * Set root space value
-     * @param val - variable value in px
-     */
-    set space(val: TNumberAttr);
-    /**
-     * Get root time value
-     */
-    get time(): TNumberAttr;
-    /**
-     * Set root time value
-     * @param val - time value in ms
-     */
-    set time(val: TNumberAttr);
-    /**
-     * Get root angle value
-     */
-    get angle(): TNumberAttr;
-    /**
-     * Set root angle value
-     * @param val - angle value in ms
-     */
-    set angle(val: TNumberAttr);
-    /**
-     * Get brand color value
-     */
-    get color(): TStringAttr;
-    /**
-     * Set brand color value
-     * @param val - color string
-     */
-    set color(val: TStringAttr);
-    /**
-     * Get neutral color value
-     */
-    get neutral(): TStringAttr;
-    /**
-     * Set neutral color value
-     * @param val - color string
-     */
-    set neutral(val: TStringAttr);
-    /**
-     * Get contrast color value
-     */
-    get contrast(): TStringAttr;
-    /**
-     * Set contrast color value
-     * @param val - color string
-     */
-    set contrast(val: TStringAttr);
-    /**
-     * Get root easing function
-     */
-    get easing(): TStringAttr;
-    /**
-     * Set root easing function
-     * @param val - easing function
-     */
-    set easing(val: TStringAttr);
 
     // makers handlers
 
@@ -394,14 +341,6 @@ const MEDIA = '@media';
 const SCRIPT = 'script';
 const STYLE = 'style';
 const THEME_ATTR = 'theme';
-const SIZE_ATTR = 'size';
-const SPACE_ATTR = 'space';
-const TIME_ATTR = 'time';
-const ANGLE_ATTR = 'angle';
-const COLOR_ATTR = 'color';
-const CONTRAST_ATTR = 'contrast';
-const NEUTRAL_ATTR = 'neutral';
-const EASING_ATTR = 'easing';
 const EVENT_NAME = LIBRARY + 'changes';
 const EFFCSS_ATTR = 'data-' + LIBRARY;
 const APP_JSON = 'application/json';
@@ -412,6 +351,18 @@ export const DEFAULT_ATTRS: Record<string, string> = {
     mode: 'a',
     pre: 'f',
 };
+const PROVIDER_SYMBOL = Symbol(TAG_NAME);
+const CUST_NUM_ATTRS = [
+    'size', 'space', 'radius', 'angle', 'time'
+] as const;
+const CUST_STRING_ATTRS = [
+    'easing', 'color', 'contrast', 'neutral', 'sans', 'serif', 'mono'
+] as const;
+const CUST_ATTRS = [
+    ...CUST_NUM_ATTRS,
+    ...CUST_STRING_ATTRS
+] as const;
+const CUST_ATTRS_SET = new Set(CUST_ATTRS);
 
 const ATTR_VAL_SEPARATOR = ';';
 // utils
@@ -437,16 +388,7 @@ const createGlobalMaker = ({
     theme, attrs, scope
 }: {
     theme: TThemeController;
-    attrs: {
-        size: TNumberAttr;
-        space: TNumberAttr;
-        time: TNumberAttr;
-        angle: TNumberAttr;
-        color: TStringAttr;
-        easing: TStringAttr;
-        contrast: TStringAttr;
-        neutral: TStringAttr;
-    };
+    attrs: TAttrs;
     scope: TScope;
 }): TStyleSheetMaker => {
     return ({ bem, each, themeVar, merge, pseudo: {r}, at: { media }, units: {px} }) => {
@@ -461,6 +403,14 @@ const createGlobalMaker = ({
                         fontSize: px(themeVar('size'))
                     },
                 },
+                [getAttrSelector('scheme=light')]: {
+                    colorScheme: 'light',
+                    ...$light
+                },
+                [getAttrSelector('scheme=dark')]: {
+                    colorScheme: 'dark',
+                    ...$dark
+                }
             },
             // custom theme
             each(theme.list, (k, v) => {
@@ -476,13 +426,17 @@ const createGlobalMaker = ({
                     [bem<TBaseStyleSheetMaker>(`..theme.${k}`)]: value
                 }
             }),
-            ...Object.entries(attrs).map(([name, val]) => val && ({
-                [getAttrSelector(name)]: each(
-                    Array.isArray(val) ? val : [val], (ind, curVal) => ({
-                        [scope.varName(posVal(name, +ind))]: curVal
-                    }))
-                })
-            )
+            ...CUST_ATTRS.map((name) => {
+                const val = attrs[name];
+                return val && (
+                    {
+                        [getAttrSelector(name)]: each(
+                            Array.isArray(val) ? val : [val], (ind, curVal) => ({
+                                [scope.varName(posVal(name, +ind))]: curVal
+                        }))
+                    }
+                );
+            })
         );
     };
 };
@@ -646,16 +600,16 @@ const construct = (host: THost, {
             get() {
                 return host.getAttribute('min') === '';
             }
-        },
-        size: describeNumAttr(host, SIZE_ATTR),
-        space: describeNumAttr(host, SPACE_ATTR),
-        time: describeNumAttr(host, TIME_ATTR),
-        angle: describeNumAttr(host, ANGLE_ATTR),
-        color: describeStringAttr(host, COLOR_ATTR),
-        easing: describeStringAttr(host, EASING_ATTR),
-        contrast: describeStringAttr(host, CONTRAST_ATTR),
-        neutral: describeStringAttr(host, NEUTRAL_ATTR)
+        }
     });
+    Object.defineProperties(host, CUST_NUM_ATTRS.reduce((acc, attr) => {
+        acc[attr] = describeNumAttr(host, attr);
+        return acc;
+    }, {} as Record<TAttrKeys, object>));
+    Object.defineProperties(host, CUST_STRING_ATTRS.reduce((acc, attr) => {
+        acc[attr] = describeStringAttr(host, attr);
+        return acc;
+    }, {} as Record<TAttrKeys, object>));
     const prefix = host.pre;
     const collector = createCollector({ prefix });
     const scope = createScope({
@@ -701,19 +655,15 @@ const construct = (host: THost, {
                 const cssContent = Object.entries(styleSheetsDict).filter(([k, v]) => !v.disabled).map(([k, v]) => `<style ${EFFCSS_ATTR}="${k}">${[...v.cssRules].map(rule => rule.cssText).join('')}</style>`).join('');
                 let tag = STYLE;
                 let textContent = '';
-                const attrs: Record<string, string | number | boolean | undefined | null> = {
+                const attrs: Record<string, string | null> = CUST_ATTRS.reduce((acc, attr) => {
+                    acc[attr] = host.getAttribute(attr);
+                    return acc;
+                }, {
                     is: TAG_NAME,
                     min: host.getAttribute('min'),
                     mode: host.getAttribute('mode'),
-                    size: host.getAttribute(SIZE_ATTR),
-                    space: host.getAttribute(SPACE_ATTR),
-                    time: host.getAttribute(TIME_ATTR),
-                    angle: host.getAttribute(ANGLE_ATTR),
-                    color: host.getAttribute(COLOR_ATTR),
-                    easing: host.getAttribute(EASING_ATTR),
-                    contrast: host.getAttribute(CONTRAST_ATTR),
-                    neutral: host.getAttribute(NEUTRAL_ATTR)
-                };
+                    scheme: host.getAttribute('scheme'),
+                } as Record<string, string | null>);
                 if (!noscript) {
                     tag = SCRIPT;
                     attrs.type = APP_JSON;
@@ -736,10 +686,6 @@ const construct = (host: THost, {
     Object.assign(host, handlers);
 };
 
-const PROVIDER_SYMBOL = Symbol(TAG_NAME);
-const CUST_ATTRS = [SIZE_ATTR, SPACE_ATTR, TIME_ATTR, ANGLE_ATTR, COLOR_ATTR, EASING_ATTR, CONTRAST_ATTR, NEUTRAL_ATTR];
-const CUST_ATTRS_SET = new Set(CUST_ATTRS);
-
 const queryStyleProvider = () => globalThis?.document.querySelector(`[is=${TAG_NAME}]`) as unknown as IStyleProvider;
 
 /**
@@ -761,12 +707,16 @@ function defineProvider(): boolean {
             min: IStyleProvider['min'];
             size: IStyleProvider['size'];
             space: IStyleProvider['space'];
+            radius: IStyleProvider['radius'];
             angle: IStyleProvider['angle'];
             time: IStyleProvider['time'];
             color: IStyleProvider['color'];
             easing: IStyleProvider['easing'];
             contrast: IStyleProvider['contrast'];
             neutral: IStyleProvider['neutral'];
+            sans: IStyleProvider['sans'];
+            serif: IStyleProvider['serif'];
+            mono: IStyleProvider['mono'];
 
             // maker handlers
 
@@ -818,27 +768,10 @@ function defineProvider(): boolean {
             };
 
             protected _customize = () => {
-                const size = this.size;
-                const space = this.space;
-                const time = this.time;
-                const angle = this.angle;
-                const color = this.color;
-                const easing = this.easing;
-                const contrast = this.contrast;
-                const neutral = this.neutral;
                 // create init stylesheet maker
                 const next = createGlobalMaker({
                     theme: this.theme,
-                    attrs: {
-                        size,
-                        space,
-                        time,
-                        angle,
-                        color,
-                        easing,
-                        contrast,
-                        neutral
-                    },
+                    attrs: this,
                     scope: this._s(this._c.key())
                 });
                 // apply maker
@@ -937,11 +870,13 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         noscript,
         attrs = {}
     } = settings;
-    let {
-        mode = DEFAULT_ATTRS.mode, min, pre = DEFAULT_ATTRS.prefix,
-        size = null, space = null, time = null, angle = null, easing = null,
-        color = null, contrast = null, neutral = null
-    } = attrs;
+    const attributes = Object.entries(attrs).reduce((acc, [attr, val]) => {
+        if (val) acc[attr] = typeof val === 'boolean' ? '' : (val + '');
+        return acc;
+    }, {
+        mode: DEFAULT_ATTRS.mode,
+        pre: DEFAULT_ATTRS.prefix
+    } as Record<string, string | null>);
     class StyleProviderEmulation implements IStyleProvider {
         get tagName(): string {
             return '';
@@ -949,19 +884,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         get textContent(): string {
             return '';
         }
-        attributes = {
-            size: size ? size + '' : null,
-            space: space ? space + '' : null,
-            time: time ? time + '' : null,
-            angle: angle ? angle + '' : null,
-            color: color || null,
-            easing: easing || null,
-            contrast: contrast || null,
-            neutral: neutral || null,
-            pre,
-            mode,
-            min: min ? '' : null
-        };
+        attributes = attributes;
 
         getAttribute(name: TAttrKeys) {
             const val = this.attributes[name];
@@ -969,7 +892,7 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         }
         setAttribute(name: TAttrKeys, val: string) {
             this.attributes[name] = (val + '');
-            if (CUST_ATTRS_SET.has(name)) this._customize();
+            if (CUST_ATTRS_SET.has(name as keyof TAttrs)) this._customize();
         }
         removeAttribute(name: keyof typeof this.attributes) {
             delete this.attributes[name];
@@ -983,12 +906,16 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         min: IStyleProvider['min'];
         size: IStyleProvider['size'];
         space: IStyleProvider['space'];
+        radius: IStyleProvider['radius'];
         angle: IStyleProvider['angle'];
         time: IStyleProvider['time'];
         color: IStyleProvider['color'];
         easing: IStyleProvider['easing'];
         contrast: IStyleProvider['contrast'];
         neutral: IStyleProvider['neutral'];
+        sans: IStyleProvider['sans'];
+        serif: IStyleProvider['serif'];
+        mono: IStyleProvider['mono'];
 
         // maker handlers
 
@@ -1038,27 +965,10 @@ const emulateProvider = (settings: TUseStylePropviderParams = {}): IStyleProvide
         };
 
         protected _customize = () => {
-            const size = this.size;
-            const space = this.space;
-            const time = this.time;
-            const angle = this.angle;
-            const color = this.color;
-            const easing = this.easing;
-            const contrast = this.contrast;
-            const neutral = this.neutral;
             // create init stylesheet maker
             const next = createGlobalMaker({
                 theme: this.theme,
-                attrs: {
-                    size,
-                    space,
-                    time,
-                    angle,
-                    color,
-                    easing,
-                    contrast,
-                    neutral
-                },
+                attrs: this,
                 scope: this._s(this._c.key())
             });
             // apply maker
@@ -1098,10 +1008,16 @@ export const useStyleProvider: TUseStyleProvider = (params = {}) => {
         else {
             const script = document.createElement(SCRIPT, {
                 is: TAG_NAME
-            })
+            });
             script.setAttribute('is', TAG_NAME);
             const attrs = settings?.attrs;
-            if (attrs) Object.entries(attrs).map(([k,v]) => v && DEFAULT_ATTRS[k] !== v && script.setAttribute(k, isBoolean(v) ? '' : v + ''));
+            if (attrs) Object.entries(attrs).map(([k,v]) => v && DEFAULT_ATTRS[k] !== v && script.setAttribute(k, isBoolean(v) ?
+                '' :
+                Array.isArray(v) ?
+                    v.join(ATTR_VAL_SEPARATOR) :
+                    v + ''
+                )
+            );
             document.head.appendChild(script);
             styleProvider = script as unknown as IStyleProvider;
         }

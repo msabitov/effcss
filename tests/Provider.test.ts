@@ -31,9 +31,17 @@ const CONTRAST_VAR = '--contrast';
 const NEUTRAL_VAR = '--neutral';
 const EASING_VAR = '--easing';
 const SPACE_VAR = '--space';
+const RADIUS_VAR = '--radius';
+const MONO_VAR = '--mono-ff';
+const SANS_VAR = '--sans-ff';
+const SERIF_VAR = '--serif-ff';
 const THIRD_MAKER: TStyleSheetMaker = ({ time, angle, color, easing, theme }) => {
     return {
         html: {
+            [SERIF_VAR]: theme.serif,
+            [SANS_VAR]: theme.sans,
+            [MONO_VAR]: theme.mono,
+            [RADIUS_VAR]: theme.radius,
             [SPACE_VAR]: theme.space,
             transitionDuration: time(),
             rotate: angle(2),
@@ -127,6 +135,7 @@ const SIX_MAKER: TStyleSheetMaker = ({ select }) => {
 const defThemeVars = {
     size: 18,
     space: 10,
+    radius: 9,
     time: 150,
     angle: 15,
     color: 'red',
@@ -368,6 +377,21 @@ describe('Provider utils:', () => {
         expect(getComputedStyle(document.documentElement).getPropertyValue(SPACE_VAR)).toBe(`calc(${defThemeVars.space} * 1px)`);
     });
 
+    test('set radius attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const radius = 16;
+        consumer.radius = radius;
+        expect(getComputedStyle(document.documentElement).getPropertyValue(RADIUS_VAR)).toBe(`calc(${radius} * 1px)`);
+    });
+
+    test('reset radius attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const radius = 24;
+        consumer.radius = radius;
+        consumer.radius = null;
+        expect(getComputedStyle(document.documentElement).getPropertyValue(RADIUS_VAR)).toBe(`calc(${defThemeVars.radius} * 1px)`);
+    });
+
     test('set time attribute', () => {
         consumer.use(THIRD_MAKER);
         const time = 550;
@@ -452,6 +476,54 @@ describe('Provider utils:', () => {
         consumer.neutral = null;
         const defColor = consumer.theme.get().neutral;
         expect(window.getComputedStyle(document.documentElement).getPropertyValue(NEUTRAL_VAR)).toBe(defColor);
+    });
+
+    test('set sans attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const sans = 'Verdana';
+        consumer.sans = sans;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(SANS_VAR)).toBe(sans);
+    });
+
+    test('reset sans attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const sans = 'Verdana';
+        consumer.sans = sans;
+        consumer.sans = null;
+        const defValue = consumer.theme.get().sans;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(SANS_VAR)).toBe(defValue);
+    });
+
+    test('set serif attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const serif = 'Times New Roman';
+        consumer.serif = serif;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(SERIF_VAR)).toBe(serif);
+    });
+
+    test('reset sans attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const serif = 'Times New Roman';
+        consumer.serif = serif;
+        consumer.serif = null;
+        const defValue = consumer.theme.get().serif;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(SERIF_VAR)).toBe(defValue);
+    });
+
+    test('set mono attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const mono = 'Lucida Console';
+        consumer.mono = mono;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(MONO_VAR)).toBe(mono);
+    });
+
+    test('reset sans attribute', () => {
+        consumer.use(THIRD_MAKER);
+        const mono = 'Lucida Console';
+        consumer.mono = mono;
+        consumer.mono = null;
+        const defValue = consumer.theme.get().mono;
+        expect(window.getComputedStyle(document.documentElement).getPropertyValue(MONO_VAR)).toBe(defValue);
     });
     
     test('set easing attribute', () => {
@@ -702,6 +774,36 @@ describe('useStyleProvider:', () => {
             document.head.appendChild(script);
             provider = useStyleProvider();
             expect(provider).toBe(script);
+        });
+
+        test(`pass array to attribute:`, () => {
+            provider = useStyleProvider({
+                attrs: {
+                    min: true,
+                    mode: 'c',
+                    color: ['green', 'red'],
+                    pre: 'eff'
+                }
+            });
+            expect(provider + '').toContain(
+                `:root:has([is="effcss-provider"][color]) { --eff-color: green; --eff-color-1: red; }`
+            );
+        });
+
+        test(`pass 'scheme' attribute:`, () => {
+            provider = useStyleProvider({
+                attrs: {
+                    min: true,
+                    mode: 'c',
+                    scheme: 'dark'
+                }
+            });
+
+            const darkLightness = (provider.theme.get().$dark as {lightness: {bg: {xl: number;}};}).lightness.bg.xl + '';
+            const computedStyle = getComputedStyle(document.documentElement);
+            const isCorrectScheme = computedStyle.colorScheme === 'dark';
+            const isCorrectPropertyValue = computedStyle.getPropertyValue('--f-lightness-bg-xl') === darkLightness;
+            expect(isCorrectScheme && isCorrectPropertyValue).toBeTruthy();
         });
     });
 

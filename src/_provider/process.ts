@@ -129,6 +129,10 @@ export interface IMakerParams {
          */
         space: TProxyNumVar;
         /**
+         * Radius variable
+         */
+        radius: TProxyNumVar;
+        /**
          * Time variable
          */
         time: TProxyNumVar;
@@ -152,6 +156,18 @@ export interface IMakerParams {
          * Neutral color variable
          */
         neutral: TProxyStrVar;
+        /**
+         * Sans-serif font family variable
+         */
+        sans: TProxyStrVar;
+        /**
+         * Serif font family variable
+         */
+        serif: TProxyStrVar;
+        /**
+         * Monospace font family variable
+         */
+        mono: TProxyStrVar;
     }
 }
 
@@ -190,10 +206,14 @@ export const createProcessor: TCreateProcessor = (params) => {
         angle: scalableVariable('angle', themeVar, 'deg'),
         size: scalableVariable('size', themeVar, 'px'),
         space: scalableVariable('space', themeVar, 'px'),
+        radius: scalableVariable('radius', themeVar, 'px'),
         easing: simpleVariable('easing', themeVar),
         color: simpleVariable('color', themeVar),
         contrast: simpleVariable('contrast', themeVar),
-        neutral: simpleVariable('neutral', themeVar)
+        neutral: simpleVariable('neutral', themeVar),
+        sans: simpleVariable('sans', themeVar),
+        serif: simpleVariable('serif', themeVar),
+        mono: simpleVariable('mono', themeVar)
     };
     return {
         compile: ({ key, maker, mode }) => {

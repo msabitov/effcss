@@ -232,7 +232,8 @@ describe('Base:', () => {
         const styleString = processor.compile({
             key: 'cust',
             maker: ({ theme: {
-                size, space, angle, time, easing, neutral, color, contrast, variable
+                size, space, angle, radius, sans, mono, serif,
+                time, easing, neutral, color, contrast, variable
             } }) => {
                 return {
                     '.base': {
@@ -243,14 +244,18 @@ describe('Base:', () => {
                         padding: space,
                         transform: `skew(${angle})`,
                         transitionDuration: time,
-                        transitionTimingFunction: easing
+                        transitionTimingFunction: easing,
+                        borderRadius: radius,
+                        fontFamily: sans
                     },
                     '.scalable': {
                         opacity: variable('opacity.main', 0.5),
                         width: size(10),
                         padding: space(2),
                         transform: `skew(${angle(2)})`,
-                        transitionDuration: time(1.5)
+                        transitionDuration: time(1.5),
+                        borderRadius: radius(2),
+                        fontFamily: serif
                     },
                     '.indexed': {
                         background: neutral[2],
@@ -260,7 +265,8 @@ describe('Base:', () => {
                         padding: space[2],
                         transform: `skew(${angle[1]})`,
                         transitionDuration: time[8],
-                        transitionTimingFunction: easing[2]
+                        transitionTimingFunction: easing[2],
+                        fontFamily: mono
                     },
                     '.scalable-indexed': {
                         opacity: variable('opacity.main.2', variable('opacity.main', 1)),
@@ -282,6 +288,8 @@ describe('Base:', () => {
                 `transform:skew(calc(var(--f-angle) * 1deg));` +
                 `transition-duration:calc(var(--f-time) * 1ms);` +
                 `transition-timing-function:var(--f-easing);` +
+                `border-radius:calc(var(--f-radius) * 1px);` +
+                `font-family:var(--f-sans);` +
             `}` +
             `.scalable{` +
                 `opacity:var(--f-opacity-main,0.5);` +
@@ -289,6 +297,8 @@ describe('Base:', () => {
                 `padding:calc(var(--f-space) * 2px);` +
                 `transform:skew(calc(var(--f-angle) * 2deg));` +
                 `transition-duration:calc(var(--f-time) * 1.5ms);` +
+                `border-radius:calc(var(--f-radius) * 2px);` +
+                `font-family:var(--f-serif);` +
             `}` +
             `.indexed{` +
                 `background:var(--f-neutral-2,var(--f-neutral));` +
@@ -299,6 +309,7 @@ describe('Base:', () => {
                 `transform:skew(calc(var(--f-angle-1,var(--f-angle)) * 1deg));` +
                 `transition-duration:calc(var(--f-time-8,var(--f-time)) * 1ms);` +
                 `transition-timing-function:var(--f-easing-2,var(--f-easing));` +
+                `font-family:var(--f-mono);` +
             `}` +
             `.scalable-indexed{` +
                 `opacity:var(--f-opacity-main-2,var(--f-opacity-main,1));` +

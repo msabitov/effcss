@@ -4,6 +4,9 @@ type TScalableVariable  = (coef?: number | string | object) => string;
 type TProxyVariable = {
     [index: number]: TScalableVariable;
 };
+type TProxyStringVariable = {
+    [index: number]: object;
+};
 type TProxyScalableVariable = TProxyVariable  & TScalableVariable;
 
 export const scalableVariable = (
@@ -40,7 +43,7 @@ export const scalableVariable = (
 export const simpleVariable = (
     name: string,
     resolver: (val: string, fallback?: string | number) => string
-): TProxyVariable => {
+): TProxyStringVariable => {
     const configure = (pos: number = 0) => {
         const baseName = resolver(name);
         const indName = pos ? resolver(name + '-' + pos, baseName) : baseName;
@@ -51,7 +54,7 @@ export const simpleVariable = (
             [NO_PARSE_SYMBOL]: {
                 value: true
             }
-        }) as TProxyVariable;
+        }) as TProxyStringVariable;
     };
 
     const handler = {
@@ -61,5 +64,5 @@ export const simpleVariable = (
         }
     };
 
-    return new Proxy<TProxyVariable>(configure(), handler);
+    return new Proxy<TProxyStringVariable>(configure(), handler);
 };
