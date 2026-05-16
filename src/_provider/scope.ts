@@ -91,9 +91,9 @@ export type TStyles = {
 type TAttrs = {
     $: string;
 };
-type TSelect = <T extends TStyles>(value: TSelectors<T>) => string;
+export type TSelect<M extends TStyles = TStyles> = <T extends M>(value: TSelectors<T>) => string;
 type TResolveSelector = <T extends TStyleSheet>(params: TStringBEM<T>) => string;
-type TResolveAttr = {
+export type TResolveAttr = {
     <T extends TStyleSheet>(params: TBEM<T>): Record<string, string>;
     <T extends TStyleSheet>(): TMonoResolver<T, "", "">;
     /**
@@ -329,7 +329,7 @@ export const createScope: TCreateScope = (params = {}) => {
                 }
             }
         ) as TAttrs;
-        const select: TScope['select'] = (arg) => {
+        const select: TSelect<TStyles> = (arg) => {
             const value = arg.replaceAll('.', '-').replace(':', '_');
             return makeSelector(styleSheetKey, min(value));
         };

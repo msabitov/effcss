@@ -1,9 +1,9 @@
 
 // types
-import type { TProcessor } from './_provider/process';
+import type { TProcessor, TStyleSheetMaker } from './_provider/process';
 import type { TManager } from './_provider/manage';
 import type { TCollector } from './_provider/collect';
-import type { TDeepPartial } from './_provider/scope';
+import type { TDeepPartial, TResolveAttr } from './_provider/scope';
 import type { TDetails, TScope, TScopeResolver, TStyles } from './_provider/scope';
 import type { TThemeController } from './_provider/theme';
 export type {
@@ -20,7 +20,7 @@ export type {
     TPaletteLightness,
     TPaletteMode
 } from './_provider/_process/palette';
-export type { TDetails };
+export type { TDetails, TStyleSheetMaker };
 // functions
 import { createProcessor } from './_provider/process';
 import { createManager } from './_provider/manage';
@@ -123,11 +123,7 @@ export type TOverrideAttrs = {
 } & TAttrs;
 type TAttrKeys = keyof TProviderAttrs;
 type TManagerLite = Pick<TManager, 'pack' | 'status' | 'on' | 'off' | 'get' | 'hydrate' | 'all'>;
-type TResolveAttr = ReturnType<TScopeResolver>['attr'];
-/**
- * StyleSheet maker
- */
-export type TStyleSheetMaker = Parameters<TProcessor['compile']>[0]['maker'];
+
 /**
  * StyleSheet maker utils
  */
@@ -162,7 +158,7 @@ type CX = {
      * @param maker - stylesheet maker
      * @param details - design details
      */
-    <T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>): string;
+    <T extends TStyles>(maker: TStyleSheetMaker<T>, details: TDetails<T>): string;
     /**
      * Join expressions
      * @param args - arguments
@@ -178,7 +174,7 @@ type DX = {
      * @param maker - stylesheet maker
      * @param details - design details
      */
-    <T extends TStyles>(maker: TStyleSheetMaker, details: TDetails<T>): Record<string, string>;
+    <T extends TStyles>(maker: TStyleSheetMaker<T>, details: TDetails<T>): Record<string, string>;
     /**
      * Join expressions
      * @param args - arguments

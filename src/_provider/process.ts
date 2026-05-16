@@ -1,5 +1,5 @@
 // types
-import type { TCreateScope } from './scope'; 
+import type { TCreateScope, TScopeResolver, TSelect, TStyles } from './scope'; 
 // process utils
 import { resolveAtRules } from './_process/atrules';
 import { resolveUnits } from './_process/units';
@@ -30,7 +30,7 @@ type TRelative = (coef?: number | string | object) => string;
 type TProxyNumVar = ReturnType<typeof scalableVariable>;
 type TProxyStrVar = ReturnType<typeof simpleVariable>;
 
-export interface IMakerParams {
+export interface IMakerParams<M extends TStyles = TStyles> {
     dash: typeof dash;
     comma: typeof comma;
     space: typeof space;
@@ -41,7 +41,7 @@ export interface IMakerParams {
     /**
      * Resolve scoped selector
      */
-    select: TScope['select'];
+    select: TSelect<M>;
     /**
      * BEM selector resolver
      * @deprecated
@@ -171,15 +171,19 @@ export interface IMakerParams {
     }
 }
 
+/**
+ * StyleSheet maker
+ */
+export type TStyleSheetMaker<M extends TStyles = TStyles> = (params: IMakerParams<M>) => object | string;
 export type TProcessor = {
     /**
      * Compile stylesheet maker to CSSStylesheet content
      * @param params - params
      */
-    compile(params: { key: string; maker: (params: IMakerParams) => object | string; mode?: 'a' | 'c'; }): string;
+    compile(params: { key: string; maker: TStyleSheetMaker; mode?: 'a' | 'c'; }): string;
 };
 type TCreateProcessor = (params: {
-    scope: ReturnType<TCreateScope>;
+    scope: TScopeResolver;
     prefix: string;
 }) => TProcessor;
 

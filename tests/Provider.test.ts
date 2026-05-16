@@ -87,23 +87,22 @@ type TMakerTunings = {
 
 const DEF_TUNING_VAL = 'rgb(82, 119, 119)'
 
-const FIFTH_MAKER: TStyleSheetMaker = ({ select, theme: { tuning } }) => {
-    const selector = select<TMaker>;
-    const tuningVar = tuning<TMakerTunings>
+const FIFTH_MAKER: TStyleSheetMaker<TMaker> = ({ select, theme: { tuning } }) => {
+    const tuningVar = tuning<TMakerTunings>;
     return {
-        [selector('sz:s')]: {
+        [select<TMaker>('sz:s')]: {
             width: '10px'
         },
-        [selector('card')]: {
+        [select('card')]: {
             boxSizing: 'border-box'
         },
-        [selector('card.inv:')]: {
+        [select('card.inv:')]: {
             width: '50%'
         },
-        [selector('card.footer')]: {
+        [select('card.footer')]: {
             height: '32px'
         },
-        [selector('rounded:')]: {
+        [select('rounded:')]: {
             borderRadius: '10px'
         },
         body: {
@@ -111,22 +110,21 @@ const FIFTH_MAKER: TStyleSheetMaker = ({ select, theme: { tuning } }) => {
         }
     };
 };
-const SIX_MAKER: TStyleSheetMaker = ({ select }) => {
-    const selector = select<TMaker>;
+const SIX_MAKER: TStyleSheetMaker<TMaker> = ({ select }) => {
     return {
-        [selector('sz:s')]: {
+        [select('sz:s')]: {
             width: '10px'
         },
-        [selector('card')]: {
+        [select('card')]: {
             boxSizing: 'border-box'
         },
-        [selector('card.inv:')]: {
+        [select('card.inv:')]: {
             width: '50%'
         },
-        [selector('card.footer')]: {
+        [select('card.footer')]: {
             height: '32px'
         },
-        [selector('rounded:')]: {
+        [select('rounded:')]: {
             borderRadius: '10px'
         }
     };
@@ -280,7 +278,7 @@ describe('Provider utils:', () => {
     });
 
     test('`cx` with object', () => {
-        const classNames = consumer.cx<TMaker>(FIFTH_MAKER, {
+        const classNames = consumer.cx(FIFTH_MAKER, {
             sz: 's',
             card: {
                 footer: {}
@@ -290,20 +288,20 @@ describe('Provider utils:', () => {
     });
 
     test('`cx` with array', () => {
-        const classNames = consumer.cx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        const classNames = consumer.cx(FIFTH_MAKER, ['sz:s', 'card.footer']);
         expect(classNames).toEqual('f1-sz_s f1-card-footer');
     });
 
     test('`cx` join', () => {
-        const firstClassNames = consumer.cx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
-        const secondClassNames = consumer.cx<TMaker>(FIFTH_MAKER, ['card.inv:']);
-        const thirdClassNames = consumer.cx<TMaker>(SIX_MAKER, ['rounded:', 'card.inv:']);
+        const firstClassNames = consumer.cx(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        const secondClassNames = consumer.cx(FIFTH_MAKER, ['card.inv:']);
+        const thirdClassNames = consumer.cx(SIX_MAKER, ['rounded:', 'card.inv:']);
         const result = consumer.cx.join(firstClassNames, secondClassNames, thirdClassNames, false && 'hidden', true && 'visible');
         expect(result).toEqual('f1-sz_s f1-card-footer f1-card f1-card-inv_ f2-rounded_ f2-card f2-card-inv_ visible');
     });
 
     test('`dx` with object', () => {
-        const classNames = consumer.dx<TMaker>(FIFTH_MAKER, {
+        const classNames = consumer.dx(FIFTH_MAKER, {
             sz: 's',
             card: {
                 footer: {}
@@ -315,15 +313,15 @@ describe('Provider utils:', () => {
     });
 
     test('`dx` with array', () => {
-        const classNames = consumer.dx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        const classNames = consumer.dx(FIFTH_MAKER, ['sz:s', 'card.footer']);
         expect(classNames).toEqual({
             'data-f1': 'sz_s card-footer'
         });
     });
 
     test('`dx` join', () => {
-        const firstClassNames = consumer.dx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
-        const secondClassNames = consumer.dx<TMaker>(SIX_MAKER, ['rounded:', 'card.inv:']);
+        const firstClassNames = consumer.dx(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        const secondClassNames = consumer.dx(SIX_MAKER, ['rounded:', 'card.inv:']);
         const result = consumer.dx.join(firstClassNames, secondClassNames, false && {hidden: ''}, true && {visible: ''});
         expect(result).toEqual({
             'data-f1': 'sz_s card-footer',
@@ -624,20 +622,20 @@ describe('Provider with `min` mode:', () => {
     });
 
     test('`cx` with array', () => {
-        const classNames = consumer.cx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        const classNames = consumer.cx(FIFTH_MAKER, ['sz:s', 'card.footer']);
         expect(classNames).toEqual('f2-0 f2-3');
     });
 
     test('`cx` join', () => {
-        const firstClassNames = consumer.cx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
-        const secondClassNames = consumer.cx<TMaker>(FIFTH_MAKER, ['card.inv:']);
-        const thirdClassNames = consumer.cx<TMaker>(SIX_MAKER, ['rounded:', 'card.inv:']);
+        const firstClassNames = consumer.cx(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        const secondClassNames = consumer.cx(FIFTH_MAKER, ['card.inv:']);
+        const thirdClassNames = consumer.cx(SIX_MAKER, ['rounded:', 'card.inv:']);
         const result = consumer.cx.join(firstClassNames, secondClassNames, thirdClassNames, false && 'hidden', true && 'visible');
         expect(result).toEqual('f2-0 f2-3 f2-1 f2-2 f3-4 f3-1 f3-2 visible');
     });
 
     test('`dx` with object', () => {
-        const classNames = consumer.dx<TMaker>(FIFTH_MAKER, {
+        const classNames = consumer.dx(FIFTH_MAKER, {
             sz: 's',
             card: {
                 footer: {}
@@ -649,15 +647,15 @@ describe('Provider with `min` mode:', () => {
     });
 
     test('`dx` with array', () => {
-        const classNames = consumer.dx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        const classNames = consumer.dx(FIFTH_MAKER, ['sz:s', 'card.footer']);
         expect(classNames).toEqual({
             'data-f2': '0 3'
         });
     });
 
     test('`dx` join', () => {
-        const firstClassNames = consumer.dx<TMaker>(FIFTH_MAKER, ['sz:s', 'card.footer']);
-        const secondClassNames = consumer.dx<TMaker>(SIX_MAKER, ['rounded:', 'card.inv:']);
+        const firstClassNames = consumer.dx(FIFTH_MAKER, ['sz:s', 'card.footer']);
+        const secondClassNames = consumer.dx(SIX_MAKER, ['rounded:', 'card.inv:']);
         const result = consumer.dx.join(firstClassNames, secondClassNames, false && {hidden: ''}, true && {visible: ''});
         expect(result).toEqual({
             'data-f2': '0 3',
@@ -680,13 +678,13 @@ describe('Provider with `min` mode:', () => {
     });
 
     test('check default tuning value', () => {
-        consumer.dx<TMaker>(FIFTH_MAKER, []);
+        consumer.dx(FIFTH_MAKER, []);
         expect(getComputedStyle(document.body).backgroundColor).toEqual(DEF_TUNING_VAL);
     });
 
     test('check updated tuning value', () => {
         const UPD_TUNING_VAL = 'oklch(0.85 0.02 196.66)';
-        consumer.dx<TMaker>(FIFTH_MAKER, []);
+        consumer.dx(FIFTH_MAKER, []);
         const vars = consumer.tune<TMakerTunings>({
             card: {
                 color: UPD_TUNING_VAL

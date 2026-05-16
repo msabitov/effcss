@@ -121,15 +121,14 @@ export type TMyMaker = {
     };
 }
 
-export const myMaker: TStyleSheetMaker = ({
+// use TMyMaker to define style variants
+export const myMaker: TStyleSheetMaker<TMyMaker> = ({
     select, merge,
     pseudo: {h},
     at: { keyframes, property },
     theme: { neutral, size },
     units: { px }
 }) = {
-    // specify selector variants via generic
-    const selector = select<TCardMaker>;
     // create property with unique identifier
     const widthProperty = property({
         ini: px(200),
@@ -166,16 +165,16 @@ export const myMaker: TStyleSheetMaker = ({
         // add @keyframes rule
         ...spin,
         // add rules according to the TMyMaker contract
-        [selector('fsz:16')]: {
+        [select('fsz:16')]: {
             // rule content
         },
-        [selector('card')]: {
+        [select('card')]: {
             // rule content
         },
-        [selector('card.rounded:')]: {
+        [select('card.rounded:')]: {
             // rule content
         },
-        [selector('card.h:full')]: {
+        [select('card.h:full')]: {
             // rule content
         },
         // ... and so on
@@ -190,7 +189,6 @@ To use `Stylesheet maker` just pass it to `cx` (creates classnames string) or `d
 ```tsx
 import { useRef } from 'react';
 import { useStyleProvider } from 'effcss';
-import type { TMyMaker } from './maker';
 import { myMaker } from './maker';
 
 export const App = (props: {
@@ -199,13 +197,13 @@ export const App = (props: {
     const stylesRef = useRef();
     // put it inside ref to avoid recalculations
     if (!stylesRef.current) {
-        // thanks to the TMyMaker contract type,
+        // thanks to the TStyleSheetMaker<TMyMaker> contract type,
         // you don't need to look at the implementation - just pass the necessary selectors
         stylesRef.current = {
             // you can apply list of selectors
-            card: styleProvider.dx<TMyMaker>(myMaker, ['card.h:full', 'fsz:16']),
+            card: styleProvider.dx(myMaker, ['card.h:full', 'fsz:16']),
             // or you can apply object with selectors
-            another: styleProvider.dx<TMyMaker>(myMaker, {
+            another: styleProvider.dx(myMaker, {
                 fsz: 16,
                 card: {
                     h: 'full'
