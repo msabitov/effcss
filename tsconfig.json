@@ -10,7 +10,7 @@
         "allowSyntheticDefaultImports": true,
         "strict": true,
         "esModuleInterop": true,
-        "baseUrl": "src",
+        "rootDir": "src",
         "declaration": true,
         "declarationDir": "./dist/types",
         "strictPropertyInitialization": false,

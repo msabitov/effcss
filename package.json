@@ -1,14 +1,13 @@
 {
     "name": "effcss",
-    "version": "4.15.0",
-    "description": "Self-confident CSS-in-JS",
+    "version": "5.0.0",
+    "description": "Self-confident CSS-in-TS",
     "type": "module",
     "scripts": {
         "build": "rollup -c",
         "test": "vitest"
     },
     "keywords": [
-        "web components",
         "ui",
         "typescript",
         "css",
@@ -27,15 +26,15 @@
         }
     },
     "devDependencies": {
-        "@rollup/plugin-terser": "^0.4.4",
-        "@rollup/plugin-typescript": "^11.1.6",
-        "@vitest/browser": "^2.1.9",
+        "@rollup/plugin-terser": "^1.0.0",
+        "@rollup/plugin-typescript": "^12.3.0",
+        "@vitest/browser-playwright": "^4.1.8",
         "playwright": "^1.50.1",
-        "rollup": "^4.30.1",
+        "rollup": "^4.59.0",
         "rollup-plugin-cleaner": "^1.0.0",
         "tslib": "^2.8.1",
-        "typescript": "^5.7.3",
-        "vitest": "^2.1.9"
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.0"
     },
     "files": [
         "LICENSE",
