@@ -51,7 +51,7 @@ describe('Configured Utils:', () => {
                         width: 'auto',
                         display: 'block',
                         padding: '12px',
-                        ':hover': {
+                        '&:hover': {
                             cursor: 'pointer'
                         }
                     },
@@ -60,7 +60,7 @@ describe('Configured Utils:', () => {
                         display: 'flex',
                         flexDirection: 'column',
                         padding: '16px',
-                        ':hover': {
+                        '&:hover': {
                             outline: '2px solid black'
                         }
                     },
@@ -102,7 +102,7 @@ describe('Configured Utils:', () => {
                         width: 'auto',
                         display: 'block',
                         padding: '12px',
-                        ':hover': {
+                        '&:hover': {
                             cursor: 'pointer'
                         }
                     },
@@ -111,7 +111,7 @@ describe('Configured Utils:', () => {
                         display: 'flex',
                         flexDirection: 'column',
                         padding: '16px',
-                        ':hover': {
+                        '&:hover': {
                             outline: '2px solid black'
                         }
                     },

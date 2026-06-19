@@ -28,6 +28,7 @@ export type Scope = {
         keyframes: number;
         layers: number;
         containers: number;
+        selectors: number;
     },
     cssText: {
         variables: string;
@@ -50,9 +51,11 @@ export type Generator<T extends Contract> = (selectors: Selectors<T>) => object;
 
 // selectors
 
+export type ClassName = (rule: object) => string;
 export type ClassNamesResolver<T extends Contract> = (params: DeepPartial<T>) => string;
 export type ClassNames = <T extends Contract>(generator: Generator<T>) => ClassNamesResolver<T>;
 
+export type Attribute = (rule: object) => object;
 export type AttributesResolver<T extends Contract> = (params: DeepPartial<T>) => object;
 export type Attributes = <T extends Contract>(generator: Generator<T>) => AttributesResolver<T>;
 

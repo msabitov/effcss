@@ -17,7 +17,9 @@ import {
     type VariableDescription,
     keySymbol,
     indexSymbol,
-    Update
+    Update,
+    Attribute,
+    ClassName
 } from './types';
 
 const DIVIDER = '_';
@@ -42,18 +44,14 @@ const toRadix = (num: number) => num.toString(36);
  * @param value - stylesheet content
  * @param parent - parent rule key
  */
-const stringify = (key: string, value: object | string | number | undefined | unknown, parent?: string): string => {
+const stringify = (key: string, value: object | string | number | undefined | unknown): string => {
     let resKey = '' + key;
     if (value === null || value === undefined) return '';
     else if (Array.isArray(value)) return value.map((v) => propVal(resKey, v)).join('');
-    else if (typeof value === 'object')
-        return (
-            (!!parent && !parent.startsWith?.('@') && !resKey.startsWith?.('&') && !resKey.startsWith?.('@')
-                ? '&'
-                : '') +
-            resKey +
-            `{${objectReduce(value, (acc, item) => acc + stringify(...item, resKey), '')}}`
-        );
+    else if (typeof value === 'object') return (
+        resKey +
+        `{${objectReduce(value, (acc, item) => acc + stringify(...item), '')}}`
+    );
     else if (value === '') return resKey + ';';
     else return propVal(resKey, value);
 };
@@ -159,7 +157,8 @@ const createScope = (key: string): Scope => ({
         variables: 0,
         keyframes: 0,
         layers: 0,
-        containers: 0
+        containers: 0,
+        selectors: 0
     },
     cssText: {
         variables: '',
@@ -169,6 +168,39 @@ const createScope = (key: string): Scope => ({
         styles: ''
     }
 });
+
+const getHash = (params: {
+    type: 'class' | 'attr';
+    scope: Scope;
+    dict: Record<string, string>;
+}) => {
+    const { scope, type, dict } = params;
+    const scopeKey = scope.key;
+    let add: (key: string) => string;
+    let hash: undefined | ((key: string) => string);
+    if (type === 'class') {
+        add = StyleProvider.minify ? (key: string) => {
+            dict[key] = scopeKey + '_' + toRadix(scope.counters.selectors++)
+            return dict[key];
+        } : (key: string) => {
+            dict[key] = scopeKey + '_' + key;
+            scope.counters.selectors++;
+            return dict[key];
+        }
+        hash = (key: string) => '.' + (dict[key] ?? add(key));
+    } else {
+        add = StyleProvider.minify ? (key: string) => {
+            dict[key] = toRadix(scope.counters.selectors++)
+            return dict[key];
+        } : (key: string) => {
+            dict[key] = key;
+            scope.counters.selectors++;
+            return dict[key];
+        };
+        hash = (key: string) => `[data-${scopeKey}~="${dict[key] ?? add(key)}"]`;
+    }
+    return hash;
+};
 
 const parseDict = (dict: Record<string, string>, config: object, parent = '') => {
     return Object.entries(config).reduce((acc, [prop, val]) => {
@@ -197,6 +229,7 @@ class StyleProvider {
 
     // scopes
 
+    protected static _globalDict: Record<string, string> = {};
     protected static _globalScope: Scope;
 
     static get globalScope(): Scope {
@@ -217,6 +250,7 @@ class StyleProvider {
     protected static _variablesStylesheet?: EffCSSStyleSheet;
     protected static _animationsStylesheet?: EffCSSStyleSheet;
     protected static _layersStylesheet?: EffCSSStyleSheet;
+    protected static _sharedStylesheet?: EffCSSStyleSheet;
 
     static stylesheetsKeys: Map<any, Record<string, string>> = new Map();
     static stylesheetsMap: Map<any, EffCSSStyleSheet> = new Map<any, EffCSSStyleSheet>();
@@ -234,6 +268,11 @@ class StyleProvider {
     static get layersStylesheet(): EffCSSStyleSheet {
         if (!StyleProvider._layersStylesheet) StyleProvider._layersStylesheet = StyleProvider.createStyleSheet();
         return StyleProvider._layersStylesheet;
+    }
+
+    static get sharedStylesheet(): EffCSSStyleSheet {
+        if (!StyleProvider._sharedStylesheet) StyleProvider._sharedStylesheet = StyleProvider.createStyleSheet();
+        return StyleProvider._sharedStylesheet;
     }
 
     static createStyleSheet = (cssText: string = ''): EffCSSStyleSheet => {
@@ -281,6 +320,35 @@ class StyleProvider {
     }
     
     // creators
+
+    /**
+     * Create an anonymous rule with a class selector
+     * @param rule - rule content
+     */
+    static className: ClassName = (rule: object) => {
+        if (StyleProvider.scope) return '';
+        const scope = StyleProvider.globalScope;
+        const cls = scope.key + '_' + toRadix(scope.counters.selectors++)
+        const stylesheet = StyleProvider.sharedStylesheet;
+        stylesheet.insertRule(`.${cls} {${parseStyles(rule)}}`, stylesheet.cssRules.length);
+        return cls;
+    }
+
+    /**
+     * Create an anonymous rule with an attribute selector
+     * @param rule - rule content
+     */
+    static attribute: Attribute = (rule: object) => {
+        if (StyleProvider.scope) return {};
+        const scope = StyleProvider.globalScope;
+        const attr = `data-${scope.key}`;
+        const val = toRadix(scope.counters.selectors++);
+        const stylesheet = StyleProvider.sharedStylesheet;
+        stylesheet.insertRule(`[${attr}~="${val}"] {${parseStyles(rule)}}`, stylesheet.cssRules.length);
+        return {
+            [attr]: val
+        };
+    }
 
     /**
      * Create variable
@@ -496,30 +564,10 @@ class StyleProvider {
             serverCSSText = serverStylesheet.textContent || '';
             serverStylesheet.disabled = true;
         }
-        let count = 0;
-        let add: (key: string) => string;
-        let hash: undefined | ((key: string) => string);
-        if (type === 'class') {
-            add = StyleProvider.minify ? (key: string) => {
-                dict[key] = scopeKey + '_' + toRadix(count++)
-                return dict[key];
-            } : (key: string) => {
-                dict[key] = scopeKey + '_' + key;
-                count++;
-                return dict[key];
-            }
-            hash = (key: string) => '.' + (dict[key] ?? add(key));
-        } else if (type === 'attr') {
-            add = StyleProvider.minify ? (key: string) => {
-                dict[key] = toRadix(count++)
-                return dict[key];
-            } : (key: string) => {
-                dict[key] = key;
-                count++;
-                return dict[key];
-            };
-            hash = (key: string) => `[data-${scopeKey}~="${dict[key] ?? add(key)}"]`;
-        }
+
+        const hash: undefined | ((key: string) => string) = type && getHash({
+            type, dict, scope
+        });
         const selectors = hash && getSelectorsProxy(hash);
         // save prev
         const prevScope = StyleProvider.scope;
@@ -549,7 +597,8 @@ class StyleProvider {
         },
         serializeStylesheet(StyleProvider._layersStylesheet, 'data-effcss-layers') +
         serializeStylesheet(StyleProvider._variablesStylesheet, 'data-effcss-variables') +
-        serializeStylesheet(StyleProvider._animationsStylesheet, 'data-effcss-animations'));
+        serializeStylesheet(StyleProvider._animationsStylesheet, 'data-effcss-animations') +
+        serializeStylesheet(StyleProvider._sharedStylesheet, 'data-effcss-shared'));
     }
 };
 
@@ -609,6 +658,22 @@ export const containers: Containers = (config) => StyleProvider.containers(confi
 
 // selectors
 
+// single
+
+/**
+ * Create an anonymous rule with a class selector
+ * @param rule - rule content
+ */
+export const className: ClassName = (rule) => StyleProvider.className(rule);
+
+/**
+ * Create an anonymous rule with an attribute selector
+ * @param rule - rule content
+ */
+export const attribute: Attribute = (rule) => StyleProvider.attribute(rule);
+
+// multiple
+
 /**
  * Create a stylesheet with class selectors
  * @param generator - stylesheet generator
@@ -651,6 +716,11 @@ export const animationsStylesheet = () => StyleProvider.animationsStylesheet;
  * Get the layers stylesheet
  */
 export const layersStylesheet = () => StyleProvider.layersStylesheet;
+
+/**
+ * Get the shared stylesheet
+ */
+export const sharedStylesheet = () => StyleProvider.sharedStylesheet;
 
 // advanced
 

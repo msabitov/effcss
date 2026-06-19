@@ -36,6 +36,22 @@ EffCSS is a self-confident CSS-in-TS library based only on the browser APIs. Use
 -   [GitLab](https://gitlab.com/msabitov/effcss)
 -   [NPM](https://www.npmjs.com/package/effcss)
 
+## Examples
+
+-   [Vanilla TS](https://stackblitz.com/edit/effcss-ts-vitejs?file=src%2Fmain.ts)
+-   [React](https://stackblitz.com/edit/effcss-react-vitejs?file=src%2FApp.tsx)
+-   [Svelte](https://stackblitz.com/edit/effcss-svelte-vitejs?file=src%2FApp.svelte)
+-   [Vue](https://stackblitz.com/edit/effcss-vue-vitejs?file=src%2FApp.vue)
+-   [Angular](https://stackblitz.com/edit/effcss-angular-vitejs?file=src%2Fmain.ts)
+-   [SolidJS](https://stackblitz.com/edit/effcss-solidjs-vitejs?file=src%2FApp.tsx)
+-   [Preact](https://stackblitz.com/edit/effcss-preact-vitejs?file=src%2Fapp.tsx)
+-   [Qwik](https://stackblitz.com/edit/effcss-qwik-vitejs?file=src%2Fapp.tsx)
+-   [Lit](https://stackblitz.com/edit/effcss-lit-vitejs?file=src%2Fmy-element.ts)
+-   [React SSR](https://stackblitz.com/edit/effcss-react-ssr-vitejs?file=src%2FApp.tsx)
+-   [Svelte SSR](https://stackblitz.com/edit/effcss-svelte-ssr-vitejs?file=src%2FApp.svelte)
+-   [Vue SSR](https://stackblitz.com/edit/effcss-vue-ssr-vitejs?file=src%2FApp.vue)
+-   [Astro SSG](https://stackblitz.com/edit/effcss-ts-astro?file=src%2Fpages%2Findex.astro)
+
 ## Installation
 
 Type in your terminal:
@@ -63,7 +79,6 @@ import {
     variable, variables,
     animation, animations
 } from 'effcss';
-
 
 // 1. declare
 
@@ -165,7 +180,7 @@ const styleComponents = attributes<Components>((selectors) => {
         [card]: {
             display: 'flex',
             justifyContent: 'center',
-            ':hover': {
+            '&:hover': {
                 filter: `drop-shadow(0 0 2em ${shadowColor()})`
             }
         },
@@ -174,7 +189,7 @@ const styleComponents = attributes<Components>((selectors) => {
         },
         [card.bg.secondary]: {
             // with fallback value
-            background: colors.secondary('')
+            background: colors.secondary('cyan')
         },
         '@media(prefers-color-scheme: dark)': {
             [card + ':hover']: {
@@ -217,10 +232,10 @@ const styleUtils = classNames<Utils>((selectors) => {
             width: widthVars.s()
         },
         [w.m]: {
-            width: widthVars.s()
+            width: widthVars.m()
         },
         [w.l]: {
-            width: widthVars.s()
+            width: widthVars.l()
         },
         // ... and so on
     };

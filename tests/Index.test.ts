@@ -7,7 +7,10 @@ import {
     variable, variables,
     layer, layers,
     animation, animations,
-    update
+    update,
+    className,
+    sharedStylesheet,
+    attribute
 } from '../src/index';
 
 type Card = {
@@ -48,7 +51,7 @@ describe('Utils:', () => {
                         width: 'auto',
                         display: 'block',
                         padding: '12px',
-                        ':hover': {
+                        '&:hover': {
                             cursor: 'pointer'
                         }
                     },
@@ -57,7 +60,7 @@ describe('Utils:', () => {
                         display: 'flex',
                         flexDirection: 'column',
                         padding: '16px',
-                        ':hover': {
+                        '&:hover': {
                             outline: '2px solid black'
                         }
                     },
@@ -99,7 +102,7 @@ describe('Utils:', () => {
                         width: 'auto',
                         display: 'block',
                         padding: '12px',
-                        ':hover': {
+                        '&:hover': {
                             cursor: 'pointer'
                         }
                     },
@@ -108,7 +111,7 @@ describe('Utils:', () => {
                         display: 'flex',
                         flexDirection: 'column',
                         padding: '16px',
-                        ':hover': {
+                        '&:hover': {
                             outline: '2px solid black'
                         }
                     },
@@ -1083,6 +1086,51 @@ describe('Utils:', () => {
             expect(customCSS).toContain('padding: var(--fk-0,1rem);');
             expect(customCSS).toContain('background: var(--fk-2,transparent);');
             expect(customCSS).toContain('color: var(--fk-1);');
+        });
+    });
+
+    describe('Anonymous rules', () => {
+        test('className', () => {
+            const cls = className({
+                margin: 'auto',
+                '&:hover': {
+                    outline: '2px solid black',
+                    '.child': {
+                        background: 'grey'
+                    }
+                }
+            });
+
+            const styles = serialize(sharedStylesheet());
+            expect(cls).toBe('f2_0')
+            expect(styles).toContain(`.f2_0 {` +
+                `\n  margin: auto;` +
+                `\n  &:hover {\n  outline: black solid 2px;` +
+                `\n  & .child { background: grey; }\n}` +
+            `\n}`);
+        });
+
+        test('attribute', () => {
+            const attr = attribute({
+                margin: 'auto',
+                '&:hover': {
+                    outline: '2px solid black',
+                    '.child': {
+                        background: 'grey'
+                    }
+                }
+            });
+
+            const styles = serialize(sharedStylesheet());
+            expect(attr).toEqual({
+                'data-f2': '1'
+            });
+
+            expect(styles).toContain(`[data-f2~="1"] {` +
+                `\n  margin: auto;` +
+                `\n  &:hover {\n  outline: black solid 2px;` +
+                `\n  & .child { background: grey; }\n}` +
+            `\n}`);
         });
     });
 
