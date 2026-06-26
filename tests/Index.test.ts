@@ -10,7 +10,11 @@ import {
     update,
     className,
     sharedStylesheet,
-    attribute
+    attribute,
+    serializeMeta,
+    lazyAttributes,
+    lazyClassNames,
+    lazyCustomStyles
 } from '../src/index';
 
 type Card = {
@@ -1168,6 +1172,207 @@ describe('Utils:', () => {
                 `body { padding: var(--fk-0,1rem); }.class { background: var(--fk-2,transparent); color: var(--fk-1); }` +
                 `</style>`
             );
+        });
+    });
+
+    describe('Serialize meta', () => {
+        test('classNames stylesheet', () => {
+            const meta = serializeMeta();
+            expect(meta).toContain(
+                `<script type="application/json" data-effcss-key="f0">` +
+                `{"w":"f0_0","card":"f0_1","blur":"f0_2","w_s":"f0_3","w_m":"f0_4","w_l":"f0_5","blur_true":"f0_6","card_variant":"f0_7",` +
+                `"card_variant_1":"f0_8","card_variant_2":"f0_9","card_rounded":"f0_a","card_rounded_true":"f0_b"}` +
+                `</script>`
+            );
+        });
+
+        test('attributes stylesheet', () => {
+            const meta = serializeMeta();
+            expect(meta).toContain(
+                `<script type="application/json" data-effcss-key="f1">` +
+                `{"w":"0","card":"1","blur":"2","w_s":"3","w_m":"4","w_l":"5","blur_true":"6","card_variant":"7",` +
+                `"card_variant_1":"8","card_variant_2":"9","card_rounded":"a","card_rounded_true":"b"}` +
+                `</script>`
+            );
+        });
+
+        test('custom stylesheet', () => {
+            const meta = serializeMeta();
+            expect(meta).toContain(
+                `<script type="application/json" data-effcss-key="fk"></script>`
+            );
+        });
+    });
+
+    describe('Lazy stylesheets', () => {
+        test('classNames:', () => {
+            const card = lazyClassNames<Card>((selectors) => {
+                const {w, card, blur} = selectors;
+                return {
+                    [w.s]: {
+                        width: '12px'
+                    },
+                    [w.m]: {
+                        width: '24px'
+                    },
+                    [w.l]: {
+                        width: '26px'
+                    },
+                    [blur.true]: {
+                        filter: 'blur(5px)'
+                    },
+                    [card]: {
+                        background: 'white',
+                        border: 'none'
+                    },
+                    [card.variant[1]]: {
+                        width: 'auto',
+                        display: 'block',
+                        padding: '12px',
+                        '&:hover': {
+                            cursor: 'pointer'
+                        }
+                    },
+                    [card.variant[2]]: {
+                        width: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        padding: '16px',
+                        '&:hover': {
+                            outline: '2px solid black'
+                        }
+                    },
+                    [card.rounded.true]: {
+                        borderRadius: '1rem'
+                    }
+                }
+            });
+            expect(stylesheet(card)).toBeUndefined();
+
+            const cls = card({
+                card: {
+                    rounded: true
+                },
+                w: 's'
+            });
+            expect(stylesheet(card)).toBeDefined();
+            expect(cls).toBe('fl_1 fl_b fl_3');
+        });
+
+        test('attributes:', () => {
+            const card = lazyAttributes<Card>((selectors) => {
+                const {w, card, blur} = selectors;
+                return {
+                    [w.s]: {
+                        width: '12px'
+                    },
+                    [w.m]: {
+                        width: '24px'
+                    },
+                    [w.l]: {
+                        width: '26px'
+                    },
+                    [blur.true]: {
+                        filter: 'blur(5px)'
+                    },
+                    [card]: {
+                        background: 'white',
+                        border: 'none'
+                    },
+                    [card.variant[1]]: {
+                        width: 'auto',
+                        display: 'block',
+                        padding: '12px',
+                        '&:hover': {
+                            cursor: 'pointer'
+                        }
+                    },
+                    [card.variant[2]]: {
+                        width: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        padding: '16px',
+                        '&:hover': {
+                            outline: '2px solid black'
+                        }
+                    },
+                    [card.rounded.true]: {
+                        borderRadius: '1rem'
+                    }
+                }
+            });
+            expect(stylesheet(card)).toBeUndefined();
+
+            const attrs = card({
+                card: {
+                    rounded: true
+                },
+                w: 's'
+            });
+            expect(stylesheet(card)).toBeDefined();
+            expect(attrs).toEqual({
+                'data-fm': '1 b 3'
+            });
+        });
+
+        test('customStyles', () => {
+            const custom = lazyCustomStyles(() => ({
+                'body': {
+                    padding: '1rem'
+                },
+                '.class': {
+                    background: 'transparent',
+                    width: '100%',
+                    '&:focus': {
+                        borderWidth: '0px'
+                    }
+                },
+                'button:hover': {
+                    outline: '2px solid black'
+                },
+                '@media screen and (max-width: 768px)': {
+                    '.class': {
+                        width: '50%'
+                    }
+                }
+            }));
+            expect(stylesheet(custom)).toBeUndefined();
+
+            custom();
+            expect(stylesheet(custom)).toBeDefined();
+        });
+    });
+
+    describe('Special value syntax', () => {
+        test('object array', () => {
+            const custom = customStyles(() => ({
+                '@font-face': [
+                    {
+                        fontFamily: '"Bitstream Vera Serif Bold"',
+                        src: 'url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2")'
+                    },
+                    {
+                        fontFamily: '"MyHelvetica"',
+                        src: 'local("Helvetica Neue Bold"), local("HelveticaNeue-Bold"), url("MgOpenModernaBold.woff2")',
+                        fontWeight: 'bold'
+                    }
+                ]
+            }));
+
+            expect(serialize(stylesheet(custom))).toContain(
+                `@font-face { font-family: "Bitstream Vera Serif Bold"; src: url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2"); }` +
+                `@font-face { font-family: MyHelvetica; src: local("Helvetica Neue Bold"), local("HelveticaNeue-Bold"), url("MgOpenModernaBold.woff2"); font-weight: bold; }`
+            );
+        });
+
+        test('string array', () => {
+            const custom = customStyles(() => ({
+                '.cls': {
+                    textDecoration: ['underline', 'underline dotted']
+                }
+            }));
+
+            expect(serialize(stylesheet(custom))).toContain('.cls { text-decoration: underline dotted; }');
         });
     });
 });

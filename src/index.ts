@@ -15,14 +15,26 @@ import {
     type Scope,
     type CustomStyles,
     type VariableDescription,
+    type Attribute,
+    type ClassName,
+    type Generator,
+    type Update,
     keySymbol,
     indexSymbol,
-    Update,
-    Attribute,
-    ClassName
+    dictSymbol
 } from './types';
 
+export type {
+    Generator
+};
+
 const DIVIDER = '_';
+const STYLE_ATTRS = {
+    layers: 'data-effcss-layers',
+    variables: 'data-effcss-variables',
+    animations: 'data-effcss-animations',
+    shared: 'data-effcss-shared'
+};
 const objectReduce = <
     T extends object,
     F extends (previousValue: any, currentValue: [string, any], currentIndex: number, array: [string, any][]) => any
@@ -42,12 +54,11 @@ const toRadix = (num: number) => num.toString(36);
  * Stringify style object
  * @param key - stylesheet key
  * @param value - stylesheet content
- * @param parent - parent rule key
  */
 const stringify = (key: string, value: object | string | number | undefined | unknown): string => {
     let resKey = '' + key;
     if (value === null || value === undefined) return '';
-    else if (Array.isArray(value)) return value.map((v) => propVal(resKey, v)).join('');
+    else if (Array.isArray(value)) return value.map((v) => stringify(resKey, v)).join('');
     else if (typeof value === 'object') return (
         resKey +
         `{${objectReduce(value, (acc, item) => acc + stringify(...item), '')}}`
@@ -56,10 +67,11 @@ const stringify = (key: string, value: object | string | number | undefined | un
     else return propVal(resKey, value);
 };
 
-const parseStyles = (styles: object): string => objectReduce(styles, (acc, item) => acc + stringify(...item), '');
+const parseStyles = (styles?: object): string => styles ? objectReduce(styles, (acc, item) => acc + stringify(...item), '') : '';
 
-const markStylesheet = (stylesheet: EffCSSStyleSheet, key: string) => {
+const markStylesheet = (stylesheet: EffCSSStyleSheet, key: string, dict: Record<string, string>) => {
     stylesheet[keySymbol] = key;
+    stylesheet[dictSymbol] = dict;
 };
 
 const serializeStylesheet = (stylesheet?: EffCSSStyleSheet, attr?: string) => {
@@ -70,11 +82,34 @@ const serializeStylesheet = (stylesheet?: EffCSSStyleSheet, attr?: string) => {
     return '';
 };
 
+const serializeStylesheetMeta = (stylesheet?: EffCSSStyleSheet, attr?: string) => {
+    const key = stylesheet && stylesheet[keySymbol] || '';
+    if (stylesheet && !stylesheet.disabled) return `<script type="application/json"${key ? ` data-effcss-key="${key}"` : ''}${attr ? ' ' + attr : ''}>${
+        stylesheet[dictSymbol] && Object.keys(stylesheet[dictSymbol]).length ? JSON.stringify(stylesheet[dictSymbol]) : ''
+    }</script>`;
+    return '';
+};
+
 const getServerStylesheet = (key: string) => {
     const head = globalThis.document?.head;
     const stylesheet: HTMLStyleElement | null = head && head.querySelector(`style[data-effcss-key="${key}"]`);
     return stylesheet;
-}
+};
+
+const getServerMetaScript = (key: string) => {
+    const head = globalThis.document?.head;
+    const metaScript: HTMLScriptElement | null = head && head.querySelector(`script[data-effcss-key="${key}"]`);
+    return metaScript;
+};
+
+const getStyleContent = (attr: string): string => {
+    const stylesheet = globalThis.document?.head.querySelector(`[${attr}]`) as HTMLStyleElement | null;
+    if (stylesheet) {
+        stylesheet.disabled = true;
+        return stylesheet.textContent || '';
+    }
+    return '';
+};
 
 const propertySyntaxList = [
     'angle', 'color', 'custom-ident', 'image', 'integer',
@@ -157,6 +192,7 @@ const createScope = (key: string): Scope => ({
         variables: 0,
         keyframes: 0,
         layers: 0,
+        layersDeclarations: 0,
         containers: 0,
         selectors: 0
     },
@@ -229,7 +265,6 @@ class StyleProvider {
 
     // scopes
 
-    protected static _globalDict: Record<string, string> = {};
     protected static _globalScope: Scope;
 
     static get globalScope(): Scope {
@@ -247,6 +282,13 @@ class StyleProvider {
 
     // stylesheets
 
+    protected static _serverCounters = {
+        variables: 0,
+        animations: 0,
+        layers: 0,
+        shared: 0
+    };
+
     protected static _variablesStylesheet?: EffCSSStyleSheet;
     protected static _animationsStylesheet?: EffCSSStyleSheet;
     protected static _layersStylesheet?: EffCSSStyleSheet;
@@ -256,22 +298,38 @@ class StyleProvider {
     static stylesheetsMap: Map<any, EffCSSStyleSheet> = new Map<any, EffCSSStyleSheet>();
 
     static get variablesStylesheet(): EffCSSStyleSheet {
-        if (!StyleProvider._variablesStylesheet) StyleProvider._variablesStylesheet = StyleProvider.createStyleSheet();
+        if (!StyleProvider._variablesStylesheet) {
+            const serverCSS = getStyleContent(STYLE_ATTRS.variables);
+            StyleProvider._variablesStylesheet = StyleProvider.createStyleSheet(serverCSS);
+            if (serverCSS) StyleProvider._serverCounters.variables = StyleProvider._variablesStylesheet.cssRules.length;
+        }
         return StyleProvider._variablesStylesheet;
     }
 
     static get animationsStylesheet(): EffCSSStyleSheet {
-        if (!StyleProvider._animationsStylesheet) StyleProvider._animationsStylesheet = StyleProvider.createStyleSheet();
+        if (!StyleProvider._animationsStylesheet) {
+            const serverCSS = getStyleContent(STYLE_ATTRS.animations);
+            StyleProvider._animationsStylesheet = StyleProvider.createStyleSheet(serverCSS);
+            if (serverCSS) StyleProvider._serverCounters.animations = StyleProvider._animationsStylesheet.cssRules.length;
+        }
         return StyleProvider._animationsStylesheet;
     }
 
     static get layersStylesheet(): EffCSSStyleSheet {
-        if (!StyleProvider._layersStylesheet) StyleProvider._layersStylesheet = StyleProvider.createStyleSheet();
+        if (!StyleProvider._layersStylesheet) {
+            const serverCSS = getStyleContent(STYLE_ATTRS.layers);
+            StyleProvider._layersStylesheet = StyleProvider.createStyleSheet(serverCSS);
+            if (serverCSS) StyleProvider._serverCounters.layers = StyleProvider._layersStylesheet.cssRules.length;
+        }
         return StyleProvider._layersStylesheet;
     }
 
     static get sharedStylesheet(): EffCSSStyleSheet {
-        if (!StyleProvider._sharedStylesheet) StyleProvider._sharedStylesheet = StyleProvider.createStyleSheet();
+        if (!StyleProvider._sharedStylesheet) {
+            const serverCSS = getStyleContent(STYLE_ATTRS.shared);
+            StyleProvider._sharedStylesheet = StyleProvider.createStyleSheet(serverCSS);
+            if (serverCSS) StyleProvider._serverCounters.shared = StyleProvider._sharedStylesheet.cssRules.length;
+        }
         return StyleProvider._sharedStylesheet;
     }
 
@@ -328,9 +386,10 @@ class StyleProvider {
     static className: ClassName = (rule: object) => {
         if (StyleProvider.scope) return '';
         const scope = StyleProvider.globalScope;
-        const cls = scope.key + '_' + toRadix(scope.counters.selectors++)
+        const index = scope.counters.selectors++;
+        const cls = scope.key + '_' + toRadix(index);
         const stylesheet = StyleProvider.sharedStylesheet;
-        stylesheet.insertRule(`.${cls} {${parseStyles(rule)}}`, stylesheet.cssRules.length);
+        if (StyleProvider._serverCounters.shared <= index) stylesheet.insertRule(`.${cls} {${parseStyles(rule)}}`, stylesheet.cssRules.length);
         return cls;
     }
 
@@ -342,9 +401,10 @@ class StyleProvider {
         if (StyleProvider.scope) return {};
         const scope = StyleProvider.globalScope;
         const attr = `data-${scope.key}`;
-        const val = toRadix(scope.counters.selectors++);
+        const index = scope.counters.selectors++;
+        const val = toRadix(index);
         const stylesheet = StyleProvider.sharedStylesheet;
-        stylesheet.insertRule(`[${attr}~="${val}"] {${parseStyles(rule)}}`, stylesheet.cssRules.length);
+        if (StyleProvider._serverCounters.shared <= index) stylesheet.insertRule(`[${attr}~="${val}"] {${parseStyles(rule)}}`, stylesheet.cssRules.length);
         return {
             [attr]: val
         };
@@ -367,9 +427,11 @@ class StyleProvider {
         // global variables
         scope = StyleProvider.globalScope;
         const stylesheet = StyleProvider.variablesStylesheet;
-        const name = `--${scope.key}-${toRadix(scope.counters.variables++)}`;
+        const index = scope.counters.variables++;
+        const name = `--${scope.key}-${toRadix(index)}`;
         const { rule, resolver } = variableRule({ name, config });
-        const index = stylesheet.insertRule(rule, stylesheet.cssRules.length);
+
+        if (StyleProvider._serverCounters.variables <= index) stylesheet.insertRule(rule, index);
         resolver[indexSymbol] = index;
         return resolver;
     }
@@ -384,7 +446,8 @@ class StyleProvider {
         if (scope) {
             const { key: scopeKey, counters, cssText } = scope;
             return Object.entries(config).reduce((acc, [key, val]) => {
-                const name = `--${scopeKey}-${toRadix(counters.variables++)}`;
+                const index = counters.variables++;
+                const name = `--${scopeKey}-${toRadix(index)}`;
                 const { rule, resolver } = variableRule({ name, config: val })
                 cssText.variables += rule;
                 acc[key] = resolver;
@@ -395,9 +458,10 @@ class StyleProvider {
         const { key: scopeKey, counters } = scope;
         const stylesheet = StyleProvider.variablesStylesheet;
         return Object.entries(config).reduce((acc, [key, val]) => {
-            const name = `--${scopeKey}-${toRadix(counters.variables++)}`;
+            const index = counters.variables++
+            const name = `--${scopeKey}-${toRadix(index)}`;
             const { rule, resolver } = variableRule({ name, config: val })
-            const index = stylesheet.insertRule(rule, stylesheet.cssRules.length);
+            if (StyleProvider._serverCounters.variables <= index) stylesheet.insertRule(rule, index);
             resolver[indexSymbol] = index;
             acc[key] = resolver;
             return acc;
@@ -421,9 +485,10 @@ class StyleProvider {
         // global variables
         scope = StyleProvider.globalScope;
         const stylesheet = StyleProvider.animationsStylesheet;
-        const name = `${scope.key}-${toRadix(scope.counters.keyframes++)}`;
-        const { rule, resolver } = animationRule({ name, config })
-        stylesheet.insertRule(rule, stylesheet.cssRules.length);
+        const index = scope.counters.keyframes++;
+        const name = `${scope.key}-${toRadix(index)}`;
+        const { rule, resolver } = animationRule({ name, config });
+        if (StyleProvider._serverCounters.animations <= index) stylesheet.insertRule(rule, index);
         return resolver;
     }
 
@@ -448,9 +513,10 @@ class StyleProvider {
         scope = StyleProvider.globalScope;
         const stylesheet = StyleProvider.animationsStylesheet;
         return Object.entries(config).reduce((acc, [key, val]) => {
-            const name = `${scope.key}-${toRadix(scope.counters.keyframes++)}`;
-            const { rule, resolver } = animationRule({ name, config: val })
-            stylesheet.insertRule(rule, stylesheet.cssRules.length);
+            const index = scope.counters.keyframes++;
+            const name = `${scope.key}-${toRadix(index)}`;
+            const { rule, resolver } = animationRule({ name, config: val });
+            if (StyleProvider._serverCounters.animations <= index) stylesheet.insertRule(rule, index);
             acc[key] = resolver;
             return acc;
         }, {} as Record<string, AnimationResolver>) as AnimationsResolvers<T>;
@@ -466,21 +532,23 @@ class StyleProvider {
             const name = `${scope.key}-${toRadix(scope.counters.layers++)}`;
             const ruleKey = `@layer ${name}`;
             const declaration = ruleKey + ';';
+            scope.counters.layersDeclarations++;
             const resolver = (() => ruleKey) as LayerResolver;
             scope.cssText.layers += declaration;
             resolver[Symbol.toPrimitive] = () => ruleKey;
             return resolver;
-        
         }
         // global layer
         scope = StyleProvider.globalScope;
         const stylesheet = StyleProvider.layersStylesheet;
-        const name = `${scope.key}-${toRadix(scope.counters.layers++)}`;
+        const index = scope.counters.layers++;
+        const name = `${scope.key}-${toRadix(index)}`;
         const ruleKey = `@layer ${name}`;
         const declaration = ruleKey + ';';
+        const declarationIndex = scope.counters.layersDeclarations++;
         const resolver = (() => ruleKey) as LayerResolver;
         resolver[Symbol.toPrimitive] = () => ruleKey;
-        stylesheet.insertRule(declaration, stylesheet.cssRules.length);
+        if (StyleProvider._serverCounters.layers <= declarationIndex) stylesheet.insertRule(declaration, declarationIndex);
         return resolver;
     }
 
@@ -510,7 +578,8 @@ class StyleProvider {
         scope = StyleProvider.globalScope;
         const stylesheet = StyleProvider.layersStylesheet;
         const resolvers = config.reduce((acc, key) => {
-        const name = `${scope.key}-${toRadix(scope.counters.layers++)}`;
+            const index = scope.counters.layers++;
+            const name = `${scope.key}-${toRadix(index)}`;
             order.push(name);
             const ruleKey = `@layer ${name}`;
             const resolver = (() => ruleKey) as LayerResolver;
@@ -518,7 +587,8 @@ class StyleProvider {
             acc[key] = resolver;
             return acc;
         }, {} as Record<NoInfer<T>, LayerResolver>);
-        stylesheet.insertRule(`@layer ${order.join(', ')};`, stylesheet.cssRules.length);
+        const declarationIndex = scope.counters.layersDeclarations++;
+        if (StyleProvider._serverCounters.layers <= declarationIndex) stylesheet.insertRule(`@layer ${order.join(', ')};`, declarationIndex);
         return resolvers;
     }
 
@@ -546,6 +616,58 @@ class StyleProvider {
         }, {} as Record<string, ContainerResolver>) as ContainersResolvers<T>;
     }
 
+    static resolveStylesheet(generator: Function, {type}: {
+        type?: 'class' | 'attr';
+    }) {
+        const stylesheet = StyleProvider.createStyleSheet();
+        const scope = StyleProvider.createScope();
+        const scopeKey = scope.key;
+        const serverStylesheet = getServerStylesheet(scopeKey);
+        let dict: Record<string, string> = {};
+        let cssText: string = '';
+        if (serverStylesheet) {
+            cssText = serverStylesheet.textContent || '';
+            serverStylesheet.disabled = true;
+        }
+
+        const serverMetaScript = getServerMetaScript(scopeKey);
+        if (cssText && serverMetaScript) {
+            dict = JSON.parse(serverMetaScript.textContent || '');
+        } else {
+            const hash: undefined | ((key: string) => string) = type && getHash({
+                type, dict, scope
+            });
+            const selectors = hash && getSelectorsProxy(hash);
+            // save prev
+            const prevScope = StyleProvider.scope;
+            // set next
+            StyleProvider.scope = scope;
+            // calc rules inside current scope
+            let styleObject: object | undefined;
+            // if we have server css for custom styles
+            if (!type && cssText) styleObject = undefined;
+            else styleObject = generator(selectors);
+            // if there are no server CSS
+            if (!cssText) cssText = scope.cssText.layers + scope.cssText.variables + scope.cssText.keyframes + parseStyles(styleObject);
+            // return prev scope
+            StyleProvider.scope = prevScope;
+        }
+        stylesheet.replaceSync(cssText);
+        markStylesheet(stylesheet, scopeKey, dict);
+        const resolveNames = getFromDict(dict);
+        let resolver: Function;
+        if (type === 'class') resolver = resolveNames;
+        else if (type === 'attr') resolver = (
+            config: Record<string, true | Record<string, string | number | boolean>>
+        ) => ({[`data-${scope.key}`]: resolveNames(config)});
+        else resolver = () => null;
+        return {
+            resolver,
+            stylesheet,
+            scope
+        };
+    }
+
     /**
      * Create stylesheet selectors
      * @param generator - stylesheet generator 
@@ -554,51 +676,69 @@ class StyleProvider {
     static selectors(generator: Function, {type}: {
         type?: 'class' | 'attr';
     }) {
-        const scope = StyleProvider.createScope();
-        const scopeKey = scope.key;
-        const stylesheet = StyleProvider.createStyleSheet();
-        const serverStylesheet = getServerStylesheet(scopeKey);
-        const dict: Record<string, string> = {};
-        let serverCSSText: string = '';
-        if (serverStylesheet) {
-            serverCSSText = serverStylesheet.textContent || '';
-            serverStylesheet.disabled = true;
-        }
-
-        const hash: undefined | ((key: string) => string) = type && getHash({
-            type, dict, scope
-        });
-        const selectors = hash && getSelectorsProxy(hash);
-        // save prev
-        const prevScope = StyleProvider.scope;
-        // set next
-        StyleProvider.scope = scope;
-        // calc rules inside current scope
-        const styleObject = generator(selectors);
-        // return prev scope
-        StyleProvider.scope = prevScope;
-        // get styles from object
-        stylesheet.replaceSync(
-            serverCSSText || (scope.cssText.layers + scope.cssText.variables + scope.cssText.keyframes + parseStyles(styleObject))
-        );
-        markStylesheet(stylesheet, scopeKey);
-        const resolveNames = getFromDict(dict);
-        let resolver: Function;
-        if (type === 'class') resolver = resolveNames;
-        else if (type === 'attr') resolver = (config: Record<string, true | Record<string, string | number | boolean>>) => ({[`data-${scope.key}`]: resolveNames(config)});
-        else resolver = () => null;
+        const {resolver, stylesheet} = StyleProvider.resolveStylesheet(generator, {type});
         return StyleProvider.linkStylesheet(resolver, stylesheet);
     }
 
+    static lazySelectors(generator: Function, {type}: {
+        type?: 'class' | 'attr';
+    }) {
+        let selectorsResolver: Function;
+        const lazyResolver = (config: object) => {
+            if (!selectorsResolver) {
+                const {resolver, stylesheet} = StyleProvider.resolveStylesheet(generator, {type});
+                selectorsResolver = resolver;
+                StyleProvider.linkStylesheet(lazyResolver, stylesheet);
+            }
+            return selectorsResolver(config);
+        };
+        return lazyResolver;
+    }
+
+    protected static _serializeLayers(): string {
+        return serializeStylesheet(StyleProvider._layersStylesheet, STYLE_ATTRS.layers);
+    }
+
+    protected static _serializeVariables(): string {
+        return serializeStylesheet(StyleProvider._variablesStylesheet, STYLE_ATTRS.variables);
+    }
+
+    protected static _serializeAnimations(): string {
+        return serializeStylesheet(StyleProvider._animationsStylesheet, STYLE_ATTRS.animations);
+    }
+
+    protected static _serializeShared(): string {
+        return serializeStylesheet(StyleProvider._sharedStylesheet, STYLE_ATTRS.shared);
+    }
+
     static serialize(stylesheet?: EffCSSStyleSheet): string {
-        if (stylesheet) return serializeStylesheet(stylesheet);
+        if (stylesheet) {
+            switch (stylesheet) {
+                case StyleProvider._layersStylesheet:
+                    return StyleProvider._serializeLayers();
+                case StyleProvider._variablesStylesheet:
+                    return StyleProvider._serializeVariables();
+                case StyleProvider._animationsStylesheet:
+                    return StyleProvider._serializeAnimations();
+                case StyleProvider._sharedStylesheet:
+                    return StyleProvider._serializeShared();
+                default:
+                    return serializeStylesheet(stylesheet);
+            }
+        }
         return [...StyleProvider.stylesheetsMap.values()].reduce((acc, stylesheet) => {
             return acc += serializeStylesheet(stylesheet);
-        },
-        serializeStylesheet(StyleProvider._layersStylesheet, 'data-effcss-layers') +
-        serializeStylesheet(StyleProvider._variablesStylesheet, 'data-effcss-variables') +
-        serializeStylesheet(StyleProvider._animationsStylesheet, 'data-effcss-animations') +
-        serializeStylesheet(StyleProvider._sharedStylesheet, 'data-effcss-shared'));
+        }, (
+            StyleProvider._serializeLayers() + StyleProvider._serializeVariables() +
+            StyleProvider._serializeAnimations() + StyleProvider._serializeShared()
+        ));
+    }
+
+    static serializeMeta(stylesheet?: EffCSSStyleSheet): string {
+        if (stylesheet) return serializeStylesheetMeta(stylesheet);
+        return [...StyleProvider.stylesheetsMap.values()].reduce((acc, stylesheet) => {
+            return acc += serializeStylesheetMeta(stylesheet);
+        }, '' as string);
     }
 };
 
@@ -686,13 +826,31 @@ export const classNames: ClassNames = (generator) => StyleProvider.selectors(gen
  */
 export const attributes: Attributes = (generator) => StyleProvider.selectors(generator , { type: 'attr' });
 
-// custom styles
-
 /**
  * Create a custom stylesheet
  * @param generator - stylesheet generator
  */
 export const customStyles: CustomStyles = (generator) => StyleProvider.selectors(generator, { type: undefined });
+
+// lazy
+
+/**
+ * Create a lazy stylesheet with class selectors
+ * @param generator - stylesheet generator
+ */
+export const lazyClassNames: ClassNames = (generator) => StyleProvider.lazySelectors(generator, { type: 'class' }) as ReturnType<ClassNames>;
+
+/**
+ * Create a lazy stylesheet with attribute selectors
+ * @param generator - stylesheet generator
+ */
+export const lazyAttributes: Attributes = (generator) => StyleProvider.lazySelectors(generator , { type: 'attr' }) as ReturnType<Attributes>;
+
+/**
+ * Create a lazy custom stylesheet
+ * @param generator - stylesheet generator
+ */
+export const lazyCustomStyles: CustomStyles = (generator) => StyleProvider.lazySelectors(generator, { type: undefined }) as ReturnType<CustomStyles>;
 
 // stylesheets
 
@@ -700,7 +858,7 @@ export const customStyles: CustomStyles = (generator) => StyleProvider.selectors
  * Get a stylesheet via resolver
  * @param resolver - stylesheet resolver
  */
-export const stylesheet = (resolver: any) => resolver && StyleProvider.stylesheetsMap.get(resolver);
+export const stylesheet = (resolver: Function): EffCSSStyleSheet | undefined => resolver && StyleProvider.stylesheetsMap.get(resolver);
 
 /**
  * Get the variables stylesheet
@@ -736,6 +894,12 @@ export const update: Update = (arg: any, value: any) => StyleProvider.update(arg
  * @param stylesheet - concrete stylesheet
  */
 export const serialize = (stylesheet?: EffCSSStyleSheet) => StyleProvider.serialize(stylesheet);
+
+/**
+ * Serialize metadata for stylesheet/stylesheets
+ * @param stylesheet - concrete stylesheet
+ */
+export const serializeMeta = (stylesheet?: EffCSSStyleSheet) => StyleProvider.serializeMeta(stylesheet);
 
 /**
  * Configure CSS generation

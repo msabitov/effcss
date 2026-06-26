@@ -1,10 +1,7 @@
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
-    serialize,
-    classNames, attributes,
-    configure,
-    customStyles,
-    stylesheet
+    configure, serialize, stylesheet,
+    classNames, attributes, customStyles
 } from '../src/index';
 
 type Card = {
@@ -185,6 +182,39 @@ describe('Configured Utils:', () => {
             expect(styles).toContain(
                 `<style data-effcss-key="effcss2">.custom{padding:12px;}</style>`
             );
+        });
+    });
+
+    describe('Special value syntax', () => {
+        test('object array', () => {
+            const custom = customStyles(() => ({
+                '@font-face': [
+                    {
+                        fontFamily: '"Bitstream Vera Serif Bold"',
+                        src: 'url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2")'
+                    },
+                    {
+                        fontFamily: '"MyHelvetica"',
+                        src: 'local("Helvetica Neue Bold"), local("HelveticaNeue-Bold"), url("MgOpenModernaBold.woff2")',
+                        fontWeight: 'bold'
+                    }
+                ]
+            }));
+
+            expect(serialize(stylesheet(custom))).toContain(
+                `@font-face{font-family:"Bitstream Vera Serif Bold";src:url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2");}` +
+                `@font-face{font-family:"MyHelvetica";src:local("Helvetica Neue Bold"), local("HelveticaNeue-Bold"), url("MgOpenModernaBold.woff2");font-weight:bold;}`
+            );
+        });
+
+        test('string array', () => {
+            const custom = customStyles(() => ({
+                '.cls': {
+                    textDecoration: ['underline', 'underline dotted']
+                }
+            }));
+
+            expect(serialize(stylesheet(custom))).toContain('.cls{text-decoration:underline;text-decoration:underline dotted;}');
         });
     });
 });

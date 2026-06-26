@@ -1,5 +1,6 @@
 export const keySymbol = Symbol('effcss-key');
 export const indexSymbol = Symbol('effcss-index');
+export const dictSymbol = Symbol('effcss-dict');
 
 type GetIndex = {[key in typeof indexSymbol]: number;};
 type ToPrimitive = {[key in typeof Symbol.toPrimitive]: () => string;};
@@ -15,7 +16,7 @@ export type EffCSSStyleSheet = {
     insertRule(rule: string, index: number): number;
     deleteRule(index: number): void;
     replaceSync(rules: string): void;
-} & Record<typeof keySymbol, string | undefined>;
+} & Record<typeof keySymbol, string | undefined> & Record<typeof dictSymbol, Record<string, string> | undefined>;
 
 export type Contract = {
     [key: string]: string | number | boolean | Contract;
@@ -27,6 +28,7 @@ export type Scope = {
         variables: number;
         keyframes: number;
         layers: number;
+        layersDeclarations: number;
         containers: number;
         selectors: number;
     },
