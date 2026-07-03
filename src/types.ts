@@ -24,20 +24,35 @@ export type Contract = {
 
 export type Scope = {
     key: string;
-    counters: {
-        variables: number;
-        keyframes: number;
-        layers: number;
-        layersDeclarations: number;
-        containers: number;
-        selectors: number;
+    // counters
+    c: {
+        // variables
+        v: number;
+        // animations
+        a: number;
+        // layers
+        l: number;
+        // fonts
+        f: number;
+        // layersDeclarations
+        ld: number;
+        // containers
+        c: number;
+        // selectors
+        s: number;
     },
-    cssText: {
-        variables: string;
-        keyframes: string;
-        layers: string;
-        containers: string;
-        styles: string;
+    // cssText
+    t: {
+        // variables
+        v: string;
+        // animations
+        a: string;
+        // layers
+        l: string;
+        // fonts
+        f: string;
+        // containers
+        c: string;
     }
 };
 
@@ -73,7 +88,10 @@ export type VariableDescription = {
 };
 export type VariableConfig = string | number | boolean | VariableDescription;
 
-export type VariableResolver = string & ((fallback?: any) => string) & ToPrimitive & GetIndex;
+export type VariableResolver = string & ((fallback?: any) => string) & ToPrimitive & GetIndex & {
+    set(nextValue: any): void;
+    get(): string;
+};
 export type Variable = <T extends VariableConfig>(description?: T) => VariableResolver;
 
 export type VariablesResolvers<T extends Record<string, VariableConfig>> = {
@@ -104,6 +122,60 @@ export type ContainersResolvers<T extends Record<string, ContainerType>> = {
     [key in keyof T]: ContainerResolver;
 };
 export type Containers= <T extends Record<string, ContainerType>>(description: T) => ContainersResolvers<T>;
+
+// fonts
+export type FontGenericName = 'serif' | 'sans-serif' | 'monospace' | 'cursive' | 'fantasy' | 'system-ui' | 'ui-serif' | 'ui-sans-serif' | 'ui-monospace' | 'ui-rounded' | 'math' | 'fangsong';
+export type FontConfig = {
+    /**
+     * References to font resources
+     */
+    src: string;
+    /**
+     * Generic font family fallback
+     */
+    genericName?: FontGenericName;
+    /**
+     * Font-display
+     */
+    display?: string;
+    /**
+     * Font-stretch 
+     */
+    stretch?: string;
+    /**
+     * Font-style
+     */
+    style?: string;
+    /**
+     * Font-weight
+     */
+    weight?: string | number;
+    /**
+     * Font-variant 
+     */
+    variant?: string;
+    /**
+     * Font-feature-settings
+     */
+    featureSettings?: string;
+    /**
+     * Font-variation-settings
+     */
+    variationSettings?: string;
+    /**
+     * Unicode-range
+     */
+    unicodeRange?: string;
+    /**
+     * Size-adjust
+     */
+    sizeAdjust?: string;
+};
+export type FontResolver = string & ((...fallbacks: any[]) => string) & ToPrimitive;
+export type Font = (descriptors: FontConfig) => FontResolver;
+export type FontsResolvers<T extends Record<string, FontConfig>> = Record<keyof T, FontResolver>;
+export type Fonts = <T extends Record<string, FontConfig>>(description: T) => FontsResolvers<T>;
+
 
 export type Update = {
     <T extends string>(

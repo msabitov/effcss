@@ -16,7 +16,10 @@ import {
     layers,
     sharedStylesheet,
     className,
-    attribute
+    attribute,
+    fontsStylesheet,
+    fonts,
+    font
 } from '../src/index';
 
 type Card = {
@@ -146,7 +149,7 @@ const SERVER_META = (
     `"card_variant_1":"8","card_variant_2":"9","card_rounded":"a","card_rounded_true":"b"}` +
     `</script>`
 ) + (
-    `<script type="application/json" data-effcss-key="f2">{}</script>`
+    `<script type="application/json" data-effcss-key="f2"></script>`
 );
 
 const SERVER_CSS = (
@@ -181,6 +184,13 @@ const SERVER_CSS = (
     `<style data-effcss-animations>@keyframes f3-0{0%{width:100px;}100%{width:200px;}}`+
     `@keyframes f3-1{0%{width:100px;}100%{width:200px;}}`+
     `@keyframes f3-2{0%{opacity:0;}50%{opacity:0.6;}100%{opacity:1;}}</style>`
+)+(
+    `<style data-effcss-fonts>` +
+    `@font-face {font-family:"f3-0";src:url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2");}` +
+    `@font-face {font-family:"f3-1";src:url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff");` +
+    `font-display:swap;font-style:normal;font-weight:400;}` +
+    `@font-face {font-family:"f3-2";src:url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2");}` +
+    `</style>`
 )+(
     `<style data-effcss-shared>.f3_0{margin:auto;&:hover{outline:black solid 2px;&.child{background:grey;}}}`+
     `[data-f3~="1"]{margin:auto;&:hover{outline:black solid 2px;&.child{background:grey;}}}`+
@@ -377,6 +387,47 @@ describe('Utils:', () => {
     
             expect(components + '').toBe('@layer f3-3');
             expect(stylesheet.cssRules?.length).toBe(3);
+            expect(insertRuleSpy).toHaveBeenCalledOnce();
+        });
+
+        test('fonts', () => {
+            const stylesheet = fontsStylesheet();
+            const insertRuleSpy = vi.spyOn(stylesheet, 'insertRule');
+
+            expect(stylesheet.cssRules?.length).toBe(3);
+            expect(insertRuleSpy).not.toHaveBeenCalled();
+
+            const base = font({
+                src: `url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2")`
+            });
+
+            const group = fonts({
+                first: {
+                    src: `url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff")`,
+                    weight: 400,
+                    style: 'normal',
+                    display: 'swap'
+                },
+                second: {
+                    src: `url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2")`
+                }
+            });
+
+            expect(base()).toBe('"f3-0"');
+            expect(group.first()).toBe('"f3-1"');
+            expect(group.second()).toBe('"f3-2"');
+            expect(stylesheet.cssRules?.length).toBe(3);
+            expect(insertRuleSpy).not.toHaveBeenCalled();
+
+            const next = font({
+                src: `url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff")`,
+                weight: 400,
+                style: 'normal',
+                display: 'swap'
+            });
+
+            expect(next()).toBe('"f3-3"');
+            expect(stylesheet.cssRules?.length).toBe(4);
             expect(insertRuleSpy).toHaveBeenCalledOnce();
         });
 

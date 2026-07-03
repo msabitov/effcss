@@ -1,7 +1,11 @@
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
     configure, serialize, stylesheet,
-    classNames, attributes, customStyles
+    classNames, attributes, customStyles,
+    variable,
+    update,
+    variablesStylesheet,
+    variables
 } from '../src/index';
 
 type Card = {
@@ -130,6 +134,15 @@ describe('Configured Utils:', () => {
     });
 
     describe('Configure:', () => {
+        test('blocks configuration when stylesheets are created:', () => {
+            const result = configure({
+                prefix: 'next',
+                minify: false,
+                emulate: true
+            });
+            expect(result).toBeFalsy();
+        });
+
         test('custom prefix:', () => {
             const cssText = serialize();
             expect(cssText).toContain(`.${prefix}0_card_rounded_true`);
@@ -215,6 +228,76 @@ describe('Configured Utils:', () => {
             }));
 
             expect(serialize(stylesheet(custom))).toContain('.cls{text-decoration:underline;text-decoration:underline dotted;}');
+        });
+    });
+
+    describe('Update', () => {
+        test('single variable', () => {
+            const size = variable('12px');
+            const color = variable({
+                syntax: 'color',
+                inherits: false,
+                initialValue: 'red'
+            });
+            const empty = variable();
+
+            expect(size.get()).toBe('12px');
+            expect(color.get()).toBe('red');
+            expect(empty.get()).toBe('');
+
+            update(size, '24px');
+            update(color, 'black');
+
+            let varsCSS = serialize(variablesStylesheet());
+            expect(varsCSS).toContain(`@property ${size} {syntax:"*";inherits:true;initial-value:24px;}`);
+            expect(varsCSS).toContain(`@property ${color} {syntax:"<color>";inherits:false;initial-value:black;}`);
+            expect(varsCSS).toContain(`@property ${empty} {syntax:"*";inherits:true;}`);
+
+            expect(size.get()).toBe('24px');
+            expect(color.get()).toBe('black');
+
+            size.set('28px');
+            color.set('#fefefe');
+            empty.set('45deg');
+
+            expect(size.get()).toBe('28px');
+            expect(color.get()).toBe('#fefefe');
+            expect(empty.get()).toBe('45deg');
+
+            varsCSS = serialize(variablesStylesheet());
+            expect(varsCSS).toContain(`@property ${size} {syntax:"*";inherits:true;initial-value:28px;}`);
+            expect(varsCSS).toContain(`@property ${color} {syntax:"<color>";inherits:false;initial-value:#fefefe;}`);
+            expect(varsCSS).toContain(`@property ${empty} {syntax:"*";inherits:true;initial-value:45deg;}`);
+
+            empty.set('');
+            expect(empty.get()).toBe('');
+        });
+
+        test('multiple variables', () => {
+            const vars = variables({
+                size: '12px',
+                color: {
+                    syntax: 'color',
+                    inherits: false,
+                    initialValue: 'red'
+                }
+            });
+
+            update(vars, {
+                size: '24px',
+                color: 'black'
+            });
+
+            let varsCSS = serialize(variablesStylesheet());
+            expect(varsCSS).toContain(`@property ${vars.size} {syntax:"*";inherits:true;initial-value:24px;}`);
+            expect(varsCSS).toContain(`@property ${vars.color} {syntax:"<color>";inherits:false;initial-value:black;}`);
+
+            vars.size.set('28px');
+            vars.color.set('grey');
+
+            varsCSS = serialize(variablesStylesheet());
+            expect(varsCSS).toContain(`@property ${vars.size} {syntax:"*";inherits:true;initial-value:28px;}`);
+            expect(varsCSS).toContain(`@property ${vars.color} {syntax:"<color>";inherits:false;initial-value:grey;}`);
         });
     });
 });

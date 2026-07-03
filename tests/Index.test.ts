@@ -14,7 +14,10 @@ import {
     serializeMeta,
     lazyAttributes,
     lazyClassNames,
-    lazyCustomStyles
+    lazyCustomStyles,
+    font,
+    fontsStylesheet,
+    fonts
 } from '../src/index';
 
 type Card = {
@@ -80,6 +83,7 @@ describe('Utils:', () => {
                 w: 's'
             });
             expect(cls).toBe('f0_1 f0_b f0_3');
+            expect(serialize(card)).toBe(serialize(stylesheet(card)));
         });
 
         test('attributes:', () => {
@@ -133,6 +137,7 @@ describe('Utils:', () => {
             expect(attrs).toEqual({
                 'data-f1': '1 b 3'
             });
+            expect(serialize(card)).toBe(serialize(stylesheet(card)));
         });
     });
 
@@ -561,6 +566,70 @@ describe('Utils:', () => {
                     expect(cardCSS).toContain('container: fa-2 / size scroll-state;');
                 });
             });
+
+            describe('font:', () => {
+                test('global', () => {
+                    const first = font({
+                        src: `url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff")`,
+                        weight: 400,
+                        style: 'normal',
+                        display: 'swap'
+                    });
+                    const second = font({
+                        src: `url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2")`,
+                        genericName: 'sans-serif'
+                    });
+            
+                    const card = classNames<Card>((selectors) => {
+                        const {card} = selectors;
+                        return {
+                            body: {
+                                fontFamily: first()
+                            },
+                            [card]: {
+                                fontFamily: second(first)
+                            }
+                        };
+                    });
+
+                    const cardCSS = serialize(stylesheet(card));
+                    const fontCSS = serialize(fontsStylesheet());
+                    expect(fontCSS).toContain('@font-face { font-family: f2-0;');
+                    expect(fontCSS).toContain('@font-face { font-family: f2-1;');
+                    expect(cardCSS).toContain('font-family: f2-0;');
+                    expect(cardCSS).toContain('font-family: f2-1, f2-0, sans-serif;');
+                });
+
+                test('local', () => {
+                    const card = classNames<Card>((selectors) => {
+                        const {card} = selectors;
+            
+                        const first = font({
+                            src: `url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff")`,
+                            weight: 400,
+                            style: 'normal',
+                            display: 'swap'
+                        });
+                        const second = font({
+                            src: `url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2")`
+                        });
+                        return {
+                            body: {
+                                fontFamily: first()
+                            },
+                            [card]: {
+                                fontFamily: second(first)
+                            }
+                        };
+                    });
+
+                    const cardCSS = serialize(stylesheet(card));
+                    expect(cardCSS).toContain('@font-face { font-family: fc-0;');
+                    expect(cardCSS).toContain('@font-face { font-family: fc-1;');
+                    expect(cardCSS).toContain('font-family: fc-0;');
+                    expect(cardCSS).toContain('font-family: fc-1, fc-0;');
+                });
+            });
         });
 
         describe('multiple rules:', () => {
@@ -658,13 +727,13 @@ describe('Utils:', () => {
                     });
             
                     const cardCSS = serialize(stylesheet(card));
-                    expect(cardCSS).toContain('@property --fc-0');
-                    expect(cardCSS).toContain('@property --fc-1');
-                    expect(cardCSS).toContain('--fc-0: 10px;');
-                    expect(cardCSS).toContain('var(--fc-0)');
-                    expect(cardCSS).toContain('var(--fc-0,18px)');
-                    expect(cardCSS).toContain('var(--fc-1)');
-                    expect(cardCSS).toContain('var(--fc-1,grey)');
+                    expect(cardCSS).toContain('@property --fe-0');
+                    expect(cardCSS).toContain('@property --fe-1');
+                    expect(cardCSS).toContain('--fe-0: 10px;');
+                    expect(cardCSS).toContain('var(--fe-0)');
+                    expect(cardCSS).toContain('var(--fe-0,18px)');
+                    expect(cardCSS).toContain('var(--fe-1)');
+                    expect(cardCSS).toContain('var(--fe-1,grey)');
                 });
             });
 
@@ -768,10 +837,10 @@ describe('Utils:', () => {
                     });
             
                     const cardCSS = serialize(stylesheet(card));
-                    expect(cardCSS).toContain('@keyframes fe-0');
-                    expect(cardCSS).toContain('@keyframes fe-1');
-                    expect(cardCSS).toContain('fe-0');
-                    expect(cardCSS).toContain('animation-name: fe-1;');
+                    expect(cardCSS).toContain('@keyframes fg-0');
+                    expect(cardCSS).toContain('@keyframes fg-1');
+                    expect(cardCSS).toContain('fg-0');
+                    expect(cardCSS).toContain('animation-name: fg-1;');
                 });
             });
 
@@ -861,10 +930,10 @@ describe('Utils:', () => {
                     });
             
                     const cardCSS = serialize(stylesheet(card));
-                    expect(cardCSS).toContain('@layer fg-0, fg-1, fg-2;');
-                    expect(cardCSS).toContain('@layer fg-0 {');
-                    expect(cardCSS).toContain('@layer fg-1 {');
-                    expect(cardCSS).toContain('@layer fg-2 {');
+                    expect(cardCSS).toContain('@layer fi-0, fi-1, fi-2;');
+                    expect(cardCSS).toContain('@layer fi-0 {');
+                    expect(cardCSS).toContain('@layer fi-1 {');
+                    expect(cardCSS).toContain('@layer fi-2 {');
                 });
             });
 
@@ -982,12 +1051,80 @@ describe('Utils:', () => {
                     });
             
                     const cardCSS = serialize(stylesheet(card));
-                    expect(cardCSS).toContain('@container fi-0 not scroll-state(scrollable: none)');
-                    expect(cardCSS).toContain('@container fi-1 (max-width: 768px)');
-                    expect(cardCSS).toContain('@container fi-2 (height > 30rem)');
-                    expect(cardCSS).toContain('container: fi-0');
-                    expect(cardCSS).toContain('container: fi-1 / inline-size;');
-                    expect(cardCSS).toContain('container: fi-2 / size scroll-state;');
+                    expect(cardCSS).toContain('@container fk-0 not scroll-state(scrollable: none)');
+                    expect(cardCSS).toContain('@container fk-1 (max-width: 768px)');
+                    expect(cardCSS).toContain('@container fk-2 (height > 30rem)');
+                    expect(cardCSS).toContain('container: fk-0');
+                    expect(cardCSS).toContain('container: fk-1 / inline-size;');
+                    expect(cardCSS).toContain('container: fk-2 / size scroll-state;');
+                });
+            });
+
+            describe('fonts:', () => {
+                test('global', () => {
+                    const globalFonts = fonts({
+                        first: {
+                            src: `url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff")`,
+                            weight: 400,
+                            style: 'normal',
+                            display: 'swap'
+                        },
+                        second: {
+                            src: `url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2")`,
+                            genericName: 'sans-serif'
+                        }
+                    });
+            
+                    const card = classNames<Card>((selectors) => {
+                        const {card} = selectors;
+                        return {
+                            body: {
+                                fontFamily: globalFonts.first()
+                            },
+                            [card]: {
+                                fontFamily: globalFonts.second()
+                            }
+                        };
+                    });
+
+                    const cardCSS = serialize(stylesheet(card));
+                    const fontCSS = serialize(fontsStylesheet());
+                    expect(fontCSS).toContain('@font-face { font-family: f2-2;');
+                    expect(fontCSS).toContain('@font-face { font-family: f2-3;');
+                    expect(cardCSS).toContain('font-family: f2-2;');
+                    expect(cardCSS).toContain('font-family: f2-3, sans-serif;');
+                });
+
+                test('local', () => {
+                    const card = classNames<Card>((selectors) => {
+                        const {card} = selectors;
+            
+                        const localFonts = fonts({
+                            first: {
+                                src: `url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff")`,
+                                weight: 400,
+                                style: 'normal',
+                                display: 'swap'
+                            },
+                            second: {
+                                src: `url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2")`
+                            }
+                        });
+                        return {
+                            body: {
+                                fontFamily: localFonts.first()
+                            },
+                            [card]: {
+                                fontFamily: localFonts.second('sans-serif')
+                            }
+                        };
+                    });
+
+                    const cardCSS = serialize(card);
+                    expect(cardCSS).toContain('@font-face { font-family: fm-0;');
+                    expect(cardCSS).toContain('@font-face { font-family: fm-1;');
+                    expect(cardCSS).toContain('font-family: fm-0;');
+                    expect(cardCSS).toContain('font-family: fm-1, sans-serif;');
                 });
             });
         });
@@ -1001,13 +1138,38 @@ describe('Utils:', () => {
                 inherits: false,
                 initialValue: 'red'
             });
+            const empty = variable();
+
+            expect(size.get()).toBe('12px');
+            expect(color.get()).toBe('red');
+            expect(empty.get()).toBe('');
 
             update(size, '24px');
             update(color, 'black');
 
-            const varsCSS = serialize(variablesStylesheet());
+            let varsCSS = serialize(variablesStylesheet());
             expect(varsCSS).toContain(`@property ${size} { syntax: "*"; inherits: true; initial-value: 24px; }`);
             expect(varsCSS).toContain(`@property ${color} { syntax: "<color>"; inherits: false; initial-value: black; }`);
+            expect(varsCSS).toContain(`@property ${empty} { syntax: "*"; inherits: true; }`);
+
+            expect(size.get()).toBe('24px');
+            expect(color.get()).toBe('black');
+
+            size.set('28px');
+            color.set('#fefefe');
+            empty.set('45deg');
+
+            expect(size.get()).toBe('28px');
+            expect(color.get()).toBe('#fefefe');
+            expect(empty.get()).toBe('45deg');
+
+            varsCSS = serialize(variablesStylesheet());
+            expect(varsCSS).toContain(`@property ${size} { syntax: "*"; inherits: true; initial-value: 28px; }`);
+            expect(varsCSS).toContain(`@property ${color} { syntax: "<color>"; inherits: false; initial-value: #fefefe; }`);
+            expect(varsCSS).toContain(`@property ${empty} { syntax: "*"; inherits: true; initial-value: 45deg; }`);
+
+            empty.set('');
+            expect(empty.get()).toBe('');
         });
 
         test('multiple variables', () => {
@@ -1025,9 +1187,16 @@ describe('Utils:', () => {
                 color: 'black'
             });
 
-            const varsCSS = serialize(variablesStylesheet());
+            let varsCSS = serialize(variablesStylesheet());
             expect(varsCSS).toContain(`@property ${vars.size} { syntax: "*"; inherits: true; initial-value: 24px; }`);
             expect(varsCSS).toContain(`@property ${vars.color} { syntax: "<color>"; inherits: false; initial-value: black; }`);
+
+            vars.size.set('28px');
+            vars.color.set('grey');
+
+            varsCSS = serialize(variablesStylesheet());
+            expect(varsCSS).toContain(`@property ${vars.size} { syntax: "*"; inherits: true; initial-value: 28px; }`);
+            expect(varsCSS).toContain(`@property ${vars.color} { syntax: "<color>"; inherits: false; initial-value: grey; }`);
         });
     });
 
@@ -1055,6 +1224,7 @@ describe('Utils:', () => {
             }));
 
             const customCSS = serialize(stylesheet(custom));;
+            expect(customCSS).toBe(serialize(custom));
             expect(customCSS).toContain(
                 `body { padding: 1rem; }` +
                 `.class {\n  background: transparent; width: 100%;\n  &:focus { border-width: 0px; }\n}` +
@@ -1083,13 +1253,13 @@ describe('Utils:', () => {
 
             const customCSS = serialize(stylesheet(custom));;
             expect(customCSS).toContain(
-                `@property --fk-0 { syntax: "*"; inherits: true; }` +
-                `@property --fk-1 { syntax: "*"; inherits: true; initial-value: black; }` +
-                `@property --fk-2 { syntax: "*"; inherits: true; initial-value: grey; }`
+                `@property --fo-0 { syntax: "*"; inherits: true; }` +
+                `@property --fo-1 { syntax: "*"; inherits: true; initial-value: black; }` +
+                `@property --fo-2 { syntax: "*"; inherits: true; initial-value: grey; }`
             );
-            expect(customCSS).toContain('padding: var(--fk-0,1rem);');
-            expect(customCSS).toContain('background: var(--fk-2,transparent);');
-            expect(customCSS).toContain('color: var(--fk-1);');
+            expect(customCSS).toContain('padding: var(--fo-0,1rem);');
+            expect(customCSS).toContain('background: var(--fo-2,transparent);');
+            expect(customCSS).toContain('color: var(--fo-1);');
         });
     });
 
@@ -1166,10 +1336,10 @@ describe('Utils:', () => {
         test('custom stylesheet', () => {
             const styles = serialize();
             expect(styles).toContain(
-                `<style data-effcss-key="fk">` +
-                `@property --fk-0 { syntax: "*"; inherits: true; }@property --fk-1 { syntax: "*"; inherits: true; initial-value: black; }` +
-                `@property --fk-2 { syntax: "*"; inherits: true; initial-value: grey; }` +
-                `body { padding: var(--fk-0,1rem); }.class { background: var(--fk-2,transparent); color: var(--fk-1); }` +
+                `<style data-effcss-key="fo">` +
+                `@property --fo-0 { syntax: "*"; inherits: true; }@property --fo-1 { syntax: "*"; inherits: true; initial-value: black; }` +
+                `@property --fo-2 { syntax: "*"; inherits: true; initial-value: grey; }` +
+                `body { padding: var(--fo-0,1rem); }.class { background: var(--fo-2,transparent); color: var(--fo-1); }` +
                 `</style>`
             );
         });
@@ -1199,7 +1369,7 @@ describe('Utils:', () => {
         test('custom stylesheet', () => {
             const meta = serializeMeta();
             expect(meta).toContain(
-                `<script type="application/json" data-effcss-key="fk"></script>`
+                `<script type="application/json" data-effcss-key="fo"></script>`
             );
         });
     });
@@ -1256,7 +1426,7 @@ describe('Utils:', () => {
                 w: 's'
             });
             expect(stylesheet(card)).toBeDefined();
-            expect(cls).toBe('fl_1 fl_b fl_3');
+            expect(cls).toBe('fp_1 fp_b fp_3');
         });
 
         test('attributes:', () => {
@@ -1311,7 +1481,7 @@ describe('Utils:', () => {
             });
             expect(stylesheet(card)).toBeDefined();
             expect(attrs).toEqual({
-                'data-fm': '1 b 3'
+                'data-fq': '1 b 3'
             });
         });
 

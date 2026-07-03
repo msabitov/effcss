@@ -18,6 +18,8 @@
 
 EffCSS is a self-confident CSS-in-TS library based only on the browser APIs. Use the full power of JS and TS to create styles.
 
+<a href="https://www.producthunt.com/products/effcss?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-effcss" target="_blank" rel="noopener noreferrer"><img alt="EffCSS - Self-confident CSS-in-TS | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1182584&amp;theme=neutral&amp;t=1782663997840"></a>
+
 ## Some features
 
 -   zero-dependency,
