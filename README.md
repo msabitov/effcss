@@ -10,6 +10,7 @@
 
 [![license](https://badgen.net/static/license/Apache%202.0/blue)](https://sourcecraft.dev/msabitov/effcss/browse/LICENSE?rev=master)
 [![npm latest package](https://badgen.net/npm/v/effcss)](https://www.npmjs.com/package/effcss)
+[![Coverage Status](https://coveralls.io/repos/github/msabitov/effcss/badge.svg?branch=master)](https://coveralls.io/github/msabitov/effcss?branch=master)
 ![minified size](https://badgen.net/bundlephobia/min/effcss)
 ![minzipped size](https://badgen.net/bundlephobia/minzip/effcss)
 ![install size](https://badgen.net/packagephobia/install/effcss)
@@ -32,10 +33,7 @@ EffCSS is a self-confident CSS-in-TS library based only on the browser APIs. Use
 
 -   [Docs](https://effnd.tech/css/)
 -   [SourceCraft](https://sourcecraft.dev/msabitov/effcss)
--   [GitFlic](https://gitflic.ru/project/msabitov/effcss)
--   [GitVerse](https://gitverse.ru/msabitov/effcss)
 -   [GitHub](https://github.com/msabitov/effcss)
--   [GitLab](https://gitlab.com/msabitov/effcss)
 -   [NPM](https://www.npmjs.com/package/effcss)
 
 ## Examples

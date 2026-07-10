@@ -1,14 +1,18 @@
 {
     "name": "effcss",
-    "version": "5.3.0",
+    "version": "5.3.1",
     "description": "Self-confident CSS-in-TS",
     "type": "module",
     "scripts": {
         "build": "rollup -c",
-        "test": "vitest"
+        "test": "vitest",
+        "coverage": "vitest run --coverage",
+        "coverage:submit": "vitest run --coverage && coveralls < ./coverage/lcov.info"
     },
     "keywords": [
         "ui",
+        "user interface",
+        "front-end",
         "typescript",
         "css",
         "css-in-js",
@@ -28,13 +32,15 @@
     "devDependencies": {
         "@rollup/plugin-terser": "^1.0.0",
         "@rollup/plugin-typescript": "^12.3.0",
-        "@vitest/browser-playwright": "^4.1.8",
+        "@vitest/browser-playwright": "^4.1.10",
+        "@vitest/coverage-v8": "^4.1.10",
+        "coveralls": "^3.1.1",
         "playwright": "^1.50.1",
         "rollup": "^4.59.0",
         "rollup-plugin-cleaner": "^1.0.0",
         "tslib": "^2.8.1",
         "typescript": "^6.0.3",
-        "vitest": "^4.1.0"
+        "vitest": "^4.1.10"
     },
     "files": [
         "LICENSE",
@@ -44,7 +50,7 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://sourcecraft.dev/msabitov/effcss"
+        "url": "https://github.com/msabitov/effcss"
     },
     "homepage": "https://effnd.tech/css/"
 }

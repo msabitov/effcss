@@ -32,13 +32,16 @@ import {
 export type {
     Generator
 };
-
-const PREFIX = 'data-effcss-';
+const LIBRARY = 'effcss';
+const PREFIX = 'data-' + LIBRARY + '-';
+const KEY_ATTR = PREFIX + 'key';
 const DIVIDER = '_';
 const CSS_RULES = 'cssRules';
 const STYLE_ATTRS = ['layers', 'variables', 'fonts', 'animations', 'shared'].reduce((acc, key) => ({
     ...acc, [key]: PREFIX + key
 }), {} as Record<string, string>);
+const keyAttr = (val: string) => `${KEY_ATTR}="${val}"`;
+const keyAttrSelector = (val: string) => `[${keyAttr(val)}]`;
 const objectReduce = <
     T extends object,
     F extends (previousValue: any, currentValue: [string, any], currentIndex: number, array: [string, any][]) => any
@@ -80,7 +83,7 @@ const markStylesheet = (stylesheet: EffCSSStyleSheet, key: string, dict: Record<
 
 const serializeStylesheet = (stylesheet?: EffCSSStyleSheet, attr?: string) => {
     const key = stylesheet && stylesheet[keySymbol] || '';
-    if (stylesheet && !stylesheet.disabled) return `<style${key ? ` data-effcss-key="${key}"` : ''}${attr ? ' ' + attr : ''}>${[
+    if (stylesheet && !stylesheet.disabled) return `<style${key ? (' ' + keyAttr(key)) : ''}${attr ? ' ' + attr : ''}>${[
         ...stylesheet[CSS_RULES]
     ].reduce((acc, rule) => acc += rule.cssText, '')}</style>`;
     return '';
@@ -88,7 +91,7 @@ const serializeStylesheet = (stylesheet?: EffCSSStyleSheet, attr?: string) => {
 
 const serializeStylesheetMeta = (stylesheet?: EffCSSStyleSheet, attr?: string) => {
     const key = stylesheet && stylesheet[keySymbol] || '';
-    if (stylesheet && !stylesheet.disabled) return `<script type="application/json"${key ? ` data-effcss-key="${key}"` : ''}${attr ? ' ' + attr : ''}>${
+    if (stylesheet && !stylesheet.disabled) return `<script type="application/json"${key ? (' ' + keyAttr(key)) : ''}${attr ? ' ' + attr : ''}>${
         stylesheet[dictSymbol] && Object.keys(stylesheet[dictSymbol]).length ? JSON.stringify(stylesheet[dictSymbol]) : ''
     }</script>`;
     return '';
@@ -96,13 +99,13 @@ const serializeStylesheetMeta = (stylesheet?: EffCSSStyleSheet, attr?: string) =
 
 const getServerStylesheet = (key: string) => {
     const head = globalThis.document?.head;
-    const stylesheet: HTMLStyleElement | null = head && head.querySelector(`style[data-effcss-key="${key}"]`);
+    const stylesheet: HTMLStyleElement | null = head && head.querySelector('style' + keyAttrSelector(key));
     return stylesheet;
 };
 
 const getServerMetaScript = (key: string) => {
     const head = globalThis.document?.head;
-    const metaScript: HTMLScriptElement | null = head && head.querySelector(`script[data-effcss-key="${key}"]`);
+    const metaScript: HTMLScriptElement | null = head && head.querySelector('script' + keyAttrSelector(key));
     return metaScript;
 };
 
@@ -334,14 +337,15 @@ class StyleProvider {
 
     // global scope
     static get gs(): Scope {
-        if (!StyleProvider._gs) StyleProvider._gs = StyleProvider.createScope();
+        if (!StyleProvider._gs) StyleProvider._gs = StyleProvider.cs();
         return StyleProvider._gs;
     }
 
     static scope: Scope | null = null;
     static scopeCount = 0;
 
-    static createScope(): Scope {
+    // create scope
+    static cs(): Scope {
         const key = StyleProvider.prefix + toRadix(StyleProvider.scopeCount++);
         return createScope(key);
     }
@@ -368,12 +372,12 @@ class StyleProvider {
     // fonts stylesheet
     protected static _fs?: EffCSSStyleSheet;
 
-    static stylesheetsMap: Map<any, EffCSSStyleSheet> = new Map<any, EffCSSStyleSheet>();
+    static map: Map<any, EffCSSStyleSheet> = new Map<any, EffCSSStyleSheet>();
 
     static get vs(): EffCSSStyleSheet {
         if (!StyleProvider._vs) {
             const serverCSS = getStyleContent(STYLE_ATTRS.variables);
-            StyleProvider._vs = StyleProvider.createStyleSheet(serverCSS);
+            StyleProvider._vs = StyleProvider.cst(serverCSS);
             if (serverCSS) StyleProvider._sc.v = StyleProvider._vs[CSS_RULES].length;
         }
         return StyleProvider._vs;
@@ -382,7 +386,7 @@ class StyleProvider {
     static get as(): EffCSSStyleSheet {
         if (!StyleProvider._as) {
             const serverCSS = getStyleContent(STYLE_ATTRS.animations);
-            StyleProvider._as = StyleProvider.createStyleSheet(serverCSS);
+            StyleProvider._as = StyleProvider.cst(serverCSS);
             if (serverCSS) StyleProvider._sc.a = StyleProvider._as[CSS_RULES].length;
         }
         return StyleProvider._as;
@@ -391,7 +395,7 @@ class StyleProvider {
     static get ls(): EffCSSStyleSheet {
         if (!StyleProvider._ls) {
             const serverCSS = getStyleContent(STYLE_ATTRS.layers);
-            StyleProvider._ls = StyleProvider.createStyleSheet(serverCSS);
+            StyleProvider._ls = StyleProvider.cst(serverCSS);
             if (serverCSS) StyleProvider._sc.l = StyleProvider._ls[CSS_RULES].length;
         }
         return StyleProvider._ls;
@@ -400,7 +404,7 @@ class StyleProvider {
     static get fs(): EffCSSStyleSheet {
         if (!StyleProvider._fs) {
             const serverCSS = getStyleContent(STYLE_ATTRS.fonts);
-            StyleProvider._fs = StyleProvider.createStyleSheet(serverCSS);
+            StyleProvider._fs = StyleProvider.cst(serverCSS);
             if (serverCSS) StyleProvider._sc.f = StyleProvider._fs[CSS_RULES].length;
         }
         return StyleProvider._fs;
@@ -409,13 +413,14 @@ class StyleProvider {
     static get ss(): EffCSSStyleSheet {
         if (!StyleProvider._ss) {
             const serverCSS = getStyleContent(STYLE_ATTRS.shared);
-            StyleProvider._ss = StyleProvider.createStyleSheet(serverCSS);
+            StyleProvider._ss = StyleProvider.cst(serverCSS);
             if (serverCSS) StyleProvider._sc.s = StyleProvider._ss[CSS_RULES].length;
         }
         return StyleProvider._ss;
     }
 
-    static createStyleSheet = (cssText: string = ''): EffCSSStyleSheet => {
+    // createStyleSheet
+    static cst = (cssText: string = ''): EffCSSStyleSheet => {
         let stylesheet;
         if (!globalThis.CSSStyleSheet || StyleProvider.emulate) {
             stylesheet = {
@@ -445,8 +450,9 @@ class StyleProvider {
         return stylesheet as unknown as EffCSSStyleSheet;
     }
 
-    static linkStylesheet(resolver: any, stylesheet: EffCSSStyleSheet) {
-        StyleProvider.stylesheetsMap.set(resolver, stylesheet);
+    // linkStylesheet
+    static lst(resolver: any, stylesheet: EffCSSStyleSheet) {
+        StyleProvider.map.set(resolver, stylesheet);
         return resolver;
     }
 
@@ -753,11 +759,12 @@ class StyleProvider {
         }, {} as Record<string, FontResolver>) as FontsResolvers<T>;
     }
 
-    static resolveStylesheet(generator: Function, {type}: {
+    // resolveStylesheet
+    static rst(generator: Function, {type}: {
         type?: 'class' | 'attr';
     }) {
-        const stylesheet = StyleProvider.createStyleSheet();
-        const scope = StyleProvider.createScope();
+        const stylesheet = StyleProvider.cst();
+        const scope = StyleProvider.cs();
         const scopeKey = scope.key;
         const serverStylesheet = getServerStylesheet(scopeKey);
         let dict: Record<string, string> = {};
@@ -813,8 +820,8 @@ class StyleProvider {
     static selectors(generator: Function, {type}: {
         type?: 'class' | 'attr';
     }) {
-        const {resolver, stylesheet} = StyleProvider.resolveStylesheet(generator, {type});
-        return StyleProvider.linkStylesheet(resolver, stylesheet);
+        const {resolver, stylesheet} = StyleProvider.rst(generator, {type});
+        return StyleProvider.lst(resolver, stylesheet);
     }
 
     static lazySelectors(generator: Function, {type}: {
@@ -823,9 +830,9 @@ class StyleProvider {
         let selectorsResolver: Function;
         const lazyResolver = (config: object) => {
             if (!selectorsResolver) {
-                const {resolver, stylesheet} = StyleProvider.resolveStylesheet(generator, {type});
+                const {resolver, stylesheet} = StyleProvider.rst(generator, {type});
                 selectorsResolver = resolver;
-                StyleProvider.linkStylesheet(lazyResolver, stylesheet);
+                StyleProvider.lst(lazyResolver, stylesheet);
             }
             return selectorsResolver(config);
         };
@@ -855,7 +862,7 @@ class StyleProvider {
     static serialize(arg?: EffCSSStyleSheet | Function): string {
         let stylesheet: EffCSSStyleSheet | undefined;
         if (typeof arg === 'function') {
-            stylesheet = StyleProvider.stylesheetsMap.get(arg);
+            stylesheet = StyleProvider.map.get(arg);
             // if no stylesheet found
             if (!stylesheet) return '';
         } else stylesheet = arg;
@@ -876,7 +883,7 @@ class StyleProvider {
                     return serializeStylesheet(stylesheet);
             }
         }
-        return [...StyleProvider.stylesheetsMap.values()].reduce((acc, stylesheet) => {
+        return [...StyleProvider.map.values()].reduce((acc, stylesheet) => {
             return acc += serializeStylesheet(stylesheet);
         }, (
             StyleProvider._sl() + StyleProvider._sv() +
@@ -887,12 +894,12 @@ class StyleProvider {
     static serializeMeta(arg?: EffCSSStyleSheet | Function): string {
         let stylesheet: EffCSSStyleSheet | undefined;
         if (typeof arg === 'function') {
-            stylesheet = StyleProvider.stylesheetsMap.get(arg);
+            stylesheet = StyleProvider.map.get(arg);
             // if no stylesheet found
             if (!stylesheet) return '';
         } else stylesheet = arg;
         if (stylesheet) return serializeStylesheetMeta(stylesheet);
-        return [...StyleProvider.stylesheetsMap.values()].reduce((acc, stylesheet) => {
+        return [...StyleProvider.map.values()].reduce((acc, stylesheet) => {
             return acc += serializeStylesheetMeta(stylesheet);
         }, '' as string);
     }
@@ -1026,7 +1033,7 @@ export const lazyCustomStyles: CustomStyles = (generator) => StyleProvider.lazyS
  * Get a stylesheet via resolver
  * @param resolver - stylesheet resolver
  */
-export const stylesheet = (resolver: Function): EffCSSStyleSheet | undefined => resolver && StyleProvider.stylesheetsMap.get(resolver);
+export const stylesheet = (resolver: Function): EffCSSStyleSheet | undefined => resolver && StyleProvider.map.get(resolver);
 
 /**
  * Get the variables stylesheet

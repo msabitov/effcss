@@ -1343,6 +1343,45 @@ describe('Utils:', () => {
                 `</style>`
             );
         });
+
+        test('disabled stylesheet', () => {
+            const custom = customStyles(() => ({
+                'body': {
+                    padding: '1rem'
+                },
+                '.class': {
+                    background: 'transparent',
+                    width: '100%',
+                    '&:focus': {
+                        borderWidth: '0px'
+                    }
+                },
+                'button:hover': {
+                    outline: '2px solid black'
+                },
+                '@media screen and (max-width: 768px)': {
+                    '.class': {
+                        width: '50%'
+                    }
+                }
+            }));
+
+            expect(serialize(custom)).toBe(
+                `<style data-effcss-key="fp">body { padding: 1rem; }.class {\n  background: transparent; width: 100%;\n  &:focus { border-width: 0px; }` +
+                `\n}button:hover { outline: black solid 2px; }@media screen and (max-width: 768px) {\n  .class { width: 50%; }\n}` +
+                `</style>`
+            );
+
+            const customStylesheet = stylesheet(custom);
+            if (customStylesheet) customStylesheet.disabled = true
+            expect(serialize(custom)).toBe('');
+            expect(serialize(customStylesheet)).toBe('');
+        });
+
+        test('arbitrary function', () => {
+            const custom = () => {};
+            expect(serialize(custom)).toBe('');
+        });
     });
 
     describe('Serialize meta', () => {
@@ -1371,6 +1410,42 @@ describe('Utils:', () => {
             expect(meta).toContain(
                 `<script type="application/json" data-effcss-key="fo"></script>`
             );
+        });
+
+        test('disabled stylesheet', () => {
+            const custom = customStyles(() => ({
+                'body': {
+                    padding: '1rem'
+                },
+                '.class': {
+                    background: 'transparent',
+                    width: '100%',
+                    '&:focus': {
+                        borderWidth: '0px'
+                    }
+                },
+                'button:hover': {
+                    outline: '2px solid black'
+                },
+                '@media screen and (max-width: 768px)': {
+                    '.class': {
+                        width: '50%'
+                    }
+                }
+            }));
+
+            expect(serializeMeta(custom)).toBe(
+                `<script type="application/json" data-effcss-key="fq"></script>`
+            );
+
+            const customStylesheet = stylesheet(custom);
+            if (customStylesheet) customStylesheet.disabled = true
+            expect(serializeMeta(custom)).toBe('');
+        });
+
+        test('arbitrary function', () => {
+            const custom = () => {};
+            expect(serializeMeta(custom)).toBe('');
         });
     });
 
@@ -1426,7 +1501,7 @@ describe('Utils:', () => {
                 w: 's'
             });
             expect(stylesheet(card)).toBeDefined();
-            expect(cls).toBe('fp_1 fp_b fp_3');
+            expect(cls).toBe('fr_1 fr_b fr_3');
         });
 
         test('attributes:', () => {
@@ -1481,7 +1556,7 @@ describe('Utils:', () => {
             });
             expect(stylesheet(card)).toBeDefined();
             expect(attrs).toEqual({
-                'data-fq': '1 b 3'
+                'data-fs': '1 b 3'
             });
         });
 

@@ -5,6 +5,18 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.1] - 2026-07-10
+
+### Added
+
+- Vitest coverage scripts and deps
+- tests for serialization of disabled stylesheets and arbitrary functions
+
+### Changed
+
+- Vitest config now contains `coverage`
+- minor edits to README including a link to Coverage Status
+
 ## [5.3.0] - 2026-07-03
 
 ### Added
@@ -711,7 +723,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[5.3.0]: https://github.com/msabitov/effcss
+[5.3.1]: https://github.com/msabitov/effcss
+[5.3.0]: https://github.com/msabitov/effcss/commit/ea8e29f4a2cfe3d0b9e2a82a49d7c9317df25c5f
 [5.2.0]: https://github.com/msabitov/effcss/commit/583f58540b402507a3573de8658cd7b3d6529415
 [5.1.0]: https://github.com/msabitov/effcss/commit/7f5f831225fe8b4b5ba5f67c9568f3bd798a1ce8
 [5.0.0]: https://github.com/msabitov/effcss/commit/f9892c3a6c7d7026ce42279cad391ee01896ac5e

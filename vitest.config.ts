@@ -8,5 +8,15 @@ export default defineConfig({
       provider: playwright(),
       instances: [{ browser: 'chromium' }]
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'lcov'],
+      thresholds: {
+        lines: 90,
+        branches: 90,
+        functions: 90,
+        statements: 90
+      }
+    }
   }
 });
