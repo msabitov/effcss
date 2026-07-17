@@ -176,10 +176,31 @@ export type Font = (descriptors: FontConfig) => FontResolver;
 export type FontsResolvers<T extends Record<string, FontConfig>> = Record<keyof T, FontResolver>;
 export type Fonts = <T extends Record<string, FontConfig>>(description: T) => FontsResolvers<T>;
 
-
 export type Update = {
     <T extends string>(
         argument: VariablesResolvers<Record<T, VariableConfig>>, value: {[key in T]?: string | number | boolean | null | undefined}
     ): void
     (argument: VariableResolver, value: string | number | boolean | null | undefined): void;
 };
+
+export type StyleSheetType = 'classNames' | 'attributes' | 'customStyles';
+export type EffCSSEvent = {
+    css: string;
+} & (
+      { fn: 'variable'; name: string; }
+    | { fn: 'variables'; names: string[]; }
+    | { fn: 'variable.set'; name: string; value: string; }
+    | { fn: 'animation'; name: string; }
+    | { fn: 'animations'; names: string[]; }
+    | { fn: 'layer'; name: string; }
+    | { fn: 'layers'; names: string[]; }
+    | { fn: 'font'; name: string; }
+    | { fn: 'fonts'; names: string[]; }
+    | { fn: 'container'; name: string; type: string;}
+    | { fn: 'containers'; items: {name: string; type: string;}[]}
+    | { fn: 'className'; result: string; }
+    | { fn: 'attribute'; result: object; }
+    | { fn: 'classNames'; dict: Record<string, string>; key: string; }
+    | { fn: 'attributes'; dict: Record<string, string>; key: string; }
+    | { fn: 'customStyles'; dict: Record<string, string>; key: string; }
+);
