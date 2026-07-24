@@ -1,6 +1,8 @@
-export const keySymbol = Symbol('effcss-key');
-export const indexSymbol = Symbol('effcss-index');
-export const dictSymbol = Symbol('effcss-dict');
+import {
+    keySymbol,
+    indexSymbol,
+    dictSymbol
+} from './constants';
 
 type GetIndex = {[key in typeof indexSymbol]: number;};
 type ToPrimitive = {[key in typeof Symbol.toPrimitive]: () => string;};
@@ -16,7 +18,7 @@ export type EffCSSStyleSheet = {
     insertRule(rule: string, index: number): number;
     deleteRule(index: number): void;
     replaceSync(rules: string): void;
-} & Record<typeof keySymbol, string | undefined> & Record<typeof dictSymbol, Record<string, string> | undefined>;
+} & Partial<Record<typeof keySymbol, string> & Record<typeof dictSymbol, Record<string, string>>>;
 
 export type Contract = {
     [key: string]: string | number | boolean | Contract;
@@ -110,8 +112,8 @@ export type Animations = <T extends Record<string, AnimationConfig>>(description
 // layers
 export type LayerResolver = string & (() => string) & ToPrimitive;
 export type Layer = () => LayerResolver;
-
-export type Layers = <T extends string>(description: T[]) => Record<NoInfer<T>, LayerResolver>;
+export type LayersResolvers<T extends string> = Record<NoInfer<T>, LayerResolver>;
+export type Layers = <T extends string>(description: T[]) => LayersResolvers<T>;
 
 // containers
 export type ContainerType = '' | 'normal' | 'inline-size' | 'size' | 'anchored' | 'scroll-state' | 'inline-size scroll-state' | 'size scroll-state';

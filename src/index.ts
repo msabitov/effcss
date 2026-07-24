@@ -1,40 +1,53 @@
+import type {
+    CustomStyles,
+    ClassNames, ClassNamesResolver,
+    Attributes, AttributesResolver,
+    Attribute, ClassName,
+    Variable, VariableResolver,
+    Animation, AnimationResolver,
+    Container, ContainerResolver,
+    Layer, LayerResolver,
+    Font, FontResolver,
+    Variables, VariablesResolvers,
+    Animations, AnimationsResolvers,
+    Containers, ContainersResolvers,
+    Layers, LayersResolvers,
+    Fonts, FontsResolvers,
+    EffCSSStyleSheet, EffCSSEvent, Generator,
+
+    VariableConfig,
+    AnimationConfig,
+    ContainerType,
+    FontConfig,
+    Scope,
+    VariableDescription,
+    Update,
+    StyleSheetType
+} from './types';
 import {
-    type ClassNames, type Attributes,
-    type Variable, type Animation, type Container, type Layer,
-    type Variables, type Animations, type Containers, type Layers,
-    type EffCSSStyleSheet,
-    type VariableConfig, type VariableResolver,
-    type VariablesResolvers,
-    type AnimationResolver,
-    type AnimationConfig,
-    type AnimationsResolvers,
-    type LayerResolver,
-    type ContainerResolver,
-    type ContainerType,
-    type ContainersResolvers,
-    type Scope,
-    type CustomStyles,
-    type VariableDescription,
-    type Attribute,
-    type ClassName,
-    type Generator,
-    type Update,
-    type EffCSSEvent,
-    type StyleSheetType,
     keySymbol,
     indexSymbol,
     dictSymbol,
-    Font,
-    FontConfig,
-    FontResolver,
-    FontsResolvers,
-    Fonts
-} from './types';
+    LIBRARY
+} from './constants';
 
 export type {
-    Generator
+    CustomStyles,
+    ClassNames, ClassNamesResolver,
+    Attributes, AttributesResolver,
+    Attribute, ClassName,
+    Variable, VariableResolver,
+    Animation, AnimationResolver,
+    Container, ContainerResolver,
+    Layer, LayerResolver,
+    Font, FontResolver,
+    Variables, VariablesResolvers,
+    Animations, AnimationsResolvers,
+    Containers, ContainersResolvers,
+    Layers, LayersResolvers,
+    Fonts, FontsResolvers,
+    EffCSSStyleSheet, EffCSSEvent, Generator
 };
-const LIBRARY = 'effcss';
 const PREFIX = 'data-' + LIBRARY + '-';
 const KEY_ATTR = PREFIX + 'key';
 const DIVIDER = '_';
@@ -98,9 +111,11 @@ const serializeStylesheet = (stylesheet?: EffCSSStyleSheet, attr?: string) => {
 };
 
 const serializeStylesheetMeta = (stylesheet?: EffCSSStyleSheet) => {
-    const key = stylesheet && stylesheet[keySymbol] || '';
-    if (stylesheet && !stylesheet.disabled) return `<script type="application/json"${key ? (' ' + keyAttr(key)) : ''}>${
-        stylesheet[dictSymbol] && Object.keys(stylesheet[dictSymbol]).length ? JSON.stringify(stylesheet[dictSymbol]) : ''
+    if (!stylesheet) return '';
+    const key = stylesheet[keySymbol];
+    const dict = stylesheet[dictSymbol];
+    if (!stylesheet.disabled && key && dict) return `<script type="application/json" ${keyAttr(key)}>${
+        Object.keys(dict).length ? JSON.stringify(dict) : ''
     }</script>`;
     return '';
 };
@@ -121,7 +136,7 @@ const getStyleContent = (attr: string): string => {
     const stylesheet = globalThis.document?.head.querySelector(`[${attr}]`) as HTMLStyleElement | null;
     if (stylesheet) {
         stylesheet.disabled = true;
-        return stylesheet.textContent || '';
+        return stylesheet.textContent;
     }
     return '';
 };
@@ -384,21 +399,22 @@ class StyleProvider {
     static map: Map<any, EffCSSStyleSheet> = new Map<any, EffCSSStyleSheet>();
 
     // subscribers
-    protected static _subscribers: Set<(data: EffCSSEvent) => void> = new Set();
-    protected static _hasSubscribers: boolean = false;
+    protected static _sub: Set<(data: EffCSSEvent) => void> = new Set();
+    // hasSubscribers
+    protected static _hs: boolean = false;
 
     protected static emit(data: EffCSSEvent): void {
-        for (const fn of StyleProvider._subscribers) {
+        for (const fn of StyleProvider._sub) {
             try { fn(data); } catch { /* ignore */ }
         }
     }
 
     static subscribe(fn: (data: EffCSSEvent) => void): () => void {
-        StyleProvider._subscribers.add(fn);
-        StyleProvider._hasSubscribers = !!StyleProvider._subscribers.size;
+        StyleProvider._sub.add(fn);
+        StyleProvider._hs = !!StyleProvider._sub.size;
         return () => {
-            StyleProvider._subscribers.delete(fn);
-            StyleProvider._hasSubscribers = !!StyleProvider._subscribers.size;
+            StyleProvider._sub.delete(fn);
+            StyleProvider._hs = !!StyleProvider._sub.size;
         };
     }
 
@@ -505,7 +521,7 @@ class StyleProvider {
         const cssText = selector + ` {${parseStyles(rule)}}`;
         const stylesheet = StyleProvider.ss;
         if (StyleProvider._sc.s <= index) stylesheet.insertRule(cssText, stylesheet[CSS_RULES].length);
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: 'className', css: cssText, result: cls });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: 'className', css: cssText, result: cls });
         return cls;
     }
 
@@ -522,7 +538,7 @@ class StyleProvider {
         const cssText = `[${attr}~="${val}"] {${parseStyles(rule)}}`;
         const stylesheet = StyleProvider.ss;
         if (StyleProvider._sc.s <= index) stylesheet.insertRule(cssText, stylesheet[CSS_RULES].length);
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: 'attribute', css: cssText, result: {[attr]: val} });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: 'attribute', css: cssText, result: {[attr]: val} });
         return {
             [attr]: val
         };
@@ -554,7 +570,7 @@ class StyleProvider {
             replaceVariableRule(stylesheet, f, value);
         };
         f.get = () => getVariableValue(stylesheet, f);
-        if (StyleProvider._hasSubscribers) {
+        if (StyleProvider._hs) {
             StyleProvider.emit({ fn: 'variable', css: s, name });
             f.set = (value: any) => {
                 const css = replaceVariableRule(stylesheet, f, value);
@@ -595,7 +611,7 @@ class StyleProvider {
             f[indexSymbol] = index;
             return {name, s, f};
         };
-        const handlers = Object.entries(config).reduce(StyleProvider._hasSubscribers ? (acc, [key, val]) => {
+        const handlers = Object.entries(config).reduce(StyleProvider._hs ? (acc, [key, val]) => {
             const { name, s, f } = prepare(val);
             f.set = (value: any) => {
                 const css = replaceVariableRule(stylesheet, f, value);
@@ -613,7 +629,7 @@ class StyleProvider {
             acc[key] = f;
             return acc;
         }, {} as Record<string, VariableResolver>) as VariablesResolvers<T>;
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: 'variables', css: fullCSS, names });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: 'variables', css: fullCSS, names });
         return handlers;
     }
 
@@ -637,7 +653,7 @@ class StyleProvider {
         const name = `${scope.key}-${toRadix(index)}`;
         const { s, f } = animationRule({ name, config });
         if (StyleProvider._sc.a <= index) stylesheet.insertRule(s, index);
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: 'animation', css: s, name });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: 'animation', css: s, name });
         return f;
     }
 
@@ -670,7 +686,7 @@ class StyleProvider {
             if (StyleProvider._sc.a <= index) stylesheet.insertRule(s, index);
             return {name, s, f};
         };
-        const handlers = Object.entries(config).reduce(StyleProvider._hasSubscribers ? (acc, [key, val]) => {
+        const handlers = Object.entries(config).reduce(StyleProvider._hs ? (acc, [key, val]) => {
             const {name, s, f} = prepare(val);
             fullCSS += s;
             names.push(name);
@@ -680,7 +696,7 @@ class StyleProvider {
             acc[key] = prepare(val).f;
             return acc;
         }, {} as Record<string, AnimationResolver>) as AnimationsResolvers<T>;
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: 'animations', css: fullCSS, names });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: 'animations', css: fullCSS, names });
         return handlers;
     }
 
@@ -711,7 +727,7 @@ class StyleProvider {
         const resolver = (() => ruleKey) as LayerResolver;
         resolver[Symbol.toPrimitive] = () => ruleKey;
         if (StyleProvider._sc.l <= declarationIndex) stylesheet.insertRule(declaration, declarationIndex);
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: 'layer', css: declaration, name });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: 'layer', css: declaration, name });
         return resolver;
     }
 
@@ -719,7 +735,7 @@ class StyleProvider {
      * Create layers
      * @param config - layers config
      */
-    static layers = <T extends string>(config: T[]): Record<NoInfer<T>, LayerResolver> => {
+    static layers = <T extends string>(config: T[]): LayersResolvers<T> => {
         // local layers
         let scope = StyleProvider.scope;
         const order: string[] = [];
@@ -753,7 +769,7 @@ class StyleProvider {
         const declaration = `@layer ${order.join(', ')};`;
         const declarationIndex = scope.c.ld++;
         if (StyleProvider._sc.l <= declarationIndex) stylesheet.insertRule(declaration, declarationIndex);
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: 'layers', css: declaration, names: order });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: 'layers', css: declaration, names: order });
         return resolvers;
     }
 
@@ -773,7 +789,7 @@ class StyleProvider {
      */
     static container: Container = (containerType) => {
         const {name, type, resolver} = StyleProvider._container(containerType);
-        if (StyleProvider._hasSubscribers && !StyleProvider.scope) StyleProvider.emit({ fn: 'container', name, type, css: '' });
+        if (StyleProvider._hs && !StyleProvider.scope) StyleProvider.emit({ fn: 'container', name, type, css: '' });
         return resolver;
     }
 
@@ -785,7 +801,7 @@ class StyleProvider {
         const items: {name: string; type: string;}[] = [];
         const callback: (
             acc: Record<string, ContainerResolver>, [key, containerType]: [string, ContainerType]
-        ) => Record<string, ContainerResolver> = StyleProvider._hasSubscribers && !StyleProvider.scope ? (acc, [key, containerType]) => {
+        ) => Record<string, ContainerResolver> = StyleProvider._hs && !StyleProvider.scope ? (acc, [key, containerType]) => {
             const {name, type, resolver} = StyleProvider._container(containerType);
             acc[key] = resolver;
             items.push({name, type});
@@ -795,7 +811,7 @@ class StyleProvider {
             return acc;
         };
         const handlers = Object.entries(config).reduce(callback, {} as Record<string, ContainerResolver>) as ContainersResolvers<T>;
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: 'containers', items, css: '' });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: 'containers', items, css: '' });
         return handlers;
     }
 
@@ -820,7 +836,7 @@ class StyleProvider {
         const { s, f } = fontRule({ name, config });
 
         if (StyleProvider._sc.f <= index) stylesheet.insertRule(s, index);
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: 'font', css: s, name });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: 'font', css: s, name });
         return f;
     }
 
@@ -853,7 +869,7 @@ class StyleProvider {
             if (StyleProvider._sc.f <= index) stylesheet.insertRule(s, index);
             return {name, s, f};
         };
-        const handlers = Object.entries(config).reduce(StyleProvider._hasSubscribers ? (acc, [key, val]) => {
+        const handlers = Object.entries(config).reduce(StyleProvider._hs ? (acc, [key, val]) => {
             const {name, s, f} = prepare(val);
             fullCSS += s;
             names.push(name);
@@ -863,7 +879,7 @@ class StyleProvider {
             acc[key] = prepare(val).f;
             return acc;
         }, {} as Record<string, FontResolver>) as FontsResolvers<T>;
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: 'fonts', css: fullCSS, names });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: 'fonts', css: fullCSS, names });
         return handlers;
     }
 
@@ -906,7 +922,7 @@ class StyleProvider {
         }
         stylesheet.replaceSync(cssText);
         markStylesheet(stylesheet, scopeKey, dict);
-        if (StyleProvider._hasSubscribers) StyleProvider.emit({ fn: type, css: cssText, key: scopeKey, dict });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: type, css: cssText, key: scopeKey, dict });
         const resolveNames = getFromDict(dict);
         let resolver: Function;
         if (type === CLASSNAMES) resolver = resolveNames;

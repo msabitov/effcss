@@ -5,25 +5,34 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.1] - 2026-07-24
+
+### Added
+- utility types exports
+- variable tests for short and long syntax forms
+- serialization tests for arbitrary stylesheets
+
+### Fixed
+- metadata serialization for an arbitrary stylesheet - now it returns an empty string (test added)
+
+### Changed
+- usage example in the README
+
 ## [5.4.0] - 2026-07-17
 
 ### Added
-
 - `subscribe` utility that tracks the EffCSS style creation events (types and tests added)
 
 ### Changed
-
 - minor adjustments to coverage settings
 
 ## [5.3.1] - 2026-07-10
 
 ### Added
-
 - Vitest coverage scripts and deps
 - tests for serialization of disabled stylesheets and arbitrary functions
 
 ### Changed
-
 - Vitest config now contains `coverage`
 - minor edits to README including a link to Coverage Status
 
@@ -108,7 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - bug with updating a theme variable containing a primitive value to an object value
 
-### Updated
+### Changed
 - TypeScript types and interfaces for Style provider utils and attributes have been updated
 
 ## [4.13.0] - 2026-03-11
@@ -733,7 +742,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[5.4.0]: https://github.com/msabitov/effcss
+[5.4.1]: https://github.com/msabitov/effcss
+[5.4.0]: https://github.com/msabitov/effcss/commit/1d606649b4c0b32b28810ea9ea6faabbfc6831c0
 [5.3.1]: https://github.com/msabitov/effcss/commit/f4d3b36045c1d2f11337c8f5489ce8521ba41dec
 [5.3.0]: https://github.com/msabitov/effcss/commit/ea8e29f4a2cfe3d0b9e2a82a49d7c9317df25c5f
 [5.2.0]: https://github.com/msabitov/effcss/commit/583f58540b402507a3573de8658cd7b3d6529415

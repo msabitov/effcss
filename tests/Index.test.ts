@@ -242,6 +242,22 @@ describe('Utils:', () => {
                     expect(cardCSS).toContain('var(--f4-1)');
                     expect(cardCSS).toContain('var(--f4-1,grey)');
                 });
+
+                test('short and long syntax forms', () => {
+                    const angleShortSyntax = variable({
+                        syntax: 'angle',
+                        initialValue: '45deg'
+                    });
+
+                    const lengthLongSyntax = variable({
+                        syntax: '"<length> | <percentage>"',
+                        initialValue: '200px'
+                    });
+
+                    const varsCSS = serialize(variablesStylesheet());
+                    expect(varsCSS).toContain('syntax: "<angle>"; inherits: true; initial-value: 45deg;');
+                    expect(varsCSS).toContain('syntax: "<length> | <percentage>"; inherits: true; initial-value: 200px;');
+                });
             });
 
             describe('animation:', () => {
@@ -676,14 +692,14 @@ describe('Utils:', () => {
                     });
                     const varsCSS = serialize(variablesStylesheet());
                     const cardCSS = serialize(stylesheet(card));
-                    expect(varsCSS).toContain('@property --f2-2');
-                    expect(varsCSS).toContain('@property --f2-3');
-                    expect(cardCSS).toContain('--f2-2: 10px;');
-                    expect(cardCSS).toContain('var(--f2-2)');
-                    expect(cardCSS).toContain('var(--f2-2)');
-                    expect(cardCSS).toContain('var(--f2-2,18px)');
-                    expect(cardCSS).toContain('var(--f2-3)');
-                    expect(cardCSS).toContain('var(--f2-3,grey)');
+                    expect(varsCSS).toContain('@property --f2-4');
+                    expect(varsCSS).toContain('@property --f2-5');
+                    expect(cardCSS).toContain('--f2-4: 10px;');
+                    expect(cardCSS).toContain('var(--f2-4)');
+                    expect(cardCSS).toContain('var(--f2-4)');
+                    expect(cardCSS).toContain('var(--f2-4,18px)');
+                    expect(cardCSS).toContain('var(--f2-5)');
+                    expect(cardCSS).toContain('var(--f2-5,grey)');
                 });
 
                 test('local', () => {
@@ -1382,6 +1398,12 @@ describe('Utils:', () => {
             const custom = () => {};
             expect(serialize(custom)).toBe('');
         });
+
+        test('arbitrary stylesheet', () => {
+            const customStylesheet = new CSSStyleSheet();
+            customStylesheet.replaceSync('.cls {width: 100%;} [data-vh] {height: 100vh;}');
+            expect(serialize(customStylesheet)).toBe('<style>.cls { width: 100%; }[data-vh] { height: 100vh; }</style>');
+        });
     });
 
     describe('Serialize meta', () => {
@@ -1446,6 +1468,12 @@ describe('Utils:', () => {
         test('arbitrary function', () => {
             const custom = () => {};
             expect(serializeMeta(custom)).toBe('');
+        });
+
+        test('arbitrary stylesheet', () => {
+            const customStylesheet = new CSSStyleSheet();
+            customStylesheet.replaceSync('.cls {width: 100%;} [data-vh] {height: 100vh;}')
+            expect(serializeMeta(customStylesheet)).toBe('');
         });
     });
 
@@ -1618,6 +1646,19 @@ describe('Utils:', () => {
             }));
 
             expect(serialize(stylesheet(custom))).toContain('.cls { text-decoration: underline dotted; }');
+        });
+
+        test('statement rules', () => {
+            const custom = customStyles(() => ({
+                '@layer base, utils': '',
+                '@layer base': {
+                    '.cls': {
+                        fontWeight: 'bold'
+                    }
+                }
+            }));
+
+            expect(serialize(stylesheet(custom))).toContain('@layer base, utils;');
         });
     });
 });

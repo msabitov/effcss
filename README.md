@@ -75,10 +75,51 @@ Just declare stylesheet contract, implement it and apply ready selectors:
 
 ```tsx
 import {
-    classNames, attributes,
+    className, classNames,
+    attribute, attributes,
     variable, variables,
     animation, animations
 } from 'effcss';
+
+// you can create independent rules
+
+// returns classname string
+const bgCls = className({
+    background: 'white',
+    '&:hover': {
+        borderRadius: '1em'
+    }
+});
+
+// returns object with data-attribute
+const fontAttr = attribute({
+    fontWeight: 'bold'
+});
+
+// single global variable
+// shadowColor() => var(--unique-variable-name)
+const shadowColor = variable('#58666d');
+
+// multiple global variables
+// widthVars.s() => var(--unique-variable-name)
+const widthVars = variables({
+    s: '12px',
+    m: '16px',
+    l: '20px'
+});
+
+// single global animation
+// spinAnimation = unique-animation-name
+const spinAnimation = animation({
+    from: {
+        transform: 'rotate(0deg)',
+    },
+    to: {
+        transform: 'rotate(360deg)',
+    },
+});
+
+// also you can create isolated stylesheets
 
 // 1. declare
 
@@ -134,27 +175,8 @@ type Utils = {
 
 // 2. implement
 
-// single global variable
-const shadowColor = variable('#58666d');
-
-// multiple global variables
-const widthVars = variables({
-    s: '12px',
-    m: '16px',
-    l: '20px'
-});
-
-// single global animation
-const spinAnimation = animation({
-    from: {
-        transform: 'rotate(0deg)',
-    },
-    to: {
-        transform: 'rotate(360deg)',
-    },
-});
-
 // creates a stylesheet with attribute selectors
+// styleComponents({rounded: true}) => {[data-unique-key]: 'some values'}
 const styleComponents = attributes<Components>((selectors) => {
     const { rounded, card, spinner } = selectors;
 
@@ -201,6 +223,7 @@ const styleComponents = attributes<Components>((selectors) => {
 });
 
 // creates a stylesheet with class selectors
+// styleUtils({w: 's'}) => 'string with classnames'
 const styleUtils = classNames<Utils>((selectors) => {
     const { w, spacing, blink } = selectors;
 
@@ -258,7 +281,7 @@ const utilsCls = styleUtils({
 
 export const App = () => {
     return <div {...cardAttrs} className={utilsCls}>
-        ...
+        <p {...fontAttr} className={bgCls}>...</p>
     </div>
 };
 ```
