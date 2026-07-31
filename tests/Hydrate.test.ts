@@ -219,7 +219,9 @@ describe('Utils:', () => {
             expect(classNamesSpy).not.toHaveBeenCalled();
             expect(cls).toBe('f0_1 f0_b f0_3');
 
-            const cssText = serialize(stylesheet(card));
+            const cardStylesheet = stylesheet(card);
+            expect((cardStylesheet?.ownerNode as Element | null)?.tagName).toBe('STYLE');
+            const cssText = serialize(cardStylesheet);
             expect(cssText).toContain(
                 `.f0_3 { width: 12px; }.f0_4 { width: 24px; }.f0_5 { width: 26px; }` +
                 `.f0_6 { filter: blur(5px); }.f0_1 { background: white; }` +
@@ -246,7 +248,9 @@ describe('Utils:', () => {
                 'data-f1': '1 b 3'
             });
 
-            const cssText = serialize(stylesheet(card));
+            const cardStylesheet = stylesheet(card);
+            expect((cardStylesheet?.ownerNode as Element | null)?.tagName).toBe('STYLE');
+            const cssText = serialize(cardStylesheet);
             expect(cssText).toContain(
                 `[data-f1~="3"] { width: 12px; }[data-f1~="4"] { width: 24px; }[data-f1~="5"] { width: 26px; }` +
                 `[data-f1~="6"] { filter: blur(5px); }` +
@@ -266,7 +270,9 @@ describe('Utils:', () => {
 
             expect(customStylesSpy).not.toHaveBeenCalled();
 
-            const cssText = serialize(stylesheet(custom));
+            const customStylesheet = stylesheet(custom);
+            expect((customStylesheet?.ownerNode as Element | null)?.tagName).toBe('STYLE');
+            const cssText = serialize(customStylesheet);
             expect(cssText).toContain(
                 `@property --f2-0 { syntax: "*"; inherits: true; }` +
                 `@property --f2-1 { syntax: "*"; inherits: true; initial-value: black; }` +

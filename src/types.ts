@@ -18,6 +18,7 @@ export type EffCSSStyleSheet = {
     insertRule(rule: string, index: number): number;
     deleteRule(index: number): void;
     replaceSync(rules: string): void;
+    ownerNode: CSSStyleSheet['ownerNode'];
 } & Partial<Record<typeof keySymbol, string> & Record<typeof dictSymbol, Record<string, string>>>;
 
 export type Contract = {

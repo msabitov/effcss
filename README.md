@@ -35,6 +35,7 @@ EffCSS is a self-confident CSS-in-TS library based only on the browser APIs. Use
 -   [SourceCraft](https://sourcecraft.dev/msabitov/effcss)
 -   [GitHub](https://github.com/msabitov/effcss)
 -   [NPM](https://www.npmjs.com/package/effcss)
+-   [vite-plugin-effcss](https://www.npmjs.com/package/vite-plugin-effcss) - CSR tool injecting generated CSS into HTML. It allows to eliminate FOUC and speed up the first rendering due to style hydration just like for SSR/SSG.
 
 ## Examples
 

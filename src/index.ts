@@ -468,6 +468,7 @@ class StyleProvider {
         let stylesheet;
         if (!globalThis.CSSStyleSheet || StyleProvider.emulate) {
             stylesheet = {
+                ownerNode: null,
                 disabled: false,
                 cssRules: [{ cssText }],
     
@@ -887,20 +888,21 @@ class StyleProvider {
     static rst(generator: Function, {type}: {
         type: StyleSheetType;
     }) {
-        const stylesheet = StyleProvider.cst();
         const scope = StyleProvider.cs();
         const scopeKey = scope.key;
-        const serverStylesheet = getServerStylesheet(scopeKey);
+        const serverStyleElement = getServerStylesheet(scopeKey);
         let dict: Record<string, string> = {};
         let cssText: string = '';
-        if (serverStylesheet) {
-            cssText = serverStylesheet.textContent || '';
-            serverStylesheet.disabled = true;
-        }
+        let stylesheet: EffCSSStyleSheet;
+        if (serverStyleElement?.sheet) {
+            stylesheet = serverStyleElement.sheet;
+            cssText = serverStyleElement.textContent || '';
+        } else stylesheet = StyleProvider.cst();
 
         const serverMetaScript = getServerMetaScript(scopeKey);
-        if (cssText && serverMetaScript) {
-            dict = serverMetaScript.textContent ? JSON.parse(serverMetaScript.textContent) : {};
+        if (serverStyleElement && serverMetaScript) {
+            const metaString = serverMetaScript.textContent;
+            dict = metaString ? JSON.parse(metaString) : {};
         } else {
             const hash: undefined | ((key: string) => string) = type === CUSTOM_STYLES ? undefined : getHash({
                 type, dict, scope
@@ -916,11 +918,13 @@ class StyleProvider {
             if (!type && cssText) styleObject = undefined;
             else styleObject = generator(selectors);
             // if there are no server CSS
-            if (!cssText) cssText = scope.t.f + scope.t.l + scope.t.v + scope.t.a + parseStyles(styleObject);
+            if (!serverStyleElement) {
+                cssText = scope.t.f + scope.t.l + scope.t.v + scope.t.a + parseStyles(styleObject);
+                stylesheet.replaceSync(cssText);
+            }
             // return prev scope
             StyleProvider.scope = prevScope;
         }
-        stylesheet.replaceSync(cssText);
         markStylesheet(stylesheet, scopeKey, dict);
         if (StyleProvider._hs) StyleProvider.emit({ fn: type, css: cssText, key: scopeKey, dict });
         const resolveNames = getFromDict(dict);
