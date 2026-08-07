@@ -22,7 +22,7 @@ import type {
     Scope,
     VariableDescription,
     Update,
-    StyleSheetType
+    StyleSheetType, GlobalKey
 } from './types';
 import {
     keySymbol,
@@ -50,19 +50,25 @@ export type {
 };
 const PREFIX = 'data-' + LIBRARY + '-';
 const KEY_ATTR = PREFIX + 'key';
+const GLOBAL_ATTR = PREFIX + 'global';
 const DIVIDER = '_';
 const CSS_RULES = 'cssRules';
 const ATTRIBUTES = 'attributes';
 const CLASSNAMES = 'classNames';
 const CUSTOM_STYLES = 'customStyles';
+const VARIABLES = 'variables';
+const ANIMATIONS = 'animations';
+const FONTS = 'fonts';
+const LAYERS = 'layers';
+const SHARED = 'shared';
 const TYPE_ATTRS = { type: ATTRIBUTES } as const;
 const TYPE_CLS = { type: CLASSNAMES } as const;
 const TYPE_CUSTOM =  { type: CUSTOM_STYLES } as const;
-const STYLE_ATTRS = ['layers', 'variables', 'fonts', 'animations', 'shared'].reduce((acc, key) => ({
-    ...acc, [key]: PREFIX + key
+const GLOBALS = [LAYERS, VARIABLES, FONTS, ANIMATIONS, SHARED] as const;
+const STYLE_ATTRS = GLOBALS.reduce((acc, key) => ({
+    ...acc, [key]: GLOBAL_ATTR + '="'  + key + '"'
 }), {} as Record<string, string>);
 const keyAttr = (val: string) => `${KEY_ATTR}="${val}"`;
-const keyAttrSelector = (val: string) => `[${keyAttr(val)}]`;
 const objectReduce = <
     T extends object,
     F extends (previousValue: any, currentValue: [string, any], currentIndex: number, array: [string, any][]) => any
@@ -117,27 +123,6 @@ const serializeStylesheetMeta = (stylesheet?: EffCSSStyleSheet) => {
     if (!stylesheet.disabled && key && dict) return `<script type="application/json" ${keyAttr(key)}>${
         Object.keys(dict).length ? JSON.stringify(dict) : ''
     }</script>`;
-    return '';
-};
-
-const getServerStylesheet = (key: string) => {
-    const head = globalThis.document?.head;
-    const stylesheet: HTMLStyleElement | null = head && head.querySelector('style' + keyAttrSelector(key));
-    return stylesheet;
-};
-
-const getServerMetaScript = (key: string) => {
-    const head = globalThis.document?.head;
-    const metaScript: HTMLScriptElement | null = head && head.querySelector('script' + keyAttrSelector(key));
-    return metaScript;
-};
-
-const getStyleContent = (attr: string): string => {
-    const stylesheet = globalThis.document?.head.querySelector(`[${attr}]`) as HTMLStyleElement | null;
-    if (stylesheet) {
-        stylesheet.disabled = true;
-        return stylesheet.textContent;
-    }
     return '';
 };
 
@@ -396,6 +381,10 @@ class StyleProvider {
     // fonts stylesheet
     protected static _fs?: EffCSSStyleSheet;
 
+    protected static _serverGlobalCSS: Map<GlobalKey, CSSStyleSheet> | null = null;
+    protected static _serverCSS: Map<string, CSSStyleSheet> | null = null;
+    protected static _serverMeta: Map<string, Record<string, string>> | null = null;
+
     static map: Map<any, EffCSSStyleSheet> = new Map<any, EffCSSStyleSheet>();
 
     // subscribers
@@ -418,47 +407,97 @@ class StyleProvider {
         };
     }
 
+    static get serverCSS(): Map<string, CSSStyleSheet> {
+        if (!StyleProvider._serverCSS) {
+            StyleProvider._serverCSS = new Map();
+            const elements = globalThis.document?.head.querySelectorAll(`style[${KEY_ATTR}]`) as NodeListOf<HTMLStyleElement> | null;
+            elements?.forEach((el) => {
+                const key = el.getAttribute(KEY_ATTR);
+                const sheet = el.sheet;
+                if (key && sheet) StyleProvider._serverCSS!.set(key, sheet);
+            });
+        }
+        return StyleProvider._serverCSS as Map<string, CSSStyleSheet>;
+    }
+
+    static get serverGlobalCSS(): Map<GlobalKey, EffCSSStyleSheet> {
+        if (!StyleProvider._serverGlobalCSS) {
+            StyleProvider._serverGlobalCSS = new Map();
+            const elements = globalThis.document?.head.querySelectorAll(`[${GLOBAL_ATTR}]`) as NodeListOf<HTMLStyleElement> | null;
+            elements?.forEach((el) => {
+                const key = el.getAttribute(GLOBAL_ATTR) as GlobalKey;
+                const sheet = el.sheet;
+                if (key && sheet) StyleProvider._serverGlobalCSS!.set(key, sheet);
+            });
+        }
+        return StyleProvider._serverGlobalCSS;
+    }
+
+    static get serverMeta(): Map<string, Record<string, string>> {
+        if (!StyleProvider._serverMeta) {
+            StyleProvider._serverMeta = new Map();
+            const elements = globalThis.document?.head.querySelectorAll(`script[${KEY_ATTR}]`) as NodeListOf<HTMLScriptElement> | null;
+            elements?.forEach((el) => {
+                const key = el.getAttribute(KEY_ATTR);
+                const textContent = el.textContent;
+                const dict = textContent ? JSON.parse(el.textContent) : {};
+                if (key) StyleProvider._serverMeta!.set(key, dict);
+            });
+        }
+        return StyleProvider._serverMeta;
+    }
+
     static get vs(): EffCSSStyleSheet {
         if (!StyleProvider._vs) {
-            const serverCSS = getStyleContent(STYLE_ATTRS.variables);
-            StyleProvider._vs = StyleProvider.cst(serverCSS);
-            if (serverCSS) StyleProvider._sc.v = StyleProvider._vs[CSS_RULES].length;
+            const serverStylesheet = StyleProvider.serverGlobalCSS.get(VARIABLES);
+            if (serverStylesheet) {
+                StyleProvider._vs = serverStylesheet;
+                StyleProvider._sc.v = serverStylesheet[CSS_RULES].length;
+            } else StyleProvider._vs = StyleProvider.cst();
         }
         return StyleProvider._vs;
     }
 
     static get as(): EffCSSStyleSheet {
         if (!StyleProvider._as) {
-            const serverCSS = getStyleContent(STYLE_ATTRS.animations);
-            StyleProvider._as = StyleProvider.cst(serverCSS);
-            if (serverCSS) StyleProvider._sc.a = StyleProvider._as[CSS_RULES].length;
+            const serverStylesheet = StyleProvider.serverGlobalCSS.get(ANIMATIONS);
+            if (serverStylesheet) {
+                StyleProvider._as = serverStylesheet;
+                StyleProvider._sc.a = serverStylesheet[CSS_RULES].length;
+            } else StyleProvider._as = StyleProvider.cst();
         }
         return StyleProvider._as;
     }
 
     static get ls(): EffCSSStyleSheet {
         if (!StyleProvider._ls) {
-            const serverCSS = getStyleContent(STYLE_ATTRS.layers);
-            StyleProvider._ls = StyleProvider.cst(serverCSS);
-            if (serverCSS) StyleProvider._sc.l = StyleProvider._ls[CSS_RULES].length;
+            const serverStylesheet = StyleProvider.serverGlobalCSS.get(LAYERS);
+            if (serverStylesheet) {
+                StyleProvider._ls = serverStylesheet;
+                StyleProvider._sc.l = serverStylesheet[CSS_RULES].length;
+            } else StyleProvider._ls = StyleProvider.cst();
         }
         return StyleProvider._ls;
     }
 
     static get fs(): EffCSSStyleSheet {
         if (!StyleProvider._fs) {
-            const serverCSS = getStyleContent(STYLE_ATTRS.fonts);
-            StyleProvider._fs = StyleProvider.cst(serverCSS);
-            if (serverCSS) StyleProvider._sc.f = StyleProvider._fs[CSS_RULES].length;
+            const serverStylesheet = StyleProvider.serverGlobalCSS.get(FONTS);
+            if (serverStylesheet) {
+                StyleProvider._fs = serverStylesheet;
+                StyleProvider._sc.f = serverStylesheet[CSS_RULES].length;
+            } else StyleProvider._fs = StyleProvider.cst();
         }
         return StyleProvider._fs;
     }
 
     static get ss(): EffCSSStyleSheet {
         if (!StyleProvider._ss) {
-            const serverCSS = getStyleContent(STYLE_ATTRS.shared);
-            StyleProvider._ss = StyleProvider.cst(serverCSS);
-            if (serverCSS) StyleProvider._sc.s = StyleProvider._ss[CSS_RULES].length;
+            const serverStylesheet = StyleProvider.serverGlobalCSS.get(SHARED);
+            if (serverStylesheet) {
+                StyleProvider._ss = serverStylesheet;
+                StyleProvider._sc.s = serverStylesheet[CSS_RULES].length;
+            } else StyleProvider._ss = StyleProvider.cst();
         }
         return StyleProvider._ss;
     }
@@ -890,20 +929,18 @@ class StyleProvider {
     }) {
         const scope = StyleProvider.cs();
         const scopeKey = scope.key;
-        const serverStyleElement = getServerStylesheet(scopeKey);
+        const serverStyleSheet = StyleProvider.serverCSS.get(scopeKey);
         let dict: Record<string, string> = {};
         let cssText: string = '';
         let stylesheet: EffCSSStyleSheet;
-        if (serverStyleElement?.sheet) {
-            stylesheet = serverStyleElement.sheet;
-            cssText = serverStyleElement.textContent || '';
+        if (serverStyleSheet) {
+            stylesheet = serverStyleSheet;
+            cssText = serverStyleSheet.ownerNode?.textContent || '';
         } else stylesheet = StyleProvider.cst();
 
-        const serverMetaScript = getServerMetaScript(scopeKey);
-        if (serverStyleElement && serverMetaScript) {
-            const metaString = serverMetaScript.textContent;
-            dict = metaString ? JSON.parse(metaString) : {};
-        } else {
+        const serverMeta = StyleProvider.serverMeta.get(scopeKey);
+        if (serverStyleSheet && serverMeta) dict = serverMeta;
+        else {
             const hash: undefined | ((key: string) => string) = type === CUSTOM_STYLES ? undefined : getHash({
                 type, dict, scope
             });
@@ -918,7 +955,7 @@ class StyleProvider {
             if (!type && cssText) styleObject = undefined;
             else styleObject = generator(selectors);
             // if there are no server CSS
-            if (!serverStyleElement) {
+            if (!serverStyleSheet) {
                 cssText = scope.t.f + scope.t.l + scope.t.v + scope.t.a + parseStyles(styleObject);
                 stylesheet.replaceSync(cssText);
             }

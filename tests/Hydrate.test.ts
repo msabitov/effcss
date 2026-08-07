@@ -175,24 +175,24 @@ const SERVER_CSS = (
     `body{padding:var(--f2-0,1rem);}.class{background:var(--f2-2,transparent);color:var(--f2-1);}`+
     `</style>`
 )+(
-    `<style data-effcss-layers>@layer f2-0;@layer f2-1,f2-2;</style>`
+    `<style data-effcss-global="layers">@layer f2-0;@layer f2-1,f2-2;</style>`
 )+(
-    `<style data-effcss-variables>@property --f3-0{syntax:"*";inherits:true;initial-value:12px;}`+
+    `<style data-effcss-global="variables">@property --f3-0{syntax:"*";inherits:true;initial-value:12px;}`+
     `@property --f3-1{syntax:"<color>";inherits:false;initial-value:red;}`+
     `@property --f3-2{syntax:"*";inherits:true;initial-value:green;}</style>`
 )+(
-    `<style data-effcss-animations>@keyframes f3-0{0%{width:100px;}100%{width:200px;}}`+
+    `<style data-effcss-global="animations">@keyframes f3-0{0%{width:100px;}100%{width:200px;}}`+
     `@keyframes f3-1{0%{width:100px;}100%{width:200px;}}`+
     `@keyframes f3-2{0%{opacity:0;}50%{opacity:0.6;}100%{opacity:1;}}</style>`
 )+(
-    `<style data-effcss-fonts>` +
+    `<style data-effcss-global="fonts">` +
     `@font-face {font-family:"f3-0";src:url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2");}` +
     `@font-face {font-family:"f3-1";src:url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff");` +
     `font-display:swap;font-style:normal;font-weight:400;}` +
     `@font-face {font-family:"f3-2";src:url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2");}` +
     `</style>`
 )+(
-    `<style data-effcss-shared>.f3_0{margin:auto;&:hover{outline:black solid 2px;&.child{background:grey;}}}`+
+    `<style data-effcss-global="shared">.f3_0{margin:auto;&:hover{outline:black solid 2px;&.child{background:grey;}}}`+
     `[data-f3~="1"]{margin:auto;&:hover{outline:black solid 2px;&.child{background:grey;}}}`+
     `</style>`
 );

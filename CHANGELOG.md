@@ -5,6 +5,12 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.3] - 2026-08-07
+
+### Fixed
+- the hydration now only makes three calls to `querySelectoAll`, reducing the cost of precomputed styles' detection (tests updated)
+- server-side stylesheets are not disabled but reused on the client side, eliminating duplicate server work. Therefore, during client-side hydration, only selectors are calculated based on the received metadata
+
 ## [5.4.2] - 2026-07-31
 
 ### Added
@@ -750,7 +756,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[5.4.2]: https://github.com/msabitov/effcss
+[5.4.3]: https://github.com/msabitov/effcss
+[5.4.2]: https://github.com/msabitov/effcss/commit/3950a03c8577fe87a9c91d2f6f9c1e1ca17a520f
 [5.4.1]: https://github.com/msabitov/effcss/commit/8ede6d0d7ab58c8d80a4f6bb375a4147b51e893b
 [5.4.0]: https://github.com/msabitov/effcss/commit/1d606649b4c0b32b28810ea9ea6faabbfc6831c0
 [5.3.1]: https://github.com/msabitov/effcss/commit/f4d3b36045c1d2f11337c8f5489ce8521ba41dec

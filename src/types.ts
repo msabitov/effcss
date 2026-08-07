@@ -11,7 +11,7 @@ type DeepPartial<T> = T extends object
           [P in keyof T]?: DeepPartial<T[P]>;
       }
     : T;
-
+export type GlobalKey = 'variables' | 'animations' | 'layers' | 'fonts' | 'shared';
 export type EffCSSStyleSheet = {
     disabled: boolean;
     cssRules: Iterable<{cssText: string}> & {length: number;} & {[index: number]: {cssText: string}};
