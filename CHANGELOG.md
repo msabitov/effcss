@@ -5,6 +5,13 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.4] - 2026-08-14
+
+### Fixed
+- kebabcase property conversion now uses internal cache to improve performance
+- stringification and style parsing now use a pre-allocated array instead of dynamically allocating new ones
+- removed incorrect require export from package.json
+
 ## [5.4.3] - 2026-08-07
 
 ### Fixed
@@ -756,7 +763,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[5.4.3]: https://github.com/msabitov/effcss
+[5.4.4]: https://github.com/msabitov/effcss
+[5.4.3]: https://github.com/msabitov/effcss/commit/ea9a1248abf7bb7711cef9379fd51fa1caada3c2
 [5.4.2]: https://github.com/msabitov/effcss/commit/3950a03c8577fe87a9c91d2f6f9c1e1ca17a520f
 [5.4.1]: https://github.com/msabitov/effcss/commit/8ede6d0d7ab58c8d80a4f6bb375a4147b51e893b
 [5.4.0]: https://github.com/msabitov/effcss/commit/1d606649b4c0b32b28810ea9ea6faabbfc6831c0

@@ -69,39 +69,56 @@ const STYLE_ATTRS = GLOBALS.reduce((acc, key) => ({
     ...acc, [key]: GLOBAL_ATTR + '="'  + key + '"'
 }), {} as Record<string, string>);
 const keyAttr = (val: string) => `${KEY_ATTR}="${val}"`;
-const objectReduce = <
-    T extends object,
-    F extends (previousValue: any, currentValue: [string, any], currentIndex: number, array: [string, any][]) => any
->(
-    obj: T,
-    callback: F,
-    acc: any
-) => Object.entries(obj).reduce(callback, acc);
 const isSymbol = (val: any) => typeof val === 'symbol';
 const isObject = (val: any) => val !== null && typeof val === 'object';
-const kebabCase = (str: string): string => str.replace(/[A-Z]/g, (v) => '-' + v.toLowerCase());
+const kebabCache = new Map<string, string>();
+const kebabCase = (str: string): string => {
+    let k = kebabCache.get(str);
+    if (!k) {
+        k = str.replace(/[A-Z]/g, (v) => '-' + v.toLowerCase());
+        kebabCache.set(str, k);
+    }
+    return k;
+};
 const propVal = (prop: string, val: any) => `${kebabCase(prop)}:${'' + val};`
 const toRadix = (num: number) => num.toString(36);
 
 
 /**
- * Stringify style object
+ * Collect styles
  * @param key - stylesheet key
  * @param value - stylesheet content
+ * @param out - collector array
  */
-const stringify = (key: string, value: object | string | number | undefined | unknown): string => {
-    let resKey = '' + key;
-    if (value === null || value === undefined) return '';
-    else if (Array.isArray(value)) return value.map((v) => stringify(resKey, v)).join('');
-    else if (typeof value === 'object') return (
-        resKey +
-        `{${objectReduce(value, (acc, item) => acc + stringify(...item), '')}}`
-    );
-    else if (value === '') return resKey + ';';
-    else return propVal(resKey, value);
+const collect = (key: string, value: unknown, out: string[]): void => {
+    const resKey = '' + key;
+    if (value === null || value === undefined) return;
+    if (Array.isArray(value)) {
+        for (let i = 0; i < value.length; i++) collect(resKey, value[i], out);
+        return;
+    }
+    if (isObject(value)) {
+        out.push(resKey, '{');
+        for (const prop in value as object) {
+            if (Object.prototype.hasOwnProperty.call(value, prop)) collect(prop, (value as any)[prop], out);
+        }
+        out.push('}');
+        return;
+    }
+    if (value === '') {
+        out.push(resKey, ';');
+        return;
+    }
+    out.push(propVal(resKey, value));
 };
 
-const parseStyles = (styles: object = {}): string => objectReduce(styles, (acc, item) => acc + stringify(...item), '');
+const parseStyles = (styles: object = {}): string => {
+    const out: string[] = [];
+    for (const prop in styles as object) {
+        if (Object.prototype.hasOwnProperty.call(styles, prop)) collect(prop, (styles as any)[prop], out);
+    }
+    return out.join('');
+};
 
 const markStylesheet = (stylesheet: EffCSSStyleSheet, key: string, dict: Record<string, string>) => {
     stylesheet[keySymbol] = key;
@@ -952,7 +969,7 @@ class StyleProvider {
             // calc rules inside current scope
             let styleObject: object | undefined;
             // if we have server css for custom styles
-            if (!type && cssText) styleObject = undefined;
+            if (type === CUSTOM_STYLES && cssText) styleObject = undefined;
             else styleObject = generator(selectors);
             // if there are no server CSS
             if (!serverStyleSheet) {
