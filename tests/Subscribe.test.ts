@@ -245,9 +245,9 @@ describe('Subscribe:', () => {
             expect(events[events.length - 1]).toEqual({
                 fn: 'attribute',
                 result: {
-                    'data-f6': '1'
+                    'data-f6-1': ''
                 },
-                css: '[data-f6~="1"] {margin:auto;&:hover{outline:2px solid black;.child{background:grey;}}}'
+                css: '[data-f6-1] {margin:auto;&:hover{outline:2px solid black;.child{background:grey;}}}'
             });
         });
     });

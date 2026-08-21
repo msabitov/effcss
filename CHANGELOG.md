@@ -5,6 +5,16 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.5] - 2026-08-21
+
+### Added
+- added hydration tests for stylesheets without meta
+
+### Fixed
+- fixed a bug with creating objects using the `attribute` function - previously, selectors used one attribute and erased each other with spreading syntax; now attributes are unique
+- reduced duplication of string constants
+- minor improvement of types
+
 ## [5.4.4] - 2026-08-14
 
 ### Fixed
@@ -763,7 +773,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[5.4.4]: https://github.com/msabitov/effcss
+[5.4.5]: https://github.com/msabitov/effcss
+[5.4.4]: https://github.com/msabitov/effcss/commit/a15f952f02d5c972a1a63846eb6fd1ba87f18e7e
 [5.4.3]: https://github.com/msabitov/effcss/commit/ea9a1248abf7bb7711cef9379fd51fa1caada3c2
 [5.4.2]: https://github.com/msabitov/effcss/commit/3950a03c8577fe87a9c91d2f6f9c1e1ca17a520f
 [5.4.1]: https://github.com/msabitov/effcss/commit/8ede6d0d7ab58c8d80a4f6bb375a4147b51e893b

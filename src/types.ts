@@ -6,6 +6,7 @@ import {
 
 type GetIndex = {[key in typeof indexSymbol]: number;};
 type ToPrimitive = {[key in typeof Symbol.toPrimitive]: () => string;};
+type StringResolver = string & (() => string) & ToPrimitive;
 type DeepPartial<T> = T extends object
     ? {
           [P in keyof T]?: DeepPartial<T[P]>;
@@ -105,20 +106,20 @@ export type Variables = <T extends Record<string, VariableConfig>>(description: 
 // animations
 export type AnimationConfig = Record<string, object>;
 
-export type AnimationResolver = string & (() => string) & ToPrimitive;
+export type AnimationResolver = StringResolver;
 export type Animation = <T extends Record<string, object>>(description: T) => AnimationResolver;
 
 export type AnimationsResolvers<T extends Record<string, VariableConfig>> = Record<keyof T, AnimationResolver>;
 export type Animations = <T extends Record<string, AnimationConfig>>(description: T) => AnimationsResolvers<T>;
 // layers
-export type LayerResolver = string & (() => string) & ToPrimitive;
+export type LayerResolver = StringResolver;
 export type Layer = () => LayerResolver;
 export type LayersResolvers<T extends string> = Record<NoInfer<T>, LayerResolver>;
 export type Layers = <T extends string>(description: T[]) => LayersResolvers<T>;
 
 // containers
 export type ContainerType = '' | 'normal' | 'inline-size' | 'size' | 'anchored' | 'scroll-state' | 'inline-size scroll-state' | 'size scroll-state';
-export type ContainerResolver = string & (() => string) & ToPrimitive;
+export type ContainerResolver = StringResolver;
 export type Container = (type?: ContainerType) => ContainerResolver;
 
 export type ContainersResolvers<T extends Record<string, ContainerType>> = {

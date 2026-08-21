@@ -48,18 +48,29 @@ export type {
     Fonts, FontsResolvers,
     EffCSSStyleSheet, EffCSSEvent, Generator
 };
-const PREFIX = 'data-' + LIBRARY + '-';
+const DATA_ = 'data-';
+const PREFIX = DATA_ + LIBRARY + '-';
 const KEY_ATTR = PREFIX + 'key';
 const GLOBAL_ATTR = PREFIX + 'global';
 const DIVIDER = '_';
 const CSS_RULES = 'cssRules';
-const ATTRIBUTES = 'attributes';
-const CLASSNAMES = 'classNames';
+const ATTRIBUTE = 'attribute';
+const ATTRIBUTES = ATTRIBUTE + 's' as 'attributes';
+const CLASSNAME = 'className';
+const CLASSNAMES = CLASSNAME + 's' as 'classNames';
 const CUSTOM_STYLES = 'customStyles';
-const VARIABLES = 'variables';
-const ANIMATIONS = 'animations';
-const FONTS = 'fonts';
-const LAYERS = 'layers';
+const VARIABLE = 'variable';
+const VARIABLES = VARIABLE + 's' as 'variables';
+const VARIABLE_SET = VARIABLE + '.set' as 'variable.set';
+const ANIMATION = 'animation';
+const ANIMATIONS = ANIMATION + 's' as 'animations';
+const CONTAINER = 'container';
+const CONTAINERS = CONTAINER + 's' as 'containers';
+const FONT = 'font';
+const FONTS = FONT + 's' as 'fonts';
+const LAYER = 'layer';
+const LAYERS = LAYER + 's' as 'layers';
+const AT_LAYER_ = '@' + LAYER + ' ';
 const SHARED = 'shared';
 const TYPE_ATTRS = { type: ATTRIBUTES } as const;
 const TYPE_CLS = { type: CLASSNAMES } as const;
@@ -71,6 +82,7 @@ const STYLE_ATTRS = GLOBALS.reduce((acc, key) => ({
 const keyAttr = (val: string) => `${KEY_ATTR}="${val}"`;
 const isSymbol = (val: any) => typeof val === 'symbol';
 const isObject = (val: any) => val !== null && typeof val === 'object';
+const isNotNumber = (arg: any) => typeof arg !== 'number';
 const kebabCache = new Map<string, string>();
 const kebabCase = (str: string): string => {
     let k = kebabCache.get(str);
@@ -82,7 +94,7 @@ const kebabCase = (str: string): string => {
 };
 const propVal = (prop: string, val: any) => `${kebabCase(prop)}:${'' + val};`
 const toRadix = (num: number) => num.toString(36);
-
+const hasProperty = (obj: any, prop: PropertyKey) => Object.prototype.hasOwnProperty.call(obj, prop);
 
 /**
  * Collect styles
@@ -100,7 +112,7 @@ const collect = (key: string, value: unknown, out: string[]): void => {
     if (isObject(value)) {
         out.push(resKey, '{');
         for (const prop in value as object) {
-            if (Object.prototype.hasOwnProperty.call(value, prop)) collect(prop, (value as any)[prop], out);
+            if (hasProperty(value, prop)) collect(prop, (value as any)[prop], out);
         }
         out.push('}');
         return;
@@ -115,7 +127,7 @@ const collect = (key: string, value: unknown, out: string[]): void => {
 const parseStyles = (styles: object = {}): string => {
     const out: string[] = [];
     for (const prop in styles as object) {
-        if (Object.prototype.hasOwnProperty.call(styles, prop)) collect(prop, (styles as any)[prop], out);
+        if (hasProperty(styles, prop)) collect(prop, (styles as any)[prop], out);
     }
     return out.join('');
 };
@@ -181,7 +193,7 @@ const replaceVariableRule = (
     value: string | number | boolean | undefined | null
 ): string => {
     const index = resolver[indexSymbol];
-    if (typeof index !== 'number') return '';
+    if (isNotNumber(index)) return '';
     const rule = stylesheet[CSS_RULES][index];
     const cssText = rule.cssText;
     const parts = cssText.split(/initial-value:\s?/)
@@ -203,7 +215,7 @@ const getVariableValue = (
     resolver: VariableResolver
 ): string => {
     const index = resolver[indexSymbol];
-    if (typeof index !== 'number') return '';
+    if (isNotNumber(index)) return '';
     const rule = stylesheet[CSS_RULES][index];
     const parts = rule.cssText.split(/initial-value:\s?/)
     if (parts.length === 1) return '';
@@ -326,7 +338,8 @@ const getHash = (params: {
             scope.c.s++;
             return dict[key];
         };
-        hash = (key: string) => `[data-${scopeKey}~="${dict[key] ?? add(key)}"]`;
+        const scopeAttr = DATA_ + scopeKey;
+        hash = (key: string) => `[${scopeAttr}~="${dict[key] ?? add(key)}"]`;
     }
     return hash;
 };
@@ -569,7 +582,7 @@ class StyleProvider {
      * Create an anonymous rule with a class selector
      * @param rule - rule content
      */
-    static className: ClassName = (rule: object) => {
+    static className: (rule: object) => string = (rule: object) => {
         if (StyleProvider.scope) return '';
         const scope = StyleProvider.gs;
         const index = scope.c.s++;
@@ -578,7 +591,7 @@ class StyleProvider {
         const cssText = selector + ` {${parseStyles(rule)}}`;
         const stylesheet = StyleProvider.ss;
         if (StyleProvider._sc.s <= index) stylesheet.insertRule(cssText, stylesheet[CSS_RULES].length);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: 'className', css: cssText, result: cls });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: CLASSNAME, css: cssText, result: cls });
         return cls;
     }
 
@@ -586,19 +599,18 @@ class StyleProvider {
      * Create an anonymous rule with an attribute selector
      * @param rule - rule content
      */
-    static attribute: Attribute = (rule: object) => {
+    static attribute: (rule: object) => object = (rule: object) => {
         if (StyleProvider.scope) return {};
         const scope = StyleProvider.gs;
-        const attr = `data-${scope.key}`;
         const index = scope.c.s++;
-        const val = toRadix(index);
-        const cssText = `[${attr}~="${val}"] {${parseStyles(rule)}}`;
+        const attr = DATA_ + scope.key + '-' + toRadix(index);
+        const val = '';
+        const cssText = `[${attr}] {${parseStyles(rule)}}`;
         const stylesheet = StyleProvider.ss;
+        const result = {[attr]: val};
         if (StyleProvider._sc.s <= index) stylesheet.insertRule(cssText, stylesheet[CSS_RULES].length);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: 'attribute', css: cssText, result: {[attr]: val} });
-        return {
-            [attr]: val
-        };
+        if (StyleProvider._hs) StyleProvider.emit({ fn: ATTRIBUTE, css: cssText, result });
+        return result;
     }
 
     /**
@@ -628,10 +640,10 @@ class StyleProvider {
         };
         f.get = () => getVariableValue(stylesheet, f);
         if (StyleProvider._hs) {
-            StyleProvider.emit({ fn: 'variable', css: s, name });
+            StyleProvider.emit({ fn: VARIABLE, css: s, name });
             f.set = (value: any) => {
                 const css = replaceVariableRule(stylesheet, f, value);
-                StyleProvider.emit({ fn: 'variable.set', css, name, value });
+                StyleProvider.emit({ fn: VARIABLE_SET, css, name, value });
             };
         }
         return f;
@@ -672,7 +684,7 @@ class StyleProvider {
             const { name, s, f } = prepare(val);
             f.set = (value: any) => {
                 const css = replaceVariableRule(stylesheet, f, value);
-                StyleProvider.emit({ fn: 'variable.set', css, name, value });
+                StyleProvider.emit({ fn: VARIABLE_SET, css, name, value });
             };
             fullCSS += s;
             names.push(name);
@@ -686,7 +698,7 @@ class StyleProvider {
             acc[key] = f;
             return acc;
         }, {} as Record<string, VariableResolver>) as VariablesResolvers<T>;
-        if (StyleProvider._hs) StyleProvider.emit({ fn: 'variables', css: fullCSS, names });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: VARIABLES, css: fullCSS, names });
         return handlers;
     }
 
@@ -710,7 +722,7 @@ class StyleProvider {
         const name = `${scope.key}-${toRadix(index)}`;
         const { s, f } = animationRule({ name, config });
         if (StyleProvider._sc.a <= index) stylesheet.insertRule(s, index);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: 'animation', css: s, name });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: ANIMATION, css: s, name });
         return f;
     }
 
@@ -753,7 +765,7 @@ class StyleProvider {
             acc[key] = prepare(val).f;
             return acc;
         }, {} as Record<string, AnimationResolver>) as AnimationsResolvers<T>;
-        if (StyleProvider._hs) StyleProvider.emit({ fn: 'animations', css: fullCSS, names });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: ANIMATIONS, css: fullCSS, names });
         return handlers;
     }
 
@@ -765,7 +777,7 @@ class StyleProvider {
         let scope = StyleProvider.scope;
         if (scope) {
             const name = `${scope.key}-${toRadix(scope.c.l++)}`;
-            const ruleKey = `@layer ${name}`;
+            const ruleKey = AT_LAYER_ + name;
             const declaration = ruleKey + ';';
             scope.c.ld++;
             const resolver = (() => ruleKey) as LayerResolver;
@@ -778,13 +790,13 @@ class StyleProvider {
         const stylesheet = StyleProvider.ls;
         const index = scope.c.l++;
         const name = `${scope.key}-${toRadix(index)}`;
-        const ruleKey = `@layer ${name}`;
+        const ruleKey = AT_LAYER_ + name;
         const declaration = ruleKey + ';';
         const declarationIndex = scope.c.ld++;
         const resolver = (() => ruleKey) as LayerResolver;
         resolver[Symbol.toPrimitive] = () => ruleKey;
         if (StyleProvider._sc.l <= declarationIndex) stylesheet.insertRule(declaration, declarationIndex);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: 'layer', css: declaration, name });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: LAYER, css: declaration, name });
         return resolver;
     }
 
@@ -801,13 +813,13 @@ class StyleProvider {
             const resolvers = config.reduce((acc, key) => {
                 const name = `${scopeKey}-${toRadix(c.l++)}`;
                 order.push(name);
-                const ruleKey = `@layer ${name}`;
+                const ruleKey = AT_LAYER_ + name;
                 const resolver = (() => ruleKey) as LayerResolver;
                 resolver[Symbol.toPrimitive] = () => ruleKey;
                 acc[key] = resolver;
                 return acc;
             }, {} as Record<NoInfer<T>, LayerResolver>);
-            scope.t.l += (`@layer ${order.join(', ')};`);
+            scope.t.l += (AT_LAYER_ + order.join(', ') + ';');
             return resolvers;
         }
         // global layers
@@ -817,16 +829,16 @@ class StyleProvider {
             const index = scope.c.l++;
             const name = `${scope.key}-${toRadix(index)}`;
             order.push(name);
-            const ruleKey = `@layer ${name}`;
+            const ruleKey = AT_LAYER_ + name;
             const resolver = (() => ruleKey) as LayerResolver;
             resolver[Symbol.toPrimitive] = () => ruleKey;
             acc[key] = resolver;
             return acc;
         }, {} as Record<NoInfer<T>, LayerResolver>);
-        const declaration = `@layer ${order.join(', ')};`;
+        const declaration = AT_LAYER_ + order.join(', ') + ';';
         const declarationIndex = scope.c.ld++;
         if (StyleProvider._sc.l <= declarationIndex) stylesheet.insertRule(declaration, declarationIndex);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: 'layers', css: declaration, names: order });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: LAYERS, css: declaration, names: order });
         return resolvers;
     }
 
@@ -846,7 +858,7 @@ class StyleProvider {
      */
     static container: Container = (containerType) => {
         const {name, type, resolver} = StyleProvider._container(containerType);
-        if (StyleProvider._hs && !StyleProvider.scope) StyleProvider.emit({ fn: 'container', name, type, css: '' });
+        if (StyleProvider._hs && !StyleProvider.scope) StyleProvider.emit({ fn: CONTAINER, name, type, css: '' });
         return resolver;
     }
 
@@ -868,7 +880,7 @@ class StyleProvider {
             return acc;
         };
         const handlers = Object.entries(config).reduce(callback, {} as Record<string, ContainerResolver>) as ContainersResolvers<T>;
-        if (StyleProvider._hs) StyleProvider.emit({ fn: 'containers', items, css: '' });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: CONTAINERS, items, css: '' });
         return handlers;
     }
 
@@ -893,7 +905,7 @@ class StyleProvider {
         const { s, f } = fontRule({ name, config });
 
         if (StyleProvider._sc.f <= index) stylesheet.insertRule(s, index);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: 'font', css: s, name });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: FONT, css: s, name });
         return f;
     }
 
@@ -936,7 +948,7 @@ class StyleProvider {
             acc[key] = prepare(val).f;
             return acc;
         }, {} as Record<string, FontResolver>) as FontsResolvers<T>;
-        if (StyleProvider._hs) StyleProvider.emit({ fn: 'fonts', css: fullCSS, names });
+        if (StyleProvider._hs) StyleProvider.emit({ fn: FONTS, css: fullCSS, names });
         return handlers;
     }
 
@@ -986,7 +998,7 @@ class StyleProvider {
         if (type === CLASSNAMES) resolver = resolveNames;
         else if (type === ATTRIBUTES) resolver = (
             config: Record<string, true | Record<string, string | number | boolean>>
-        ) => ({[`data-${scope.key}`]: resolveNames(config)});
+        ) => ({[DATA_ + scope.key]: resolveNames(config)});
         else resolver = () => null;
         return {
             resolver,

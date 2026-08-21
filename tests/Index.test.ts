@@ -1239,7 +1239,7 @@ describe('Utils:', () => {
                 }
             }));
 
-            const customCSS = serialize(stylesheet(custom));;
+            const customCSS = serialize(stylesheet(custom));
             expect(customCSS).toBe(serialize(custom));
             expect(customCSS).toContain(
                 `body { padding: 1rem; }` +
@@ -1267,7 +1267,7 @@ describe('Utils:', () => {
                 };
             });
 
-            const customCSS = serialize(stylesheet(custom));;
+            const customCSS = serialize(stylesheet(custom));
             expect(customCSS).toContain(
                 `@property --fo-0 { syntax: "*"; inherits: true; }` +
                 `@property --fo-1 { syntax: "*"; inherits: true; initial-value: black; }` +
@@ -1313,10 +1313,10 @@ describe('Utils:', () => {
 
             const styles = serialize(sharedStylesheet());
             expect(attr).toEqual({
-                'data-f2': '1'
+                'data-f2-1': ''
             });
 
-            expect(styles).toContain(`[data-f2~="1"] {` +
+            expect(styles).toContain(`[data-f2-1] {` +
                 `\n  margin: auto;` +
                 `\n  &:hover {\n  outline: black solid 2px;` +
                 `\n  & .child { background: grey; }\n}` +
