@@ -72,17 +72,29 @@ export type Generator<T extends Contract> = (selectors: Selectors<T>) => object;
 
 // selectors
 
-export type ClassName = (rule: object) => string;
-export type ClassNamesResolver<T extends Contract> = (params: DeepPartial<T>) => string;
-export type ClassNames = <T extends Contract>(generator: Generator<T>) => ClassNamesResolver<T>;
+type RuleConfig = object | (() => object);
 
-export type Attribute = (rule: object) => object;
+export type LazyClassName = (rule: RuleConfig) => () => string;
+export type ClassName = ((rule: object) => string) & {lazy: LazyClassName};
+export type ClassNamesResolver<T extends Contract> = (params: DeepPartial<T>) => string;
+export type LazyClassNames = <T extends Contract>(generator: Generator<T>) => ClassNamesResolver<T>;
+export type ClassNames = (<T extends Contract>(generator: Generator<T>) => ClassNamesResolver<T>) & {
+    lazy: LazyClassNames;
+};
+
+export type LazyAttribute = (rule: RuleConfig) => () => object;
+export type Attribute = ((rule: object) => object) & {lazy: LazyAttribute;};
 export type AttributesResolver<T extends Contract> = (params: DeepPartial<T>) => object;
-export type Attributes = <T extends Contract>(generator: Generator<T>) => AttributesResolver<T>;
+export type LazyAttributes = <T extends Contract>(generator: Generator<T>) => AttributesResolver<T>;
+export type Attributes = (<T extends Contract>(generator: Generator<T>) => AttributesResolver<T>) & {
+    lazy: LazyAttributes;
+};
 
 // custom
 
-export type CustomStyles = (generator: () => object) => (() => null);
+export type CustomStylesHandler = (generator: () => object) => (() => null);
+export type LazyCustomStyles = CustomStylesHandler;
+export type CustomStyles = CustomStylesHandler & {lazy: LazyCustomStyles};
 
 // variables
 export type VariableDescription = {

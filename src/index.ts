@@ -1,8 +1,9 @@
 import type {
-    CustomStyles,
-    ClassNames, ClassNamesResolver,
-    Attributes, AttributesResolver,
-    Attribute, ClassName,
+    CustomStyles, LazyCustomStyles,
+    ClassNames, ClassNamesResolver, LazyClassNames,
+    Attributes, AttributesResolver, LazyAttributes,
+    Attribute, LazyAttribute,
+    ClassName, LazyClassName,
     Variable, VariableResolver,
     Animation, AnimationResolver,
     Container, ContainerResolver,
@@ -33,9 +34,10 @@ import {
 
 export type {
     CustomStyles,
-    ClassNames, ClassNamesResolver,
-    Attributes, AttributesResolver,
-    Attribute, ClassName,
+    ClassNames, ClassNamesResolver, LazyClassNames, 
+    Attributes, AttributesResolver, LazyAttributes,
+    Attribute, LazyAttribute, 
+    ClassName, LazyClassName,
     Variable, VariableResolver,
     Animation, AnimationResolver,
     Container, ContainerResolver,
@@ -278,6 +280,47 @@ const animationRule = ({name, config}: {
     };
 };
 
+const lazyStringResolver = <T>(gen: () => T) => {
+    let resolver: T | undefined;
+    const replacer = ((...args: any[]) => {
+        if (!resolver) resolver = gen();
+        return (resolver as any)(...args);
+    }) as T;
+    (replacer as any)[Symbol.toPrimitive] = () => {
+        if (!resolver) resolver = gen();
+        return (resolver as any)[Symbol.toPrimitive]();
+    };
+    return replacer;
+};
+
+const lazyVariableResolver = (gen: () => VariableResolver): VariableResolver => {
+    let resolver: VariableResolver | undefined;
+    const replacer = ((...args: any[]) => {
+        if (!resolver) resolver = gen();
+        return (resolver as any)(...args);
+    }) as unknown as VariableResolver;
+    (replacer as any)[Symbol.toPrimitive] = () => {
+        if (!resolver) resolver = gen();
+        return (resolver as any)[Symbol.toPrimitive]();
+    };
+    replacer.set = (value: any) => resolver?.set?.(value);
+    replacer.get = () => resolver?.get?.() || '';
+    return replacer;
+};
+
+const lazyBatch = <T, V>(
+    keys: string[],
+    entries: () => T,
+    make: (entry: () => any) => V = lazyStringResolver
+): Record<string, V> => {
+    let cached: T | undefined;
+    const warm = () => (cached ||= entries());
+    return keys.reduce((acc, key) => {
+        acc[key] = make(() => (warm() as any)[key]);
+        return acc;
+    }, {} as Record<string, V>);
+};
+
 const getSelectorsProxy = (hash: (key: string) => void, parent: string = '') => {
     const hashed = parent && hash(parent);
     return new Proxy({
@@ -362,12 +405,35 @@ const getFromDict = (dict: Record<string, string>) => (
 
 // Style provider
 
+type Creators = {
+    variable: (config?: VariableConfig) => VariableResolver;
+    variables: <T extends Record<string, VariableConfig>>(config: T) => VariablesResolvers<T>;
+    animation: <T extends Record<string, object>>(config: T) => AnimationResolver;
+    animations: <T extends Record<string, AnimationConfig>>(config: T) => AnimationsResolvers<T>;
+    layer: () => LayerResolver;
+    layers: <T extends string>(config: T[]) => LayersResolvers<T>;
+    font: Font;
+    fonts: <T extends Record<string, FontConfig>>(config: T) => FontsResolvers<T>;
+    selectors: (generator: Function, params: { type: StyleSheetType }) => any;
+};
+
 class StyleProvider {
     // settings
 
+    protected static _lazy = false;
     static prefix = 'f';
     static minify = true;
     static emulate = false;
+
+    static get lazy() {
+        return StyleProvider._lazy;
+    }
+    static set lazy(value: boolean) {
+        if (value !== StyleProvider._lazy) {
+            StyleProvider._lazy = value;
+            StyleProvider.make = value ? StyleProvider.active : StyleProvider.every;
+        }
+    }
 
     // scopes
 
@@ -613,6 +679,36 @@ class StyleProvider {
         return result;
     }
 
+    static lazyClassName: LazyClassName = (rule) => {
+        let cls: string | undefined;
+        const gen = () => (cls = StyleProvider.className(typeof rule === 'function' ? rule() : rule));
+        const replacer = (() => {
+            if (cls === undefined) return gen();
+            return cls;
+        }) as (() => string);
+        (replacer as any)[Symbol.toPrimitive] = () => '.' + (cls === undefined ? gen() : cls);
+        return replacer;
+    }
+
+    static lazyAttribute: LazyAttribute = (rule) => {
+        let result: object | null = null;
+        let attr = '';
+        const gen = () => {
+            result = StyleProvider.attribute(typeof rule === 'function' ? rule() : rule);
+            attr = Object.keys(result)[0] || '';
+            return result;
+        };
+        const replacer = (() => {
+            if (!result) return gen();
+            return result;
+        }) as (() => object);
+        (replacer as any)[Symbol.toPrimitive] = () => {
+            if (!result) gen();
+            return '[' + attr + ']';
+        };
+        return replacer;
+    }
+
     /**
      * Create variable
      * @param config - variable config
@@ -624,6 +720,8 @@ class StyleProvider {
             const name = `--${scope.key}-${toRadix(scope.c.v++)}`;
             const { s, f } = variableRule({ name, config });
             scope.t.v += s;
+            f.set = () => undefined;
+            f.get = () => '';
             return f;
         }
         // global variables
@@ -663,6 +761,8 @@ class StyleProvider {
                 const name = `--${scopeKey}-${toRadix(index)}`;
                 const { s, f } = variableRule({ name, config: val })
                 t.v += s;
+                f.set = () => undefined;
+                f.get = () => '';
                 acc[key] = f;
                 return acc;
             }, {} as Record<string, VariableResolver>) as VariablesResolvers<T>;
@@ -678,6 +778,7 @@ class StyleProvider {
             const { s, f } = variableRule({ name, config: val })
             if (StyleProvider._sc.v <= index) stylesheet.insertRule(s, index);
             f[indexSymbol] = index;
+            f.get = () => getVariableValue(stylesheet, f);
             return {name, s, f};
         };
         const handlers = Object.entries(config).reduce(StyleProvider._hs ? (acc, [key, val]) => {
@@ -1098,6 +1199,36 @@ class StyleProvider {
             return acc += serializeStylesheetMeta(stylesheet);
         }, '' as string);
     }
+
+    // make
+
+    // creators
+
+    static every: Creators = {
+        variable: StyleProvider.variable,
+        variables: StyleProvider.variables,
+        animation: StyleProvider.animation,
+        animations: StyleProvider.animations,
+        layer: StyleProvider.layer,
+        layers: StyleProvider.layers,
+        font: StyleProvider.font,
+        fonts: StyleProvider.fonts,
+        selectors: StyleProvider.selectors
+    };
+
+    static active: Creators = {
+        variable: (config) => lazyVariableResolver(() => StyleProvider.variable(config)),
+        variables: (config) => lazyBatch(Object.keys(config), () => StyleProvider.variables(config), lazyVariableResolver),
+        animation: (config) => lazyStringResolver(() => StyleProvider.animation(config)),
+        animations: (config) => lazyBatch(Object.keys(config), () => StyleProvider.animations(config)),
+        layer: () => lazyStringResolver(() => StyleProvider.layer()),
+        layers: (config) => lazyBatch(config, () => StyleProvider.layers(config)),
+        font: (config) => lazyStringResolver(() => StyleProvider.font(config)),
+        fonts: (config) => lazyBatch(Object.keys(config), () => StyleProvider.fonts(config)),
+        selectors: StyleProvider.lazySelectors
+    } as Creators;
+
+    static make = StyleProvider.every;
 };
 
 // public utils
@@ -1108,19 +1239,19 @@ class StyleProvider {
  * Create single variable
  * @param config - variable config
  */
-export const variable: Variable = (config) => StyleProvider.variable(config);
+export const variable: Variable = (config) => StyleProvider.make.variable(config);
 
 /**
  * Create single animation
  * @param config - animation config
  */
-export const animation: Animation = (config) => StyleProvider.animation(config);
+export const animation: Animation = (config) => StyleProvider.make.animation(config);
 
 /**
  * Create single layer
  * @param config - layer config
  */
-export const layer: Layer = () => StyleProvider.layer();
+export const layer: Layer = () => StyleProvider.make.layer();
 
 /**
  * Create single container
@@ -1132,7 +1263,7 @@ export const container: Container = (config) => StyleProvider.container(config);
  * Create single font
  * @param config - font config
  */
-export const font: Font = (config) => StyleProvider.font(config);
+export const font: Font = (config) => StyleProvider.make.font(config);
 
 // multiple
 
@@ -1140,19 +1271,19 @@ export const font: Font = (config) => StyleProvider.font(config);
  * Create multiple variables
  * @param config - variables config
  */
-export const variables: Variables = (config) => StyleProvider.variables(config);
+export const variables: Variables = (config) => StyleProvider.make.variables(config);
 
 /**
  * Create multiple animations
  * @param config - animations config
  */
-export const animations: Animations = (config) => StyleProvider.animations(config);
+export const animations: Animations = (config) => StyleProvider.make.animations(config);
 
 /**
  * Create multiple layers
  * @param config - layers config
  */
-export const layers: Layers = (config) => StyleProvider.layers(config);
+export const layers: Layers = (config) => StyleProvider.make.layers(config);
 
 /**
  * Create multiple containers
@@ -1164,43 +1295,41 @@ export const containers: Containers = (config) => StyleProvider.containers(confi
  * Create multiple fonts
  * @param config - fonts config
  */
-export const fonts: Fonts = (config) => StyleProvider.fonts(config);
+export const fonts: Fonts = (config) => StyleProvider.make.fonts(config);
 
 // selectors
 
-// single
+// lazy
+
+/**
+ * Create an anonymous rule with a class selector for the first use
+ * @param rule - rule content
+ */
+export const lazyClassName: LazyClassName = (rule) => StyleProvider.lazyClassName(rule);
+
+/**
+ * Create an anonymous rule with an attribute selector for the first use
+ * @param rule - rule content
+ */
+export const lazyAttribute: LazyAttribute = (rule) => StyleProvider.lazyAttribute(rule);
+
+// base
 
 /**
  * Create an anonymous rule with a class selector
  * @param rule - rule content
  */
-export const className: ClassName = (rule) => StyleProvider.className(rule);
+export const className = ((rule) => StyleProvider.className(rule)) as ClassName;
+className.lazy = lazyClassName;
 
 /**
  * Create an anonymous rule with an attribute selector
  * @param rule - rule content
  */
-export const attribute: Attribute = (rule) => StyleProvider.attribute(rule);
+export const attribute = ((rule) => StyleProvider.attribute(rule)) as Attribute;
+attribute.lazy = lazyAttribute;
 
 // multiple
-
-/**
- * Create a stylesheet with class selectors
- * @param generator - stylesheet generator
- */
-export const classNames: ClassNames = (generator) => StyleProvider.selectors(generator, TYPE_CLS);
-
-/**
- * Create a stylesheet with attribute selectors
- * @param generator - stylesheet generator
- */
-export const attributes: Attributes = (generator) => StyleProvider.selectors(generator, TYPE_ATTRS);
-
-/**
- * Create a custom stylesheet
- * @param generator - stylesheet generator
- */
-export const customStyles: CustomStyles = (generator) => StyleProvider.selectors(generator, TYPE_CUSTOM);
 
 // lazy
 
@@ -1208,19 +1337,42 @@ export const customStyles: CustomStyles = (generator) => StyleProvider.selectors
  * Create a lazy stylesheet with class selectors
  * @param generator - stylesheet generator
  */
-export const lazyClassNames: ClassNames = (generator) => StyleProvider.lazySelectors(generator, TYPE_CLS) as ReturnType<ClassNames>;
+export const lazyClassNames: LazyClassNames = (generator) => StyleProvider.active.selectors(generator, TYPE_CLS) as ReturnType<ClassNames>;
 
 /**
  * Create a lazy stylesheet with attribute selectors
  * @param generator - stylesheet generator
  */
-export const lazyAttributes: Attributes = (generator) => StyleProvider.lazySelectors(generator, TYPE_ATTRS) as ReturnType<Attributes>;
+export const lazyAttributes: LazyAttributes = (generator) => StyleProvider.active.selectors(generator, TYPE_ATTRS) as ReturnType<Attributes>;
 
 /**
  * Create a lazy custom stylesheet
  * @param generator - stylesheet generator
  */
-export const lazyCustomStyles: CustomStyles = (generator) => StyleProvider.lazySelectors(generator, TYPE_CUSTOM) as ReturnType<CustomStyles>;
+export const lazyCustomStyles: LazyCustomStyles = (generator) => StyleProvider.active.selectors(generator, TYPE_CUSTOM) as ReturnType<CustomStyles>;
+
+// base
+
+/**
+ * Create a stylesheet with class selectors
+ * @param generator - stylesheet generator
+ */
+export const classNames = ((generator) => StyleProvider.make.selectors(generator, TYPE_CLS)) as ClassNames;
+classNames.lazy = lazyClassNames;
+
+/**
+ * Create a stylesheet with attribute selectors
+ * @param generator - stylesheet generator
+ */
+export const attributes = ((generator) => StyleProvider.make.selectors(generator, TYPE_ATTRS)) as Attributes;
+attributes.lazy = lazyAttributes;
+
+/**
+ * Create a custom stylesheet
+ * @param generator - stylesheet generator
+ */
+export const customStyles: CustomStyles = (generator) => StyleProvider.make.selectors(generator, TYPE_CUSTOM);
+customStyles.lazy = lazyCustomStyles;
 
 // stylesheets
 
@@ -1280,20 +1432,23 @@ export const serializeMeta = (arg?: EffCSSStyleSheet | Function) => StyleProvide
  * Configure CSS generation
  * @param config - generation config
  */
-export const configure = (config: Partial<{
-    prefix: string;
-    minify: boolean;
-    emulate: boolean;
-}>) => {
+export const configure = (config: {
+    prefix?: string;
+    minify?: boolean;
+    emulate?: boolean;
+    lazy?: boolean;
+}) => {
     if (StyleProvider.scopeCount > 0) return false;
     const {
         prefix = StyleProvider.prefix,
         minify = StyleProvider.minify,
-        emulate = StyleProvider.emulate
+        emulate = StyleProvider.emulate,
+        lazy = StyleProvider.lazy
     } = config;
     StyleProvider.prefix = prefix;
     StyleProvider.minify = minify;
     StyleProvider.emulate = emulate;
+    StyleProvider.lazy = lazy;
     return true;
 };
 

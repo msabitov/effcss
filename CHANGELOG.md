@@ -5,6 +5,20 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0] - 2026-08-28
+
+### Added
+- lazy CSS generation mode added, it can be enabled/disabled via `configure` and allows to genereate CSS rules on the first use (tests added)
+- `lazyClassName` and `lazyAttribute` utils for lazy generation of single rules
+- the syntax of several utilities has been expanded - now `className.lazy`, `classNames.lazy`, `attribute.lazy`, `attributes.lazy` provides direct access to lazy utils
+
+### Fixed
+- fixed a bug with the lack of a `get` method for `variables` utility result entries
+- fixed `get` and `set` methods stubs for scoped variables
+
+### Changed
+- minor README changes
+
 ## [5.4.5] - 2026-08-21
 
 ### Added
@@ -773,7 +787,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[5.4.5]: https://github.com/msabitov/effcss
+[5.5.0]: https://github.com/msabitov/effcss
+[5.4.5]: https://github.com/msabitov/effcss/commit/232a0cfb6bd55dfe4b6efed6aabc259d652890cd
 [5.4.4]: https://github.com/msabitov/effcss/commit/a15f952f02d5c972a1a63846eb6fd1ba87f18e7e
 [5.4.3]: https://github.com/msabitov/effcss/commit/ea9a1248abf7bb7711cef9379fd51fa1caada3c2
 [5.4.2]: https://github.com/msabitov/effcss/commit/3950a03c8577fe87a9c91d2f6f9c1e1ca17a520f

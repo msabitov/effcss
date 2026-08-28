@@ -25,8 +25,10 @@ EffCSS is a self-confident CSS-in-TS library based only on the browser APIs. Use
 
 -   zero-dependency,
 -   framework agnostic,
+-   small bundle size,
+-   lazy mode support,
 -   selectors isolation and minification out of the box,
--   TypeScript contract-based autocompletion of stylesheet selectors,
+-   TypeScript contract-based autocompletion,
 -   compatible with any rendering (CSR, SSR, SSG).
 
 ## Links
