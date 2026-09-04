@@ -372,7 +372,7 @@ describe('Utils:', () => {
                     const card = classNames<Card>((selectors) => {
                         const {w, card} = selectors;
                         return {
-                            [startLayer]: {
+                            [startLayer()]: {
                                 button: {
                                     border: 'none'
                                 }
@@ -422,7 +422,7 @@ describe('Utils:', () => {
                         const middleLayer = layer();
                         const topLayer = layer();
                         return {
-                            [startLayer]: {
+                            [startLayer()]: {
                                 button: {
                                     border: 'none'
                                 }
@@ -867,7 +867,7 @@ describe('Utils:', () => {
                     const card = classNames<Card>((selectors) => {
                         const {w, card} = selectors;
                         return {
-                            [globalLayers.start]: {
+                            [globalLayers.start()]: {
                                 button: {
                                     border: 'none'
                                 }
@@ -913,7 +913,7 @@ describe('Utils:', () => {
             
                         const localLayers = layers(['start', 'middle', 'top']);
                         return {
-                            [localLayers.start]: {
+                            [localLayers.start()]: {
                                 button: {
                                     border: 'none'
                                 }
@@ -1659,6 +1659,103 @@ describe('Utils:', () => {
             }));
 
             expect(serialize(stylesheet(custom))).toContain('@layer base, utils;');
+        });
+    });
+
+    describe('Within  scope', () => {
+        test('single variable', () => {
+            const sizeValue = '32px'
+            let innerValue;
+            const custom = customStyles(() => {
+                const size = variable(sizeValue);
+                innerValue = size.get();
+                size.set('64px')
+                return {
+                    '.local': {
+                        width: size()
+                    }
+                }
+            });
+
+            const sheet = stylesheet(custom);
+
+            expect(innerValue).toBe('');
+            expect(serialize(sheet)).toContain(sizeValue);
+        });
+
+        test('multiple variables', () => {
+            const sizeValue = '30px'
+            let innerValue;
+            const custom = customStyles(() => {
+                const vars = variables({
+                    size: sizeValue,
+                    color: 'green'
+                });
+                innerValue = vars.size.get();
+                vars.size.set('60px')
+                return {
+                    '.local': {
+                        inlineSize: vars.size()
+                    }
+                }
+            });
+
+            const sheet = stylesheet(custom);
+
+            expect(innerValue).toBe('');
+            expect(serialize(sheet)).toContain(sizeValue);
+        });
+
+        test('no update operations inside stylesheet generator', () => {
+            const sizeValue = '32px';
+            const size = variable(sizeValue);
+            const vars = variables({
+                size: sizeValue,
+                color: 'green'
+            });
+
+            const custom = customStyles(() => {
+                update(size, '36px');
+                update(vars, {size: '36px'});
+                return {
+                    '.local': {
+                        width: size()
+                    }
+                }
+            });
+
+            expect(size.get()).toBe(sizeValue);
+            expect(vars.size.get()).toBe(sizeValue);
+        });
+
+        test('no local className/attribute', () => {
+            let localCls: string | undefined = undefined;
+            let localAttr: object | undefined = undefined;
+
+            const borderWidth = '0.125rem';
+            const clsWidth = '18px';
+            const attrWidth = '22px';
+            const custom = customStyles(() => {
+                localCls = className({
+                    width: clsWidth
+                });
+                localAttr = attribute({
+                    width: attrWidth
+                });
+                return {
+                    '.border': {
+                        borderWidth
+                    }
+                }
+            });
+
+            const sheet = stylesheet(custom);
+
+            expect(localCls).toBe('');
+            expect(localAttr).toEqual({});
+            expect(serialize(sheet)).toContain(borderWidth);
+            expect(serialize(sheet)).not.toContain(clsWidth);
+            expect(serialize(sheet)).not.toContain(attrWidth);
         });
     });
 });

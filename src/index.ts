@@ -81,6 +81,7 @@ const GLOBALS = [LAYERS, VARIABLES, FONTS, ANIMATIONS, SHARED] as const;
 const STYLE_ATTRS = GLOBALS.reduce((acc, key) => ({
     ...acc, [key]: GLOBAL_ATTR + '="'  + key + '"'
 }), {} as Record<string, string>);
+const SEMICOLON = ';';
 const keyAttr = (val: string) => `${KEY_ATTR}="${val}"`;
 const isSymbol = (val: any) => typeof val === 'symbol';
 const isObject = (val: any) => val !== null && typeof val === 'object';
@@ -97,6 +98,7 @@ const kebabCase = (str: string): string => {
 const propVal = (prop: string, val: any) => `${kebabCase(prop)}:${'' + val};`
 const toRadix = (num: number) => num.toString(36);
 const hasProperty = (obj: any, prop: PropertyKey) => Object.prototype.hasOwnProperty.call(obj, prop);
+const prepareInitialValue = (arg: any) => arg !== null && arg !== undefined ? `initial-value:${arg};` : '';
 
 /**
  * Collect styles
@@ -120,7 +122,7 @@ const collect = (key: string, value: unknown, out: string[]): void => {
         return;
     }
     if (value === '') {
-        out.push(resKey, ';');
+        out.push(resKey, SEMICOLON);
         return;
     }
     out.push(propVal(resKey, value));
@@ -181,7 +183,7 @@ const variableRule = ({name, config}: {
     else descriptor = {initialValue: config};
 
     const {syntax = '*', inherits = true, initialValue} = descriptor;
-    const rule = `@property ${name} {syntax:${shortSyntax[syntax] || syntax};inherits:${inherits};${initialValue ? `initial-value:${initialValue};` : ''}}`;
+    const rule = `@property ${name} {syntax:${shortSyntax[syntax] || syntax};inherits:${inherits};${prepareInitialValue(initialValue)}}`;
     const resolver = ((fallback?: any) => `var(${name}${fallback ? ',' + fallback : ''})`) as VariableResolver;
     resolver[Symbol.toPrimitive] = () => name;
     return {
@@ -199,13 +201,13 @@ const replaceVariableRule = (
     const rule = stylesheet[CSS_RULES][index];
     const cssText = rule.cssText;
     const parts = cssText.split(/initial-value:\s?/)
-    const nextVal = value ? `initial-value:${value};` : '';
+    const nextVal = prepareInitialValue(value);
     let result: string;
     if (parts.length === 1) {
         result = (cssText.slice(0, -1) + nextVal + '}');
     } else {
-        const [_, ...rest] = parts[1].split(';');
-        result = (parts[0] + nextVal + rest.join(';'));
+        const [_, ...rest] = parts[1].split(SEMICOLON);
+        result = (parts[0] + nextVal + rest.join(SEMICOLON));
     }
     stylesheet.deleteRule(index);
     stylesheet.insertRule(result, index);
@@ -221,7 +223,7 @@ const getVariableValue = (
     const rule = stylesheet[CSS_RULES][index];
     const parts = rule.cssText.split(/initial-value:\s?/)
     if (parts.length === 1) return '';
-    return parts[1].split(';')[0];
+    return parts[1].split(SEMICOLON)[0];
 };
 
 const fontRule = ({name, config}: {
@@ -879,7 +881,7 @@ class StyleProvider {
         if (scope) {
             const name = `${scope.key}-${toRadix(scope.c.l++)}`;
             const ruleKey = AT_LAYER_ + name;
-            const declaration = ruleKey + ';';
+            const declaration = ruleKey + SEMICOLON;
             scope.c.ld++;
             const resolver = (() => ruleKey) as LayerResolver;
             scope.t.l += declaration;
@@ -892,7 +894,7 @@ class StyleProvider {
         const index = scope.c.l++;
         const name = `${scope.key}-${toRadix(index)}`;
         const ruleKey = AT_LAYER_ + name;
-        const declaration = ruleKey + ';';
+        const declaration = ruleKey + SEMICOLON;
         const declarationIndex = scope.c.ld++;
         const resolver = (() => ruleKey) as LayerResolver;
         resolver[Symbol.toPrimitive] = () => ruleKey;
@@ -920,7 +922,7 @@ class StyleProvider {
                 acc[key] = resolver;
                 return acc;
             }, {} as Record<NoInfer<T>, LayerResolver>);
-            scope.t.l += (AT_LAYER_ + order.join(', ') + ';');
+            scope.t.l += (AT_LAYER_ + order.join(', ') + SEMICOLON);
             return resolvers;
         }
         // global layers
@@ -936,7 +938,7 @@ class StyleProvider {
             acc[key] = resolver;
             return acc;
         }, {} as Record<NoInfer<T>, LayerResolver>);
-        const declaration = AT_LAYER_ + order.join(', ') + ';';
+        const declaration = AT_LAYER_ + order.join(', ') + SEMICOLON;
         const declarationIndex = scope.c.ld++;
         if (StyleProvider._sc.l <= declarationIndex) stylesheet.insertRule(declaration, declarationIndex);
         if (StyleProvider._hs) StyleProvider.emit({ fn: LAYERS, css: declaration, names: order });
@@ -1079,18 +1081,21 @@ class StyleProvider {
             const prevScope = StyleProvider.scope;
             // set next
             StyleProvider.scope = scope;
-            // calc rules inside current scope
-            let styleObject: object | undefined;
-            // if we have server css for custom styles
-            if (type === CUSTOM_STYLES && cssText) styleObject = undefined;
-            else styleObject = generator(selectors);
-            // if there are no server CSS
-            if (!serverStyleSheet) {
-                cssText = scope.t.f + scope.t.l + scope.t.v + scope.t.a + parseStyles(styleObject);
-                stylesheet.replaceSync(cssText);
+            try {
+                // calc rules inside current scope
+                let styleObject: object | undefined;
+                // if we have server css for custom styles
+                if (type === CUSTOM_STYLES && cssText) styleObject = undefined;
+                else styleObject = generator(selectors);
+                // if there are no server CSS
+                if (!serverStyleSheet) {
+                    cssText = scope.t.f + scope.t.l + scope.t.v + scope.t.a + parseStyles(styleObject);
+                    stylesheet.replaceSync(cssText);
+                }
+            } finally {
+                // return prev scope
+                StyleProvider.scope = prevScope;
             }
-            // return prev scope
-            StyleProvider.scope = prevScope;
         }
         markStylesheet(stylesheet, scopeKey, dict);
         if (StyleProvider._hs) StyleProvider.emit({ fn: type, css: cssText, key: scopeKey, dict });
