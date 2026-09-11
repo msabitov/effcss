@@ -11,7 +11,12 @@ import {
     lazyAttribute,
     classNames,
     attributes,
-    customStyles
+    customStyles,
+    lazyCustomStyles,
+    variablesStylesheet,
+    fontsStylesheet,
+    animationsStylesheet,
+    layersStylesheet
 } from '../src/index';
 
 type Card = {
@@ -255,6 +260,8 @@ describe('Lazy mode:', () => {
 
                 // string coercion returns the correct selector
                 expect(`${clsResolver}`).toBe(`.${cls}`);
+                // call again
+                expect(clsResolver()).toBe(cls);
             });
 
             test('function arg', () => {
@@ -282,7 +289,8 @@ describe('Lazy mode:', () => {
                 expect(cls).toBe('f0_1');
                 // string coercion returns the correct selector
                 expect(`${clsResolver}`).toBe(`.${cls}`);
-                
+                // call again
+                expect(clsResolver()).toBe(cls);
             });
         });
 
@@ -306,6 +314,8 @@ describe('Lazy mode:', () => {
 
                 // string coercion returns the correct selector
                 expect(`${attrResolver}`).toBe(`[${key}]`);
+                // call again
+                expect(attrResolver()).toEqual(attrs);
 
                 const resultCSS = serialize();
                 expect(resultCSS).not.toBe(initialCSS);
@@ -338,6 +348,8 @@ describe('Lazy mode:', () => {
                 expect(key).toBe('data-f0-3');
                 // string coercion returns the correct selector
                 expect(`${attrResolver}`).toBe(`[${key}]`);
+                // call again
+                expect(attrResolver()).toEqual(attrs);
             });
         });
     });
@@ -433,6 +445,144 @@ describe('Lazy mode:', () => {
             const resultCSS = serialize(stylesheet(custom));
             expect(resultCSS).toContain('padding: 1rem;');
             expect(resultCSS).toContain('background: transparent;');
+        });
+    });
+    
+    describe('Global at-rules inside scope:', () => {
+        test('scope uses global variable', () => {
+            const initialCSS = serialize(variablesStylesheet());
+            const size = variable('29px');
+            const custom = lazyCustomStyles(() => ({
+                'body': {
+                    padding: size()
+                }
+            }));
+
+            expect(serialize(variablesStylesheet())).toBe(initialCSS);
+            custom();
+            expect(serialize(variablesStylesheet())).toContain(`@property --f0-4 { syntax: "*"; inherits: true; initial-value: 29px; }`);
+        });
+
+        test('scope uses global variables', () => {
+            const initialCSS = serialize(variablesStylesheet());
+            const { size } = variables({
+                size: '31px'
+            });
+            const custom = lazyCustomStyles(() => ({
+                'body': {
+                    padding: size()
+                }
+            }));
+
+            expect(serialize(variablesStylesheet())).toBe(initialCSS);
+            custom();
+            expect(serialize(variablesStylesheet())).toContain(`@property --f0-5 { syntax: "*"; inherits: true; initial-value: 31px; }`);
+        });
+
+        test('scope uses global animation', () => {
+            const initialCSS = serialize(animationsStylesheet());
+            const fade = animation({
+                from: { opacity: 0 },
+                to: { opacity: 1 }
+            });
+            const custom = lazyCustomStyles(() => ({
+                '.fade-in': {
+                    animationName: fade()
+                }
+            }));
+
+            expect(serialize(animationsStylesheet())).toBe(initialCSS);
+            custom();
+            expect(serialize(animationsStylesheet())).toContain('@keyframes f0-4 ');
+        });
+
+        test('scope uses global animations', () => {
+            const initialCSS = serialize(animationsStylesheet());
+            const { fade } = animations({
+                fade: {
+                    from: { opacity: 0 },
+                    to: { opacity: 1 }
+                }
+            });
+            const custom = lazyCustomStyles(() => ({
+                '.fade-in': {
+                    animationName: fade()
+                }
+            }));
+
+            expect(serialize(animationsStylesheet())).toBe(initialCSS);
+            custom();
+            expect(serialize(animationsStylesheet())).toContain('@keyframes f0-5 ');
+        });
+
+        test('scope uses global font', () => {
+            const initialCSS = serialize(fontsStylesheet());
+            const roboto = font({
+                src: `url("/fonts/roboto-regular.woff2") format("woff2")`,
+                weight: 400,
+                display: 'swap'
+            });
+            const custom = lazyCustomStyles(() => ({
+                'body': {
+                    fontFamily: roboto()
+                }
+            }));
+
+            expect(serialize(fontsStylesheet())).toBe(initialCSS);
+            custom();
+            expect(serialize(fontsStylesheet())).toContain('@font-face { font-family: f0-4;');
+        });
+
+        test('scope uses global fonts', () => {
+            const initialCSS = serialize(fontsStylesheet());
+            const { roboto } = fonts({
+                roboto: {
+                    src: `url("/fonts/roboto-regular.woff2") format("woff2")`,
+                    weight: 400,
+                    display: 'swap'
+                }
+            });
+            const custom = lazyCustomStyles(() => ({
+                'body': {
+                    fontFamily: roboto()
+                }
+            }));
+
+            expect(serialize(fontsStylesheet())).toBe(initialCSS);
+            custom();
+            expect(serialize(fontsStylesheet())).toContain('@font-face { font-family: f0-5;');
+        });
+
+        test('scope uses global layer', () => {
+            const initialCSS = serialize(layersStylesheet());
+            const base = layer();
+            const custom = lazyCustomStyles(() => ({
+                [base()]: {
+                    'body': {
+                        fontWeight: 'bold'
+                    }
+                }
+            }));
+
+            expect(serialize(layersStylesheet())).toBe(initialCSS);
+            custom();
+            expect(serialize(layersStylesheet())).toContain(`@layer f0-4;`);
+        });
+
+        test('scope uses global layers', () => {
+            const initialCSS = serialize(layersStylesheet());
+            const { base } = layers(['base', 'spec']);
+            const custom = lazyCustomStyles(() => ({
+                [base()]: {
+                    'body': {
+                        fontWeight: 'bold'
+                    }
+                }
+            }));
+
+            expect(serialize(layersStylesheet())).toBe(initialCSS);
+            custom();
+            expect(serialize(layersStylesheet())).toContain(`@layer f0-5, f0-6;`);
         });
     });
 });

@@ -73,7 +73,8 @@ const FONTS = FONT + 's' as 'fonts';
 const LAYER = 'layer';
 const LAYERS = LAYER + 's' as 'layers';
 const AT_LAYER_ = '@' + LAYER + ' ';
-const SHARED = 'shared';
+const SHARED = 'shared' as const;
+const SELECTORS = 'selectors' as const;
 const TYPE_ATTRS = { type: ATTRIBUTES } as const;
 const TYPE_CLS = { type: CLASSNAMES } as const;
 const TYPE_CUSTOM =  { type: CUSTOM_STYLES } as const;
@@ -82,6 +83,15 @@ const STYLE_ATTRS = GLOBALS.reduce((acc, key) => ({
     ...acc, [key]: GLOBAL_ATTR + '="'  + key + '"'
 }), {} as Record<string, string>);
 const SEMICOLON = ';';
+const SHORT = {
+    v: VARIABLES,
+    a: ANIMATIONS,
+    f: FONTS,
+    l: LAYERS,
+    s: SHARED
+};
+const mockGetMethod = () => '';
+const mockSetMethod = () => undefined;
 const keyAttr = (val: string) => `${KEY_ATTR}="${val}"`;
 const isSymbol = (val: any) => typeof val === 'symbol';
 const isObject = (val: any) => val !== null && typeof val === 'object';
@@ -468,16 +478,8 @@ class StyleProvider {
         s: 0
     };
 
-    // variables stylesheet
-    protected static _vs?: EffCSSStyleSheet;
-    // animations stylesheet
-    protected static _as?: EffCSSStyleSheet;
-    // layers stylesheet
-    protected static _ls?: EffCSSStyleSheet;
-    // shared stylesheet
-    protected static _ss?: EffCSSStyleSheet;
-    // fonts stylesheet
-    protected static _fs?: EffCSSStyleSheet;
+    // global stylesheets
+    static _g: Partial<Record<'a' | 'v' | 'l' | 'f' | 's', EffCSSStyleSheet>> = {};
 
     protected static _serverGlobalCSS: Map<GlobalKey, CSSStyleSheet> | null = null;
     protected static _serverCSS: Map<string, CSSStyleSheet> | null = null;
@@ -545,59 +547,36 @@ class StyleProvider {
         return StyleProvider._serverMeta;
     }
 
-    static get vs(): EffCSSStyleSheet {
-        if (!StyleProvider._vs) {
-            const serverStylesheet = StyleProvider.serverGlobalCSS.get(VARIABLES);
+    // get global stylesheet
+    static _gg(key: 'v' | 'a' | 'l' | 'f' | 's'): EffCSSStyleSheet {
+        if (!StyleProvider._g[key]) {
+            const serverStylesheet = StyleProvider.serverGlobalCSS.get(SHORT[key]);
             if (serverStylesheet) {
-                StyleProvider._vs = serverStylesheet;
-                StyleProvider._sc.v = serverStylesheet[CSS_RULES].length;
-            } else StyleProvider._vs = StyleProvider.cst();
+                StyleProvider._g[key] = serverStylesheet;
+                StyleProvider._sc[key] = serverStylesheet[CSS_RULES].length;
+            } else StyleProvider._g[key] = StyleProvider.cst();
         }
-        return StyleProvider._vs;
+        return StyleProvider._g[key];
+    }
+
+    static get vs(): EffCSSStyleSheet {
+        return StyleProvider._gg('v');
     }
 
     static get as(): EffCSSStyleSheet {
-        if (!StyleProvider._as) {
-            const serverStylesheet = StyleProvider.serverGlobalCSS.get(ANIMATIONS);
-            if (serverStylesheet) {
-                StyleProvider._as = serverStylesheet;
-                StyleProvider._sc.a = serverStylesheet[CSS_RULES].length;
-            } else StyleProvider._as = StyleProvider.cst();
-        }
-        return StyleProvider._as;
+        return StyleProvider._gg('a');
     }
 
     static get ls(): EffCSSStyleSheet {
-        if (!StyleProvider._ls) {
-            const serverStylesheet = StyleProvider.serverGlobalCSS.get(LAYERS);
-            if (serverStylesheet) {
-                StyleProvider._ls = serverStylesheet;
-                StyleProvider._sc.l = serverStylesheet[CSS_RULES].length;
-            } else StyleProvider._ls = StyleProvider.cst();
-        }
-        return StyleProvider._ls;
+        return StyleProvider._gg('l');
     }
 
     static get fs(): EffCSSStyleSheet {
-        if (!StyleProvider._fs) {
-            const serverStylesheet = StyleProvider.serverGlobalCSS.get(FONTS);
-            if (serverStylesheet) {
-                StyleProvider._fs = serverStylesheet;
-                StyleProvider._sc.f = serverStylesheet[CSS_RULES].length;
-            } else StyleProvider._fs = StyleProvider.cst();
-        }
-        return StyleProvider._fs;
+        return StyleProvider._gg('f');
     }
 
     static get ss(): EffCSSStyleSheet {
-        if (!StyleProvider._ss) {
-            const serverStylesheet = StyleProvider.serverGlobalCSS.get(SHARED);
-            if (serverStylesheet) {
-                StyleProvider._ss = serverStylesheet;
-                StyleProvider._sc.s = serverStylesheet[CSS_RULES].length;
-            } else StyleProvider._ss = StyleProvider.cst();
-        }
-        return StyleProvider._ss;
+        return StyleProvider._gg('s');
     }
 
     // createStyleSheet
@@ -715,15 +694,15 @@ class StyleProvider {
      * Create variable
      * @param config - variable config
      */
-    static variable = (config?: VariableConfig): VariableResolver => {
+    static variable = (config?: VariableConfig, initScope = StyleProvider.scope): VariableResolver => {
         // local variables
-        let scope = StyleProvider.scope;
+        let scope = initScope;
         if (scope) {
             const name = `--${scope.key}-${toRadix(scope.c.v++)}`;
             const { s, f } = variableRule({ name, config });
             scope.t.v += s;
-            f.set = () => undefined;
-            f.get = () => '';
+            f.set = mockSetMethod;
+            f.get = mockGetMethod;
             return f;
         }
         // global variables
@@ -753,9 +732,11 @@ class StyleProvider {
      * Create variables
      * @param config - variables config
      */
-    static variables = <T extends Record<string, VariableConfig>>(config: T): VariablesResolvers<T> => {
+    static variables = <T extends Record<string, VariableConfig>>(
+        config: T, initScope = StyleProvider.scope
+    ): VariablesResolvers<T> => {
         // local variables
-        let scope = StyleProvider.scope;
+        let scope = initScope;
         if (scope) {
             const { key: scopeKey, c, t } = scope;
             return Object.entries(config).reduce((acc, [key, val]) => {
@@ -763,8 +744,8 @@ class StyleProvider {
                 const name = `--${scopeKey}-${toRadix(index)}`;
                 const { s, f } = variableRule({ name, config: val })
                 t.v += s;
-                f.set = () => undefined;
-                f.get = () => '';
+                f.set = mockSetMethod;
+                f.get = mockGetMethod;
                 acc[key] = f;
                 return acc;
             }, {} as Record<string, VariableResolver>) as VariablesResolvers<T>;
@@ -809,9 +790,11 @@ class StyleProvider {
      * Create animation
      * @param config - animation config
      */
-    static animation = <T extends Record<string, object>>(config: T): AnimationResolver => {
+    static animation = <T extends Record<string, object>>(
+        config: T, initScope = StyleProvider.scope
+    ): AnimationResolver => {
         // local animation
-        let scope = StyleProvider.scope;
+        let scope = initScope;
         if (scope) {
             const name = `${scope.key}-${toRadix(scope.c.a++)}`;
             const { s, f } = animationRule({ name, config })
@@ -833,9 +816,11 @@ class StyleProvider {
      * Create animations
      * @param config - animation configs
      */
-    static animations = <T extends Record<string, AnimationConfig>>(config: T): AnimationsResolvers<T> => {
+    static animations = <T extends Record<string, AnimationConfig>>(
+        config: T, initScope = StyleProvider.scope
+    ): AnimationsResolvers<T> => {
         // local animations
-        let scope = StyleProvider.scope;
+        let scope = initScope;
         if (scope) {
             const { key: scopeKey, c, t } = scope;
             return Object.entries(config).reduce((acc, [key, val]) => {
@@ -875,9 +860,9 @@ class StyleProvider {
     /**
      * Create layer
      */
-    static layer = (): LayerResolver => {
+    static layer = (initScope = StyleProvider.scope): LayerResolver => {
         // local layer
-        let scope = StyleProvider.scope;
+        let scope = initScope;
         if (scope) {
             const name = `${scope.key}-${toRadix(scope.c.l++)}`;
             const ruleKey = AT_LAYER_ + name;
@@ -907,9 +892,9 @@ class StyleProvider {
      * Create layers
      * @param config - layers config
      */
-    static layers = <T extends string>(config: T[]): LayersResolvers<T> => {
+    static layers = <T extends string>(config: T[], initScope = StyleProvider.scope): LayersResolvers<T> => {
         // local layers
-        let scope = StyleProvider.scope;
+        let scope = initScope;
         const order: string[] = [];
         if (scope) {
             const { key: scopeKey, c } = scope;
@@ -991,9 +976,9 @@ class StyleProvider {
      * Create font
      * @param config - font config
      */
-    static font: Font = (config) => {
+    static font = (config: FontConfig, initScope = StyleProvider.scope) => {
         // local fonts
-        let scope = StyleProvider.scope;
+        let scope = initScope;
         if (scope) {
             const name = `${scope.key}-${toRadix(scope.c.f++)}`;
             const { s, f } = fontRule({ name, config });
@@ -1016,9 +1001,11 @@ class StyleProvider {
      * Create fonts
      * @param config - fonts configs
      */
-    static fonts = <T extends Record<string, FontConfig>>(config: T): FontsResolvers<T> => {
+    static fonts = <T extends Record<string, FontConfig>>(
+        config: T, initScope = StyleProvider.scope
+    ): FontsResolvers<T> => {
         // local fonts
-        let scope = StyleProvider.scope;
+        let scope = initScope;
         if (scope) {
             const { key: scopeKey, c, t } = scope;
             return Object.entries(config).reduce((acc, [key, val]) => {
@@ -1071,7 +1058,8 @@ class StyleProvider {
         } else stylesheet = StyleProvider.cst();
 
         const serverMeta = StyleProvider.serverMeta.get(scopeKey);
-        if (serverStyleSheet && serverMeta) dict = serverMeta;
+        // in lazy mode stylesheets must be evaluated again to create all at-rules on demand
+        if (serverStyleSheet && serverMeta && !StyleProvider.lazy) dict = serverMeta;
         else {
             const hash: undefined | ((key: string) => string) = type === CUSTOM_STYLES ? undefined : getHash({
                 type, dict, scope
@@ -1085,7 +1073,7 @@ class StyleProvider {
                 // calc rules inside current scope
                 let styleObject: object | undefined;
                 // if we have server css for custom styles
-                if (type === CUSTOM_STYLES && cssText) styleObject = undefined;
+                if (type === CUSTOM_STYLES && cssText && !StyleProvider.lazy) styleObject = undefined;
                 else styleObject = generator(selectors);
                 // if there are no server CSS
                 if (!serverStyleSheet) {
@@ -1141,23 +1129,23 @@ class StyleProvider {
     }
     // serialize layers
     protected static _sl(): string {
-        return serializeStylesheet(StyleProvider._ls, STYLE_ATTRS.layers);
+        return serializeStylesheet(StyleProvider._g.l, STYLE_ATTRS[LAYERS]);
     }
     // serialize variables
     protected static _sv(): string {
-        return serializeStylesheet(StyleProvider._vs, STYLE_ATTRS.variables);
+        return serializeStylesheet(StyleProvider._g.v, STYLE_ATTRS[VARIABLES]);
     }
     // serialize animations
     protected static _sa(): string {
-        return serializeStylesheet(StyleProvider._as, STYLE_ATTRS.animations);
+        return serializeStylesheet(StyleProvider._g.a, STYLE_ATTRS[ANIMATIONS]);
     }
     // serialize shared
     protected static _ssh(): string {
-        return serializeStylesheet(StyleProvider._ss, STYLE_ATTRS.shared);
+        return serializeStylesheet(StyleProvider._g.s, STYLE_ATTRS[SHARED]);
     }
     // serialize fonts
     protected static _sf(): string {
-        return serializeStylesheet(StyleProvider._fs, STYLE_ATTRS.fonts);
+        return serializeStylesheet(StyleProvider._g.f, STYLE_ATTRS[FONTS]);
     }
 
     static serialize(arg?: EffCSSStyleSheet | Function): string {
@@ -1170,15 +1158,15 @@ class StyleProvider {
 
         if (stylesheet) {
             switch (stylesheet) {
-                case StyleProvider._ls:
+                case StyleProvider._g.l:
                     return StyleProvider._sl();
-                case StyleProvider._vs:
+                case StyleProvider._g.v:
                     return StyleProvider._sv();
-                case StyleProvider._as:
+                case StyleProvider._g.a:
                     return StyleProvider._sa();
-                case StyleProvider._fs:
+                case StyleProvider._g.f:
                     return StyleProvider._sf();
-                case StyleProvider._ss:
+                case StyleProvider._g.s:
                     return StyleProvider._ssh();
                 default:
                     return serializeStylesheet(stylesheet);
@@ -1210,27 +1198,51 @@ class StyleProvider {
     // creators
 
     static every: Creators = {
-        variable: StyleProvider.variable,
-        variables: StyleProvider.variables,
-        animation: StyleProvider.animation,
-        animations: StyleProvider.animations,
-        layer: StyleProvider.layer,
-        layers: StyleProvider.layers,
-        font: StyleProvider.font,
-        fonts: StyleProvider.fonts,
-        selectors: StyleProvider.selectors
+        [VARIABLE]: StyleProvider[VARIABLE],
+        [VARIABLES]: StyleProvider[VARIABLES],
+        [ANIMATION]: StyleProvider[ANIMATION],
+        [ANIMATIONS]: StyleProvider[ANIMATIONS],
+        [LAYER]: StyleProvider[LAYER],
+        [LAYERS]: StyleProvider[LAYERS],
+        [FONT]: StyleProvider[FONT],
+        [FONTS]: StyleProvider[FONTS],
+        [SELECTORS]: StyleProvider.selectors
     };
 
     static active: Creators = {
-        variable: (config) => lazyVariableResolver(() => StyleProvider.variable(config)),
-        variables: (config) => lazyBatch(Object.keys(config), () => StyleProvider.variables(config), lazyVariableResolver),
-        animation: (config) => lazyStringResolver(() => StyleProvider.animation(config)),
-        animations: (config) => lazyBatch(Object.keys(config), () => StyleProvider.animations(config)),
-        layer: () => lazyStringResolver(() => StyleProvider.layer()),
-        layers: (config) => lazyBatch(config, () => StyleProvider.layers(config)),
-        font: (config) => lazyStringResolver(() => StyleProvider.font(config)),
-        fonts: (config) => lazyBatch(Object.keys(config), () => StyleProvider.fonts(config)),
-        selectors: StyleProvider.lazySelectors
+        [VARIABLE]: (config) => {
+            const scope = StyleProvider.scope;
+            return lazyVariableResolver(() => StyleProvider[VARIABLE](config, scope));
+        },
+        [VARIABLES]: (config) => {
+            const scope = StyleProvider.scope;
+            return lazyBatch(Object.keys(config), () => StyleProvider[VARIABLES](config, scope), lazyVariableResolver);
+        },
+        [ANIMATION]: (config) => {
+            const scope = StyleProvider.scope;
+            return lazyStringResolver(() => StyleProvider[ANIMATION](config, scope));
+        },
+        [ANIMATIONS]: (config) => {
+            const scope = StyleProvider.scope;
+            return lazyBatch(Object.keys(config), () => StyleProvider[ANIMATIONS](config, scope));
+        },
+        [LAYER]: () => {
+            const scope = StyleProvider.scope;
+            return lazyStringResolver(() => StyleProvider[LAYER](scope));
+        },
+        [LAYERS]: (config) => {
+            const scope = StyleProvider.scope;
+            return lazyBatch(config, () => StyleProvider[LAYERS](config, scope));
+        },
+        [FONT]: (config) => {
+            const scope = StyleProvider.scope;
+            return lazyStringResolver(() => StyleProvider[FONT](config, scope));
+        },
+        [FONTS]: (config) => {
+            const scope = StyleProvider.scope;
+            return lazyBatch(Object.keys(config), () => StyleProvider[FONTS](config, scope));
+        },
+        [SELECTORS]: StyleProvider.lazySelectors
     } as Creators;
 
     static make = StyleProvider.every;
@@ -1244,31 +1256,31 @@ class StyleProvider {
  * Create single variable
  * @param config - variable config
  */
-export const variable: Variable = (config) => StyleProvider.make.variable(config);
+export const variable: Variable = (config) => StyleProvider.make[VARIABLE](config);
 
 /**
  * Create single animation
  * @param config - animation config
  */
-export const animation: Animation = (config) => StyleProvider.make.animation(config);
+export const animation: Animation = (config) => StyleProvider.make[ANIMATION](config);
 
 /**
  * Create single layer
  * @param config - layer config
  */
-export const layer: Layer = () => StyleProvider.make.layer();
+export const layer: Layer = () => StyleProvider.make[LAYER]();
 
 /**
  * Create single container
  * @param config - container config
  */
-export const container: Container = (config) => StyleProvider.container(config);
+export const container: Container = (config) => StyleProvider[CONTAINER](config);
 
 /**
  * Create single font
  * @param config - font config
  */
-export const font: Font = (config) => StyleProvider.make.font(config);
+export const font: Font = (config) => StyleProvider.make[FONT](config);
 
 // multiple
 
@@ -1276,31 +1288,31 @@ export const font: Font = (config) => StyleProvider.make.font(config);
  * Create multiple variables
  * @param config - variables config
  */
-export const variables: Variables = (config) => StyleProvider.make.variables(config);
+export const variables: Variables = (config) => StyleProvider.make[VARIABLES](config);
 
 /**
  * Create multiple animations
  * @param config - animations config
  */
-export const animations: Animations = (config) => StyleProvider.make.animations(config);
+export const animations: Animations = (config) => StyleProvider.make[ANIMATIONS](config);
 
 /**
  * Create multiple layers
  * @param config - layers config
  */
-export const layers: Layers = (config) => StyleProvider.make.layers(config);
+export const layers: Layers = (config) => StyleProvider.make[LAYERS](config);
 
 /**
  * Create multiple containers
  * @param config - containers config
  */
-export const containers: Containers = (config) => StyleProvider.containers(config);
+export const containers: Containers = (config) => StyleProvider[CONTAINERS](config);
 
 /**
  * Create multiple fonts
  * @param config - fonts config
  */
-export const fonts: Fonts = (config) => StyleProvider.make.fonts(config);
+export const fonts: Fonts = (config) => StyleProvider.make[FONTS](config);
 
 // selectors
 
