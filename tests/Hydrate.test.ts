@@ -34,7 +34,7 @@ type Card = {
 const generators: {
     classNames: Generator<Card>;
     attributes: Generator<Card>;
-    customStyles: () => object;
+    customStyles: () => EffCSS.StyleSheet;
 } = {
     classNames: (selectors) => {
         const {w, card, blur} = selectors;

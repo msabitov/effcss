@@ -4,6 +4,27 @@ import {
     dictSymbol
 } from './constants';
 
+declare global {
+    namespace EffCSS {
+        /**
+         * CSS properties
+         */
+        interface Properties {}
+        /**
+         * Style rule
+         */
+        interface Rule extends Properties {
+            [selector: string]: Rule | string | number | undefined;
+        }
+        /**
+         * StyleSheet content
+         */
+        type StyleSheet = {
+            [selector: string]: Rule;
+        };
+    }
+}
+
 type GetIndex = {[key in typeof indexSymbol]: number;};
 type ToPrimitive = {[key in typeof Symbol.toPrimitive]: () => string;};
 type StringResolver = string & (() => string) & ToPrimitive;
@@ -68,14 +89,14 @@ export type Selectors<T> = {
     } : T[K] extends object ? string & Selectors<T[K]> : never;
 }
 
-export type Generator<T extends Contract> = (selectors: Selectors<T>) => object;
+export type Generator<T extends Contract> = (selectors: Selectors<T>) => EffCSS.StyleSheet;
 
 // selectors
 
-type RuleConfig = object | (() => object);
+type RuleConfig = EffCSS.Rule | (() => EffCSS.Rule);
 
 export type LazyClassName = (rule: RuleConfig) => () => string;
-export type ClassName = ((rule: object) => string) & {lazy: LazyClassName};
+export type ClassName = ((rule: EffCSS.Rule) => string) & {lazy: LazyClassName};
 export type ClassNamesResolver<T extends Contract> = (params: DeepPartial<T>) => string;
 export type LazyClassNames = <T extends Contract>(generator: Generator<T>) => ClassNamesResolver<T>;
 export type ClassNames = (<T extends Contract>(generator: Generator<T>) => ClassNamesResolver<T>) & {
@@ -83,7 +104,7 @@ export type ClassNames = (<T extends Contract>(generator: Generator<T>) => Class
 };
 
 export type LazyAttribute = (rule: RuleConfig) => () => object;
-export type Attribute = ((rule: object) => object) & {lazy: LazyAttribute;};
+export type Attribute = ((rule: EffCSS.Rule) => object) & {lazy: LazyAttribute;};
 export type AttributesResolver<T extends Contract> = (params: DeepPartial<T>) => object;
 export type LazyAttributes = <T extends Contract>(generator: Generator<T>) => AttributesResolver<T>;
 export type Attributes = (<T extends Contract>(generator: Generator<T>) => AttributesResolver<T>) & {
@@ -92,7 +113,7 @@ export type Attributes = (<T extends Contract>(generator: Generator<T>) => Attri
 
 // custom
 
-export type CustomStylesHandler = (generator: () => object) => (() => null);
+export type CustomStylesHandler = (generator: () => EffCSS.StyleSheet) => (() => null);
 export type LazyCustomStyles = CustomStylesHandler;
 export type CustomStyles = CustomStylesHandler & {lazy: LazyCustomStyles};
 
@@ -116,7 +137,7 @@ export type VariablesResolvers<T extends Record<string, VariableConfig>> = {
 export type Variables = <T extends Record<string, VariableConfig>>(description: T) => VariablesResolvers<T>;
 
 // animations
-export type AnimationConfig = Record<string, object>;
+export type AnimationConfig = Record<string, EffCSS.Properties>;
 
 export type AnimationResolver = StringResolver;
 export type Animation = <T extends Record<string, object>>(description: T) => AnimationResolver;

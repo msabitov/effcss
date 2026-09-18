@@ -11,9 +11,10 @@
 [![license](https://badgen.net/static/license/Apache%202.0/blue)](https://sourcecraft.dev/msabitov/effcss/browse/LICENSE?rev=master)
 [![npm latest package](https://badgen.net/npm/v/effcss)](https://www.npmjs.com/package/effcss)
 [![Coverage Status](https://coveralls.io/repos/github/msabitov/effcss/badge.svg?branch=master)](https://coveralls.io/github/msabitov/effcss?branch=master)
-![minified size](https://badgen.net/bundlephobia/min/effcss)
-![minzipped size](https://badgen.net/bundlephobia/minzip/effcss)
+![npm package minimized gzipped size](https://img.shields.io/bundlejs/size/effcss?cacheSeconds=0)
 ![install size](https://badgen.net/packagephobia/install/effcss)
+![NPM Downloads](https://img.shields.io/npm/dm/effcss)
+![GitHub Repo stars](https://img.shields.io/github/stars/msabitov/effcss)
 
 </div>
 
@@ -69,6 +70,33 @@ pnpm add effcss
 # yarn
 yarn add effcss
 ```
+
+## CSS types & TS autocompletion
+
+By default EffCSS is permissive: styles accept any object. To enable strict CSS-typing (autocompletion + validation of invalid values), define `EffCSS.Properties` once in your project via global namespace augmentation.
+
+For example, you can install [`csstype`](https://www.npmjs.com/package/csstype)
+
+```sh
+npm i -D csstype
+```
+
+Then combine with EffCSS
+
+```ts
+// env.d.ts
+import type { Properties as CSSProperties } from 'csstype';
+
+declare global {
+    namespace EffCSS {
+        interface Properties extends CSSProperties {}
+    }
+}
+
+export {};
+```
+
+Now every style rule gets full TS autocompletion for CSS properties.
 
 ## Usage
 

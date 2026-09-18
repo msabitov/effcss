@@ -5,6 +5,18 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.3] - 2026-09-18
+
+### Added
+- `EffCSS` namespace and the overridable `EffCSS.Properties` interface: a single place to type CSS properties across all utilities. By default it stays permissive (previous behavior), but extending `EffCSS.Properties` (e.g. via `csstype`) once enables strict typing everywhere. Pure type-level feature — no new dependency, no runtime changes
+- `EffCSS.Rule` — recursive rule type built on top of `Properties`, allowing nested rules with arbitrary selectors (`'&:hover'`, `@media(...)`, `.class`, `> li`, `--var`) at any level
+- `EffCSS.StyleSheet` — top-level type for stylesheet generators (`classNames`, `attributes`, `customStyles`); the top level may contain only selectors, not CSS properties
+- public style types in `src/types.ts` now use `EffCSS.Rule`/`EffCSS.StyleSheet` instead of plain `object`
+- added the section about CSS types & TS autocompletion in README
+
+### Fixed
+- badges in the README
+
 ## [5.5.2] - 2026-09-11
 
 ### Added
