@@ -5,6 +5,14 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - 2026-09-25
+
+### Added
+- `theme` utility has been added, allowing you to create a theme with set of variables and several options to apply (type and tests added)
+
+### Fixed
+- StyleSheet and Rule types fixed - object values can be arrays, and for independent declarations empty string is available
+
 ## [5.5.3] - 2026-09-18
 
 ### Added

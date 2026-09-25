@@ -14,13 +14,13 @@ declare global {
          * Style rule
          */
         interface Rule extends Properties {
-            [selector: string]: Rule | string | number | undefined;
+            [selector: string]: Rule | string | number | undefined | string[];
         }
         /**
          * StyleSheet content
          */
         type StyleSheet = {
-            [selector: string]: Rule;
+            [selector: string]: Rule | Rule[] | '';
         };
     }
 }
@@ -241,3 +241,28 @@ export type EffCSSEvent = {
     | { fn: 'attributes'; dict: Record<string, string>; key: string; }
     | { fn: 'customStyles'; dict: Record<string, string>; key: string; }
 );
+export type Theme = <
+    TVars extends Record<string, VariableConfig>,
+    TOptions extends Record<string, Record<keyof TVars, string | number | boolean>>
+>(config: {
+    vars: TVars;
+    options: TOptions;
+    initial?: keyof TOptions;
+}) => {
+    /**
+     * Theme variables
+     */
+    vars: VariablesResolvers<TVars>;
+    /**
+     * Theme options list
+     */
+    list: (keyof TOptions)[];
+    /**
+     * Get current theme name
+     */
+    get(): keyof TOptions | undefined;
+    /**
+     * Set next theme name
+     */
+    set(name: keyof TOptions): boolean;
+}

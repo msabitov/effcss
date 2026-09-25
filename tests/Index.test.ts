@@ -17,7 +17,8 @@ import {
     lazyCustomStyles,
     font,
     fontsStylesheet,
-    fonts
+    fonts,
+    theme
 } from '../src/index';
 
 type Card = {
@@ -1756,6 +1757,97 @@ describe('Utils:', () => {
             expect(serialize(sheet)).toContain(borderWidth);
             expect(serialize(sheet)).not.toContain(clsWidth);
             expect(serialize(sheet)).not.toContain(attrWidth);
+        });
+    });
+
+    describe('Theme:', () => {
+        const makeTheme = () => theme({
+            vars: {
+                bg: { syntax: 'color', inherits: false, initialValue: '#fff' },
+                fg: { syntax: 'color', inherits: false, initialValue: '#111' },
+                accent: { syntax: 'color', inherits: true, initialValue: '#2192a7' }
+            },
+            options: {
+                light: { bg: '#fff', fg: '#111', accent: '#2192a7' },
+                dark: { bg: '#111', fg: '#eee', accent: '#7fd0ff' }
+            },
+            initial: 'light'
+        });
+
+        test('using theme variables', () => {
+            const t = makeTheme();
+
+            expect(t.vars.bg).toBeDefined();
+            expect(t.vars.fg).toBeDefined();
+            expect(t.vars.accent).toBeDefined();
+            expect(String(t.vars.bg)).toMatch(/^--/);
+            expect(t.vars.bg()).toMatch(/^var\(--/);
+        });
+
+        test('list contains all theme names', () => {
+            const t = makeTheme();
+
+            expect(t.list).toEqual(['light', 'dark']);
+        });
+
+        test('get initial theme', () => {
+            const t = makeTheme();
+
+            expect(t.get()).toBe('light');
+        });
+
+        test('get returns undefined when no initial theme', () => {
+            const t = theme({
+                vars: { bg: '#fff' },
+                options: { light: { bg: '#111' } }
+            });
+
+            expect(t.get()).toBeUndefined();
+        });
+
+        test('initial theme is applied at creation', () => {
+            const t = theme({
+                vars: { bg: '#fff' },
+                options: {
+                    light: { bg: '#fff' },
+                    dark: { bg: '#111' }
+                },
+                initial: 'dark'
+            });
+
+            expect(t.get()).toBe('dark');
+            expect(t.vars.bg.get()).toBe('#111');
+        });
+
+        test('set switches theme values', () => {
+            const t = makeTheme();
+
+            expect(t.get()).toBe('light');
+            expect(t.set('dark')).toBe(true);
+            expect(t.get()).toBe('dark');
+            expect(t.vars.bg.get()).toBe('#111');
+            expect(t.vars.fg.get()).toBe('#eee');
+            expect(t.vars.accent.get()).toBe('#7fd0ff');
+        });
+
+        test('variable expressions do not change on theme switch', () => {
+            const t = makeTheme();
+            const lightBg = String(t.vars.bg);
+            const lightFg = String(t.vars.fg);
+
+            t.set('dark');
+
+            expect(String(t.vars.bg)).toBe(lightBg);
+            expect(String(t.vars.fg)).toBe(lightFg);
+        });
+
+        test('set unknown theme returns false without changing state', () => {
+            const t = makeTheme();
+
+            expect(t.get()).toBe('light');
+            expect(t.set('unknown' as keyof typeof makeTheme | any)).toBe(false);
+            expect(t.get()).toBe('light');
+            expect(t.vars.bg.get()).toBe('#fff');
         });
     });
 });

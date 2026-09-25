@@ -23,7 +23,8 @@ import type {
     Scope,
     VariableDescription,
     Update,
-    StyleSheetType, GlobalKey
+    StyleSheetType, GlobalKey,
+    Theme
 } from './types';
 import {
     keySymbol,
@@ -1475,3 +1476,29 @@ export const configure = (config: {
  * @returns unsubscribe function
  */
 export const subscribe = (fn: (event: EffCSSEvent) => void): (() => void) => StyleProvider.subscribe(fn);
+
+/**
+ * Create theme
+ * @param config - theme config
+ */
+export const theme: Theme = (config) => {
+    const { vars, options, initial } = config;
+    const varsResolvers = StyleProvider.variables(vars);
+    const list = Object.keys(options) as (keyof typeof options)[];
+    let currentTheme: keyof typeof options | undefined = initial;
+    const get = () => currentTheme;
+    const set = (name: keyof typeof options) => {
+        const themeValues = options[name];
+        if (!themeValues) return false;
+        Object.entries(themeValues).forEach(([key, value]) => varsResolvers[key].set(value));
+        currentTheme = name;
+        return true;
+    };
+    if (currentTheme) set(currentTheme);
+    return {
+        vars: varsResolvers,
+        list,
+        get,
+        set
+    };
+};
