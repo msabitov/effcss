@@ -1,33 +1,38 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest';
-import { configure, classNames, variable, attributes, serialize, serializeMeta, variablesStylesheet } from '../src/index';
+import {
+    configure,
+    classNames,
+    variable,
+    attributes,
+    serialize,
+    serializeMeta,
+    variablesStylesheet
+} from '../src/index';
 
 type Card = {
     w: 's' | 'm' | 'l';
     blur: true;
 };
 
-const SERVER_CSS = (
+const SERVER_CSS =
     `<style data-effcss-key="f0">.f0_2{width:12px;}.f0_3{filter:blur(5px);}</style>` +
     `<style data-effcss-key="f1">[data-f1~="2"]{width:var(--f2-0);}[data-f1~="3"]{filter:blur(5px);}</style>` +
-    `<style data-effcss-global="variables">@property --f2-0{syntax:"*";inherits:true;initial-value:12px;}</style>`
-);
-const SERVER_META = (
+    `<style data-effcss-global="variables">@property --f2-0{syntax:"*";inherits:true;initial-value:12px;}</style>`;
+const SERVER_META =
     `<script type="application/json" data-effcss-key="f0">` +
     `{"w":"f0_0","blur":"f0_1","w_s":"f0_2","blur_true":"f0_3"}` +
     `</script>` +
     `<script type="application/json" data-effcss-key="f1">` +
     `{"w":"0","blur":"1","w_s":"2","blur_true":"3"}` +
-    `</script>`
-);
+    `</script>`;
 
 describe('Lazy hydrate:', () => {
     configure({ lazy: true });
 
     beforeAll(async () => {
         document.head.insertAdjacentHTML('beforeend', SERVER_CSS + SERVER_META);
-        return () => document.head
-            .querySelectorAll('[data-effcss-key], [data-effcss-global]')
-            .forEach((el) => el.remove());;
+        return () =>
+            document.head.querySelectorAll('[data-effcss-key], [data-effcss-global]').forEach((el) => el.remove());
     });
 
     test('generator reexecuted', async () => {
@@ -58,7 +63,7 @@ describe('Lazy hydrate:', () => {
     test('global at-rules initialized', async () => {
         // warm first variable inside a lazy custom stylesheet
         const size = variable('12px');
-        
+
         const gen = vi.fn((selectors: any) => {
             const { w, blur } = selectors;
             return {

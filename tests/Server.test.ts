@@ -1,7 +1,11 @@
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
-    configure, serialize, stylesheet,
-    classNames, attributes, customStyles,
+    configure,
+    serialize,
+    stylesheet,
+    classNames,
+    attributes,
+    customStyles,
     variable,
     update,
     variablesStylesheet,
@@ -14,8 +18,8 @@ type Card = {
     card: {
         variant: 1 | 2;
         rounded: true;
-    }
-}
+    };
+};
 
 describe('Configured Utils:', () => {
     const prefix = 'effcss';
@@ -30,7 +34,7 @@ describe('Configured Utils:', () => {
     describe('Selectors:', () => {
         test('classNames:', () => {
             const card = classNames<Card>((selectors) => {
-                const {w, card, blur} = selectors;
+                const { w, card, blur } = selectors;
                 return {
                     [w.s]: {
                         width: '12px'
@@ -68,8 +72,8 @@ describe('Configured Utils:', () => {
                     [card.rounded.true]: {
                         borderRadius: '1rem'
                     }
-                }
-            })
+                };
+            });
             const cls = card({
                 card: {
                     rounded: true
@@ -81,7 +85,7 @@ describe('Configured Utils:', () => {
 
         test('attributes:', () => {
             const card = attributes<Card>((selectors) => {
-                const {w, card, blur} = selectors;
+                const { w, card, blur } = selectors;
                 return {
                     [w.s]: {
                         width: '12px'
@@ -119,8 +123,8 @@ describe('Configured Utils:', () => {
                     [card.rounded.true]: {
                         borderRadius: '1rem'
                     }
-                }
-            })
+                };
+            });
             const attrs = card({
                 card: {
                     rounded: true
@@ -160,7 +164,7 @@ describe('Configured Utils:', () => {
                 '.custom': {
                     padding: '12px'
                 }
-            }))
+            }));
             const customStylesheet = stylesheet(custom);
             expect(customStylesheet instanceof globalThis.CSSStyleSheet).toBeFalsy();
         });
@@ -171,11 +175,11 @@ describe('Configured Utils:', () => {
             const styles = serialize();
             expect(styles).toContain(
                 `<style data-effcss-key="effcss0">` +
-                `.effcss0_w_s{width:12px;}.effcss0_w_m{width:24px;}.effcss0_w_l{width:26px;}.effcss0_blur_true{filter:blur(5px);}.effcss0_card{background:white;border:none;}` +
-                `.effcss0_card_variant_1{width:auto;display:block;padding:12px;&:hover{cursor:pointer;}}` +
-                `.effcss0_card_variant_2{width:auto;display:flex;flex-direction:column;padding:16px;&:hover{outline:2px solid black;}}` +
-                `.effcss0_card_rounded_true{border-radius:1rem;}` +
-                `</style>`
+                    `.effcss0_w_s{width:12px;}.effcss0_w_m{width:24px;}.effcss0_w_l{width:26px;}.effcss0_blur_true{filter:blur(5px);}.effcss0_card{background:white;border:none;}` +
+                    `.effcss0_card_variant_1{width:auto;display:block;padding:12px;&:hover{cursor:pointer;}}` +
+                    `.effcss0_card_variant_2{width:auto;display:flex;flex-direction:column;padding:16px;&:hover{outline:2px solid black;}}` +
+                    `.effcss0_card_rounded_true{border-radius:1rem;}` +
+                    `</style>`
             );
         });
 
@@ -183,18 +187,16 @@ describe('Configured Utils:', () => {
             const styles = serialize();
             expect(styles).toContain(
                 `<style data-effcss-key="effcss1">` +
-                `[data-effcss1~="w_s"]{width:12px;}[data-effcss1~="w_m"]{width:24px;}[data-effcss1~="w_l"]{width:26px;}[data-effcss1~="blur_true"]{filter:blur(5px);}[data-effcss1~="card"]{background:white;border:none;}` +
-                `[data-effcss1~="card_variant_1"]{width:auto;display:block;padding:12px;&:hover{cursor:pointer;}}[data-effcss1~="card_variant_2"]{width:auto;display:flex;flex-direction:column;padding:16px;&:hover{outline:2px solid black;}}` +
-                `[data-effcss1~="card_rounded_true"]{border-radius:1rem;}` +
-                `</style>`
+                    `[data-effcss1~="w_s"]{width:12px;}[data-effcss1~="w_m"]{width:24px;}[data-effcss1~="w_l"]{width:26px;}[data-effcss1~="blur_true"]{filter:blur(5px);}[data-effcss1~="card"]{background:white;border:none;}` +
+                    `[data-effcss1~="card_variant_1"]{width:auto;display:block;padding:12px;&:hover{cursor:pointer;}}[data-effcss1~="card_variant_2"]{width:auto;display:flex;flex-direction:column;padding:16px;&:hover{outline:2px solid black;}}` +
+                    `[data-effcss1~="card_rounded_true"]{border-radius:1rem;}` +
+                    `</style>`
             );
         });
 
         test('custom stylesheet', () => {
             const styles = serialize();
-            expect(styles).toContain(
-                `<style data-effcss-key="effcss2">.custom{padding:12px;}</style>`
-            );
+            expect(styles).toContain(`<style data-effcss-key="effcss2">.custom{padding:12px;}</style>`);
         });
     });
 
@@ -216,7 +218,7 @@ describe('Configured Utils:', () => {
 
             expect(serialize(stylesheet(custom))).toContain(
                 `@font-face{font-family:"Bitstream Vera Serif Bold";src:url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2");}` +
-                `@font-face{font-family:"MyHelvetica";src:local("Helvetica Neue Bold"), local("HelveticaNeue-Bold"), url("MgOpenModernaBold.woff2");font-weight:bold;}`
+                    `@font-face{font-family:"MyHelvetica";src:local("Helvetica Neue Bold"), local("HelveticaNeue-Bold"), url("MgOpenModernaBold.woff2");font-weight:bold;}`
             );
         });
 
@@ -227,7 +229,9 @@ describe('Configured Utils:', () => {
                 }
             }));
 
-            expect(serialize(stylesheet(custom))).toContain('.cls{text-decoration:underline;text-decoration:underline dotted;}');
+            expect(serialize(stylesheet(custom))).toContain(
+                '.cls{text-decoration:underline;text-decoration:underline dotted;}'
+            );
         });
     });
 

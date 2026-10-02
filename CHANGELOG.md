@@ -5,17 +5,28 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.1] - 2026-10-02
+
+### Changed
+
+- code is formatted using Prettier
+- minor fixes for code duplication
+- README edited
+
 ## [5.6.0] - 2026-09-25
 
 ### Added
+
 - `theme` utility has been added, allowing you to create a theme with set of variables and several options to apply (type and tests added)
 
 ### Fixed
+
 - StyleSheet and Rule types fixed - object values can be arrays, and for independent declarations empty string is available
 
 ## [5.5.3] - 2026-09-18
 
 ### Added
+
 - `EffCSS` namespace and the overridable `EffCSS.Properties` interface: a single place to type CSS properties across all utilities. By default it stays permissive (previous behavior), but extending `EffCSS.Properties` (e.g. via `csstype`) once enables strict typing everywhere. Pure type-level feature — no new dependency, no runtime changes
 - `EffCSS.Rule` — recursive rule type built on top of `Properties`, allowing nested rules with arbitrary selectors (`'&:hover'`, `@media(...)`, `.class`, `> li`, `--var`) at any level
 - `EffCSS.StyleSheet` — top-level type for stylesheet generators (`classNames`, `attributes`, `customStyles`); the top level may contain only selectors, not CSS properties
@@ -23,53 +34,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added the section about CSS types & TS autocompletion in README
 
 ### Fixed
+
 - badges in the README
 
 ## [5.5.2] - 2026-09-11
 
 ### Added
+
 - added tests for style hydration in lazy mode
 
 ### Fixed
+
 - fixed a bug with the use of global at-rules within a scope in lazy mode, which could result in at-rules being created inside that scope (tests added)
 - fixed a bug where the stylesheet generator was skipped during hydration in lazy mode, which could disrupt the counter generation order
 
 ### Changed
+
 - lazy tests have been refined
 - several edits to eliminate code duplication
 
 ## [5.5.1] - 2026-09-04
 
 ### Added
+
 - added tests for using utils within the scope
 
 ### Fixed
+
 - fixed a bug with full ignoring falsy values ​​in variables
 - fixed a bug that did not reset the scope when there was a CSS generation error
 
 ### Changed
+
 - layer tests have been refined
 
 ## [5.5.0] - 2026-08-28
 
 ### Added
+
 - lazy CSS generation mode added, it can be enabled/disabled via `configure` and allows to genereate CSS rules on the first use (tests added)
 - `lazyClassName` and `lazyAttribute` utils for lazy generation of single rules
 - the syntax of several utilities has been expanded - now `className.lazy`, `classNames.lazy`, `attribute.lazy`, `attributes.lazy` provides direct access to lazy utils
 
 ### Fixed
+
 - fixed a bug with the lack of a `get` method for `variables` utility result entries
 - fixed `get` and `set` methods stubs for scoped variables
 
 ### Changed
+
 - minor README changes
 
 ## [5.4.5] - 2026-08-21
 
 ### Added
+
 - added hydration tests for stylesheets without meta
 
 ### Fixed
+
 - fixed a bug with creating objects using the `attribute` function - previously, selectors used one attribute and erased each other with spreading syntax; now attributes are unique
 - reduced duplication of string constants
 - minor improvement of types
@@ -77,6 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.4.4] - 2026-08-14
 
 ### Fixed
+
 - kebabcase property conversion now uses internal cache to improve performance
 - stringification and style parsing now use a pre-allocated array instead of dynamically allocating new ones
 - removed incorrect require export from package.json
@@ -84,51 +108,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.4.3] - 2026-08-07
 
 ### Fixed
+
 - the hydration now only makes three calls to `querySelectoAll`, reducing the cost of precomputed styles' detection (tests updated)
 - server-side stylesheets are not disabled but reused on the client side, eliminating duplicate server work. Therefore, during client-side hydration, only selectors are calculated based on the received metadata
 
 ## [5.4.2] - 2026-07-31
 
 ### Added
+
 - section about vite-plugin-effcss has been added to the README
 
 ### Fixed
+
 - the logic for hydrating user stylesheets has been corrected - now server stylesheet is not replaced by the new constructed one. It should increase styles hydration performance (tests updated)
 
 ## [5.4.1] - 2026-07-24
 
 ### Added
+
 - utility types exports
 - variable tests for short and long syntax forms
 - serialization tests for arbitrary stylesheets
 
 ### Fixed
+
 - metadata serialization for an arbitrary stylesheet - now it returns an empty string (test added)
 
 ### Changed
+
 - usage example in the README
 
 ## [5.4.0] - 2026-07-17
 
 ### Added
+
 - `subscribe` utility that tracks the EffCSS style creation events (types and tests added)
 
 ### Changed
+
 - minor adjustments to coverage settings
 
 ## [5.3.1] - 2026-07-10
 
 ### Added
+
 - Vitest coverage scripts and deps
 - tests for serialization of disabled stylesheets and arbitrary functions
 
 ### Changed
+
 - Vitest config now contains `coverage`
 - minor edits to README including a link to Coverage Status
 
 ## [5.3.0] - 2026-07-03
 
 ### Added
+
 - `font` and `fonts` utilities which create CSS @font-face rules (tests added)
 - `fontsStylesheet` utility which returns a stylesheet for global fonts
 - CONTRIBUTING.md
@@ -136,39 +171,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Product Hunt link added to README
 
 ### Fixed
+
 - bug in the `configure` utility - special stylesheets were not taken into account (test added)
 - bug with `customStyles` hydration (test updated)
 
 ### Changed
+
 - the resolved variable now contains `get` and `set` methods, allowing to get and set the variable's initial value directly (tests added)
 - `serialize` and `serializeMeta` can use both stylesheets and stylesheets resolvers (tests updated)
 
 ## [5.2.0] - 2026-06-26
 
 ### Added
+
 - `lazyClassNames`, `lazyAttributes` and `lazyCustomStyles` utilities added, they create stylesheets only when they are used for the first time (tests added)
 - `serializeMeta` utility added, it serializes the metadata of the stylesheets, so that they will not be executed on the client (tests added)
 - `Generator` type export
 - implemented the ability to define multiple object values ​​in an array for single selector (tests added)
 
 ### Fixed
+
 - the hydration of global rules, variables, animations, and layers has been fixed - they will not be recreated if they come from the server (tests added)
 
 ## [5.1.0] - 2026-06-20
 
 ### Added
+
 - `className` utility which creates an anonymous rule with a class selector within the global scope (with tests)
 - `attribute` utility which creates an anonymous rule with an attribute selector within the global scope (with tests)
 - `sharedStylesheet` utility which returns a stylesheet of global rules (created using `className` and `attribute`)
 - links to examples in README
 
 ### Fixed
+
 - typos in README
 - automatic insertion of the `&` character to nested selectors (tests updated)
 
 ## [5.0.0] - 2026-06-17
 
 ### Added
+
 - `classNames` utility which creates a stylesheet and returns a function for deriving classnames
 - `attributes` utility which creates stylesheet and returns a function for deriving attributes
 - `customStyles` utility which creates stylesheet without derived selectors
@@ -185,6 +227,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `animationsStylesheet` utility which returns a stylesheet for global animations
 
 ### Changed
+
 - no longer uses web components
 - all styles are now generated through utility calls, no providers are needed.
 - updated versions of development dependencies
@@ -192,11 +235,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.15.0] - 2026-05-16
 
 ### Changed
+
 - the `TStyleSheetMaker` is now generic, it takes the type of public selectors as a parameter (README updated). There is no longer any need to pass the type of public selectors to the `select` utility and to the `dx` and `cx` provider methods if the `TStyleSheetMaker` has specified parameter (tests updated)
 
 ## [4.14.0] - 2026-04-12
 
 ### Added
+
 - `radius` property added to the Style provider, it allows to set root variable with the same name. Also it is added as attribute both to `<script is="effcss-provider">` and `<effcss-override>` (tests added)
 - `radius` function added to the theme utils group (test updated)
 - `sans`, `serif` and `mono` properties added to the Style provider, they allows to set root variables for font families. Also they are added as attribute both to `<script is="effcss-provider">` and `<effcss-override>` (tests added)
@@ -205,20 +250,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added the ability to change document color scheme property via the `scheme` attribute (test added)
 
 ### Fixed
+
 - bug with updating a theme variable containing a primitive value to an object value
 
 ### Changed
+
 - TypeScript types and interfaces for Style provider utils and attributes have been updated
 
 ## [4.13.0] - 2026-03-11
 
 ### Added
+
 - `space` property added to the Style provider, it allows to set theme root variable with the same name Also it is added as attribute both to `<script is="effcss-provider">` and `<effcss-override>` (tests added)
 - `space` function added to the `theme` utils group (test updated)
 - `tuning` utility added to the `theme` utils group, it allows to use public stylesheet variables which can tune stylesheet rules (tests added)
 - `tune` method added to the Style provider, it allows to tune any EffCSS stylesheet via its tuning variables (tests added)
 
 ### Changed
+
 - `update` method of theme controller now can apply transformer function as the first argument (test added)
 - the global variable prefix is now used as is without a zero index (tests updated)
 - README example has been simplified
@@ -226,9 +275,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.12.0] - 2026-02-22
 
 ### Added
+
 - `theme` utils group added, it contains base theme variables proxies to access base theme CSS properties via index (test added)
 
 ### Changed
+
 - theme property now can use array value. In that case values will be added to CSS variables with different postfix excluding value at zero index (tests added)
 - all `effcss-provider` theme attributes now can use several values splitted with `;` character (tests added).
 - all `effcss-provider` theme properties setters now can use array values (tests added)
@@ -240,132 +291,161 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.11.0] - 2026-02-08
 
 ### Added
+
 - `join` utility added to `dx` and `cx` selector resolvers, it allows to merge objects and strings respectively (tests added)
 
 ### Changed
+
 - `mode` provider parameter marked as deprecated, use `dx` and `cx` methods to to explicitly create the necessary selectors
 - README updated
 
 ## [4.10.0] - 2026-02-01
 
 ### Added
+
 - `cx` method added to Style provider, it can resolve classNames directly despite the selectors generation mode (tests added)
 - `dx` method added to Style provider, it can resolve data attributes directly despite the selectors generation mode (tests added)
-- `TDetails` type exported from `effcss`, it can be usefull to check predefined style variants of specific stylesheet maker using `satisfies` TypeScript  operator
+- `TDetails` type exported from `effcss`, it can be usefull to check predefined style variants of specific stylesheet maker using `satisfies` TypeScript operator
 
 ## [4.9.0] - 2026-01-25
 
 ### Added
+
 - `scheme` attribute added to `<effcss-override>` component, it changes color-scheme and enables dependent theme vars (tests added)
 - `TOverrideAttrs` type added, it describes attributes of `<effcss-override>` component
 
 ### Changed
+
 - `bem` maker utility marked as deprecated, you should use `select` utility instead
 
 ## [4.8.0] - 2026-01-18
 
 ### Added
+
 - `contrast` and `neutral` properties added to the `Style provider`, they allows to set theme root variables with the same name (tests added)
 - `contrast` and `neutral` added to the `color` utils group (tests added)
 
 ### Changed
+
 -`effcss-override` now can be configured with `Style provider` root variable attributes such as `size`, `color`, `angle`, etc. (tests added)
 
 ## [4.7.0] - 2026-01-11
 
 ### Added
+
 - `complement` and `grayscale` color utils created (tests added)
 - several pseudo utils added (ph, phs, fl, dc, sel)
 
 ### Fixed
+
 - bug with `ph` psuedo utility
 
 ### Changed
+
 - `pseudo` utils can take an object with styles and wrap it. This makes their use more intuitive (tests added)
 
 ## [4.6.2] - 2026-01-04
 
 ### Fixed
+
 - bug with transferring aliases of minified selectors from the server (test updated)
 - bug with saving the global provider after deleting it from the DOM (test added)
 
 ### Fixed
+
 - Patch fixes
 
 ## [4.6.1] - 2026-12-27
 
 ### Fixed
+
 - bug with incorrect selectors obtained from the `select` utility (tests added)
 
 ## [4.6.0] - 2025-12-26
 
 ### Added
+
 - coefficient and palette types export added
 
 ### Fixed
+
 - default palette values fixed.
 
 ### Changed
+
 - `at.property` utility improved - now it can be initialized via default value only (test updated)
 - stylesheet types improved - now you can use `select` utility to create scoped selectors with any nesting. To infer them you can use `list` and `obj` resolver methods (tests added, README updated)
 
 ## [4.5.1] - 2025-12-19
 
 ### Added
+
 - `TMonoBlock` and `TMonoElement` TypeScript generic types
 
 ### Changed
+
 - README
 
 ## [4.5.0] - 2025-12-13
 
 ### Added
+
 - `<effcss-override>` web component added. It allows to override global EffCSS variables for nested scope (tests added)
 
 ### Changed
+
 - Stylesheet maker can return string now. It is usefull when you have prepared styles and want to use it as is (test added)
 
 ## [4.4.0] - 2025-12-06
 
 ### Added
+
 - `easing` attribute added to the provider to define the root CSS easing function
 - `easing` utility added - it resolves the root CSS easing function when called without an argument and the `cubic-bezier` function otherwise (tests added)
 
 ## [4.3.0] - 2025-11-29
 
 ### Added
+
 - `:user-valid` (pseudo.uval) and `:user-invalid` (pseudo.uinv) pseudoclass utils added
 - `color` attribute added to the provider to define root color
 - `color.root` utility added - it resolves root color with or without modified oklch params (test added)
 
 ### Fixed
+
 - bug with an extra parenthesis in the color utils (test updated)
 
 ## [4.2.0] - 2025-11-23
 
 ### Added
+
 - the `global` parameter has been added to the `useStyleProvider` function, it allows you to use a global style provider. This can be useful for accessing the provider outside of the rendering process, as well as in the absence of context access tools
 
 ### Changed
+
 - the CSS property value can now be an array. This will allow you to generate multiple value options in separate rows for properties that have different browser support (test added)
 
 ## [4.1.0] - 2025-11-16
 
 ### Added
+
 - `$height`, `$block` and `$size` condition makers added to the `at` utility group (tests updated)
 
 ## [4.0.1] - 2025-11-09
 
 ### Chnaged
+
 - updated links to examples
 
 ## [4.0.0] - 2025-11-08
 
 ### Added
+
 - the `remake` method, which allows you to replace makers
 - `$width` and `$logic` function groups to define conditions for @container and @media rules
 
 ### Changed
+
 - now the `useStyleProvider` function is the only way to connect the library
 - all the names of the stylesheets are now generated only by the library itself
 - theme controller has been added to the Style provider, through which you can add, update, and delete custom themes
@@ -375,71 +455,86 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - unit utils now base on `calc`
 
 ### Removed
+
 - `usePublic` and `usePrivate` methods of Style provider
 
 ### Changed
+
 - Complete API redesign — moved from simple `classNames`/`attributes` calls to provider-based architecture
 - Selector isolation and minification out of the box
 - BEM and Atomic CSS compatible types
 - Updated `rollup.config.mjs` for new build pipeline
 
 ### Removed
+
 - Old direct stylesheet creation approach (replaced by `useStyleProvider`)
 
 ## [3.12.1] - 2025-11-03
 
 ### Added
+
 - `Astro` example link added
 
 ### Changed
+
 - each stylesheet maker executed on the server will be hydrated on the client without calling (test added)
 - `property` utility returns resolver including `fallback` method, that allows to use different fallback values (test improved)
 
 ## [3.12.0] - 2025-10-30
 
 ### Added
+
 - the `useStyleProvider` function, which allows you to define and create a provider in one step. The function can be called on both the client and the server, and serves as a replacement for the `createConsumer` function (tests added)
 - added the ability to send only CSS during static site generation using the `noscript` parameter (tests added)
 
 ### Changed
+
 - during server rendering, all stylesheets are now packed in separate `<style>` tags
 
 ## [3.11.0] - 2025-10-26
 
 ### Added
+
 - `startingStyle` utility added in `at` group (test added)
 - `em`, `rad`, `turn` and `s` functions added in `units` group
 
 ### Changed
+
 - bug when using named blocks and an empty block together for `Style provider` with `a` mode (tests updated)
 
 ## [3.10.1] - 2025-10-25
 
 ### Fixed
+
 - bug with empty block selectors for `Style provider` with `c`-mode (test added)
 
 ## [3.10.0] - 2025-10-23
 
 ### Added
+
 - new examples added to README (Angular, SolidJS, Preact).
 - BEM-selectors minification implemented - it can be enabled using `min` attribute of `Style provider` (tests added)
 
 ### Changed
+
 - resolved BEM-attributes object now can return attribute value via `$` property (tests added)
 
 ## [3.9.0] - 2025-10-19
 
 ### Added
+
 - `container` utility added in the `at` group. It allows to use complex @container selectors and will replace `cq` utility in the next major version (test added)
 
 ## [3.8.1] - 2025-10-13
 
 ### Fixed
+
 - bug with `at.media` utility (test improved)
 
 ## [3.8.0] - 2025-10-12
 
 ### Added
+
 - `Devtools` section added to README
 - overload to the`stylesheets` provider method - it can now accept a set of parameters as on/off methods (test added)
 - `media` utility added in the `at` group. It allows to use complex `@media` selectors and will replace `mq` utility in the next major version (test added)
@@ -447,114 +542,138 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.7.0] - 2025-10-05
 
 ### Added
+
 - `scope` utility added in the `at` group. It allows to refine the rule selector and will replace `sc` utility in the next major version (test added)
 
 ### Changed
+
 - docs and homepage links
 
 ## [3.6.0] - 2025-09-25
 
 ### Added
+
 - `property` and `keyframes` utilities added in the `at` group. They allow to create scoped rules and identifiers with more comfort then `kf` and `pr` (tests added)
 - `makers` property added to the style provider. It allows to get all processed stylesheet makers (test added)
 
 ## [3.5.3] - 2025-09-21
 
 ### Added
+
 - tests for different BEM resolver parameters.
 
 ### Changed
-- BEM attribute resolver improved - now it can be used with single block/element (tests added). When you call the result of  `use` method without arguments, it returns you special `mono resolver` object. This object can specify block (`b`), element (`e`) and modifiers (`m`) separetly and returns new object for each method call. Style attributes can be got via `$` getter
+
+- BEM attribute resolver improved - now it can be used with single block/element (tests added). When you call the result of `use` method without arguments, it returns you special `mono resolver` object. This object can specify block (`b`), element (`e`) and modifiers (`m`) separetly and returns new object for each method call. Style attributes can be got via `$` getter
 
 ## [3.5.2] - 2025-09-16
 
 ### Added
+
 - `TStyleSheetUtils` type added
 
 ### Fixed
+
 - bugs in `coef` and `palette` uitility types
 
 ## [3.5.1] - 2025-09-15
 
 ### Added
+
 - `main` range getter added to the `coef` utility (test added)
 
 ### Fixed
+
 - bug with max coef value
 - bug with custom coef merging (test added)
 
 ## [3.5.0] - 2025-09-14
 
 ### Added
+
 - `coef` utility - it allows to use predefined coefficients and its ranges to vary CSS properties (tests added).
 - `size` and `angle` utilities, they allow to use scalable size and angle values depending on `rem` and `rangle` global vars. Both `size` and `angle` can be changed dynamically via Style provider setters (tests added)
 
 ### Changed
+
 - style provider code was refactored.
 
 ## [3.4.0] - 2025-09-10
 
 ### Added
-- `palette` utility added -  it allows to use wide set of colors with predefined lightness, chroma, hue values and arbitrary alpha value in `oklch` form (tests added)
+
+- `palette` utility added - it allows to use wide set of colors with predefined lightness, chroma, hue values and arbitrary alpha value in `oklch` form (tests added)
 - `palette`setting added to Style Provider, so it can be customized for using with associated utility (test added)
 
 ### Fixed
+
 - bug with updating settings on the server-side
 
 ## [3.3.0] - 2025-08-24
 
 ### Added
+
 - `size` and `time` style provider attributes added, they control value of global `rem` and `rtime` variables respectively. It allows to control all size and time values and manually replace them at any time (tests added)
 
 ### Fixed
+
 - bug with rem global var value (test added)
 - bug with vars overriding via `settings` field of Style provider
 
 ### Changed
+
 - `use` method improved - now it can replace stylesheet content when called with `force` argument.
 - `time` utility improved - now it can be called without argument (`1` used by default).
 
 ## [3.2.0] - 2025-08-08
 
 ### Added
+
 - `time` utility added, it allows to use scalable time values depending on `rtime` global var, therefore, it becomes similar to using rem (test added)
 - `vmin` and `vmax` unit utilities added
 
 ## [3.1.0] - 2025-07-21
 
 ### Changed
+
 - the provider no longer overwrites document.adoptedStyleSheets property - it will only interact with CSSStyleSheets created through `add` and `pack` methods. All other custom constructed stylesheets will be preserved
 
 ## [3.0.4] - 2025-07-14
 
 ### Changed
+
 - README
 - several types simplified
 
 ## [3.0.3] - 2025-07-12
 
 ### Changed
+
 - README (V3 examples added, V2 examples removed)
 - several pseudo-classes added
 
 ## [3.0.2] - 2025-07-05
 
 ### Changed
+
 - README (Vue examples added)
 - several types simplified.
 
 ## [3.0.1] - 2025-06-29
 
 ### Fixed
+
 - several typos in IStyleProvider fields description
 - the types of handler in the `each`-utility
 
 ### Changed
+
 - README (new examples, docs page updated)
 
 ## [3.0.0] - 2025-06-27
 
 ### Changed
+
 - the new version for stylesheet generation Style maker functions are used
 - all utilities and global variables come in the parameters of Style maker functions
 - to use styles on both the client and the server, you need to use Style Consumer\
@@ -566,11 +685,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.2.1] - 2025-05-21
 
 ### Fixed
+
 - large-scale refactoring - shortened names of private properties and methods, simplified types
 
 ## [2.2.0] - 2025-04-27
 
 ### Added
+
 - provider params are stored in `window.__EFFCSS_PARAMS__` (test added). This is necessary primarily for debugging
 - `getIndex` method added to the Style Manager.
 - several global keys
@@ -578,22 +699,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.2] - 2025-04-14
 
 ### Changed
+
 - the provider's `on` and `off` methods can apply multiple targets and will notify once when called (tests added).
 
 ## [2.1.1] - 2025-04-06
 
 ### Fixed
+
 - bug with notifier ref destroyed by garbage collector
 
 ## [2.1.0] - 2025-04-06
 
 ### Added
+
 - `subscribe` and `unsubscribe` methods added to provider - it allows to update styles for subscribed elements
 - `eventname` attribute added to provider - it allows to react on styles changes with event listener (test added)
 
 ## [2.0.5] - 2025-04-03
 
 ### Added
+
 - `alter` method added to provider - it allows to mutate stylesheet config and to replace stylesheet content (test added)
 - `replace` method added to manager (test added)
 - `mutate` method added to collector (test added)
@@ -601,46 +726,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.4] - 2025-03-23
 
 ### Added
+
 - configs getter added to provider (test added)
 - status method added to provider and manager (test added)
 
 ### Changed
+
 - attribute resolver is now generic
 
 ## [2.0.3] - 2025-03-16
 
 ### Changed
+
 - README
 
 ### Fixed
+
 - bug with new sets inside themes (test added)
 
 ## [2.0.2] - 2025-03-08
 
 ### Added
+
 - Storybook and VItest benchmarking examples links added
 - Svelte SSR example link added
 
 ## [2.0.1] - 2025-03-08
 
 ### Added
+
 - React SSR example link added to README
 
 ### Fixed
+
 - bug with light and dark themes in main stylesheet config
 
 ### Changed
+
 - the quick start example modified
 - global keys test improved
 
 ## [2.0.0] - 2025-03-07
 
 ### Added
+
 - hydration mode for transferring configs during server rendering
 - the ability to redefine global keys and key sets
 - more tests
 
 ### Changed
+
 - no stylesheet configs inside, just tool.
 - the browser utilities are separated from the general ones
 - different scripts are responsible for settings and initial styles
@@ -652,67 +787,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.6] - 2025-02-24
 
 ### Added
+
 - `themes` option added to `defineStyleProvider` config parameter. It is an analogue of the `params` with a more appropriate name (test added)
-- `rootStyle`  option added to `defineStyleProvider` config parameter (test added)
+- `rootStyle` option added to `defineStyleProvider` config parameter (test added)
 - `keygen` parameter added to `defineStyleProvider`. It allows you to control the creation of stylesheet keys (test added)
 - `getBEMResolver` function added to utils
 - `generateStyleSheetKey` function added to utils
 - `defaultRootStyle` added to constants
 
 ### Fixed
+
 - bug with incorrect generation of variables in root theme
 
 ## [1.3.5] - 2025-02-20
 
 ### Added
+
 - several global keys
 - provider tests
 
 ### Changed
+
 - `expandSelector` method improved - now it can process block, element and boolean modifier selectors (processor tests added)
 
 ## [1.3.4] - 2025-02-16
 
 ### Added
+
 - several global keys
 
 ### Changed
+
 - README
 - manager's `expandRule` method improved - now it supports both nested and plain `exp` parameter (appropriate tests added)
-
 
 ## [1.3.3] - 2025-02-12
 
 ### Added
+
 - the ability to specify CSS properties in the lowerCamelCase style in the stylesheet config (test added)
 - Style manager tests
 
 ### Fixed
+
 - bug with getRulesCount function - now it takes into account nested rule
 - bug with style processor expandSelector function (tests added)
-
 
 ## [1.3.2] - 2025-02-08
 
 ### Added
+
 - BEM resolver now ignores modifiers with undefined value (also tests added)
 - several global keys
 
 ### Removed
+
 - redundant convertable utility
 
 ## [1.3.1] - 2025-02-03
 
 ### Added
+
 - `resolveStyleSheet` method added to style provider
 - several global keys added
 
 ## Removed
+
 - demo folder
 
 ## [1.3.0] - 2025-02-01
 
 ### Added
+
 - units field to IStyleConfig. You can now manage the units of measurement for global values
 - several media queries and pseudo selectors added to global keys
 - computed container queries selectors realized
@@ -720,76 +866,92 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.4] - 2025-01-29
 
 ### Added
+
 - banners for minified provider scripts
 
 ## [1.2.3] - 2025-01-29
 
 ### Added
+
 - README new examples
 - IStyleDispatcher interface
 - the ability to pass a modifier object to the BEM resolver and get key/value from result object
 - new tests to test the changes in paragraph 3
 
 ### Changed
+
 - package description changed
 
 ## [1.2.2] - 2025-01-26
 
 ### Added
+
 - several pseudo-classes to global keys.
 
 ### Changed
+
 - README
 
 ## [1.2.1] - 2025-01-25
 
 ### Fixed
+
 - type imports
 
 ### Changed
+
 - types are described in detail
 - `createStyleProcessor` and `createStyleManager` functions exported from index
 
 ## [1.2.0] - 2025-01-22
 
 ### Added
+
 - the ability to change the name of the initializing stylesheet has been implemented
 - the ability to connect stylesheets with an auto-generated key has been implemented
 - the BEM attribute resolver has been implemented
 - the BEM attribute resolver tests
 
 ### Changed
+
 - the processor and manager creation functions have been exported
 
 ## [1.1.4] - 2025-01-19
 
 ### Added
+
 - Several keys and values added to global dictionaries
 
 ### Fixed
+
 - typos in global dictionaries
 - typos in reset stylesheet
 
 ## [1.1.3] - 2025-01-19
 
 ### Added
+
 - tests for BEM CSS class generation
 
 ### Changed
+
 - README edited
 
 ## [1.1.2] - 2025-01-17
 
 ### Changed
+
 - homepage url edited
 - README edited
 
 ## [1.1.1] - 2025-01-15
 
 ## Added
+
 - Tests added
 
 ### Fixed
+
 - typos in README
 - typos in AgentColor config
 - unnecessary prefix `&` in first-level selectors inside at-rules
@@ -799,11 +961,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keyframes config fixed
 
 ### Changed
+
 - Provider script in demo updated
 
 ## [1.1.0] - 2025-01-11
 
 ### Added
+
 - `registerNode`, `unregisterNode` and `notify` methods of Style Manager
 - StackBlitz React demo
 - new attribute `isolated` for style provider that allows register document as dependent at component connection
@@ -811,6 +975,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.1] - 2025-01-10
 
 ### Fixed
+
 - IStyleProvider interface duplication
 - provider script connection in demo
 - transition property in dict
@@ -820,6 +985,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-01-09
 
 ### Added
+
 - Initial release of EffCSS
 - `classNames` utility — creates stylesheets with class selectors
 - TypeScript type contracts for stylesheet selectors
@@ -832,7 +998,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[5.5.2]: https://github.com/msabitov/effcss
+[5.6.1]: https://github.com/msabitov/effcss
+[5.6.0]: https://github.com/msabitov/effcss/commit/867c531a883f8bc7c6fe6a316745d4de315039e1
+[5.5.3]: https://github.com/msabitov/effcss/commit/4e4c953aec4c903c1aeaa108a1f4225a73b22963
+[5.5.2]: https://github.com/msabitov/effcss/commit/da5d04739cd4e658e31d2bb7b38c1ed37b5fd608
 [5.5.1]: https://github.com/msabitov/effcss/commit/aea44125b70009202bd37e0d6f487302b14b69ab
 [5.5.0]: https://github.com/msabitov/effcss/commit/0fa63d07e90163701e7b00c977abbdc58c6fffa5
 [5.4.5]: https://github.com/msabitov/effcss/commit/232a0cfb6bd55dfe4b6efed6aabc259d652890cd

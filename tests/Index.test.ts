@@ -1,12 +1,21 @@
 import { describe, expect, test } from 'vitest';
 import {
     serialize,
-    stylesheet, layersStylesheet, variablesStylesheet, animationsStylesheet,
-    classNames, attributes, customStyles,
-    container, containers,
-    variable, variables,
-    layer, layers,
-    animation, animations,
+    stylesheet,
+    layersStylesheet,
+    variablesStylesheet,
+    animationsStylesheet,
+    classNames,
+    attributes,
+    customStyles,
+    container,
+    containers,
+    variable,
+    variables,
+    layer,
+    layers,
+    animation,
+    animations,
     update,
     className,
     sharedStylesheet,
@@ -30,14 +39,14 @@ type Card = {
         header: {
             mini: true;
         };
-    }
-}
+    };
+};
 
 describe('Utils:', () => {
     describe('Selectors:', () => {
         test('classNames:', () => {
             const card = classNames<Card>((selectors) => {
-                const {w, card, blur} = selectors;
+                const { w, card, blur } = selectors;
                 return {
                     [w.s]: {
                         width: '12px'
@@ -75,8 +84,8 @@ describe('Utils:', () => {
                     [card.rounded.true]: {
                         borderRadius: '1rem'
                     }
-                }
-            })
+                };
+            });
             const cls = card({
                 card: {
                     rounded: true
@@ -89,7 +98,7 @@ describe('Utils:', () => {
 
         test('attributes:', () => {
             const card = attributes<Card>((selectors) => {
-                const {w, card, blur} = selectors;
+                const { w, card, blur } = selectors;
                 return {
                     [w.s]: {
                         width: '12px'
@@ -127,8 +136,8 @@ describe('Utils:', () => {
                     [card.rounded.true]: {
                         borderRadius: '1rem'
                     }
-                }
-            })
+                };
+            });
             const attrs = card({
                 card: {
                     rounded: true
@@ -146,15 +155,15 @@ describe('Utils:', () => {
         describe('single rule:', () => {
             describe('variable:', () => {
                 test('global', () => {
-                    const size = variable('12px')
+                    const size = variable('12px');
                     const color = variable({
                         syntax: '*',
                         inherits: false,
                         initialValue: 'red'
                     });
-                    
+
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
                         return {
                             [w.s]: {
                                 width: size()
@@ -176,7 +185,7 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
@@ -195,11 +204,11 @@ describe('Utils:', () => {
                     expect(cardCSS).toContain('var(--f2-1)');
                     expect(cardCSS).toContain('var(--f2-1,grey)');
                 });
-        
+
                 test('local', () => {
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
-                        const size = variable('12px')
+                        const { w, card } = selectors;
+                        const size = variable('12px');
                         const color = variable({
                             syntax: '*',
                             inherits: false,
@@ -226,14 +235,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     expect(cardCSS).toContain('@property --f4-0');
                     expect(cardCSS).toContain('@property --f4-1');
@@ -257,7 +266,9 @@ describe('Utils:', () => {
 
                     const varsCSS = serialize(variablesStylesheet());
                     expect(varsCSS).toContain('syntax: "<angle>"; inherits: true; initial-value: 45deg;');
-                    expect(varsCSS).toContain('syntax: "<length> | <percentage>"; inherits: true; initial-value: 200px;');
+                    expect(varsCSS).toContain(
+                        'syntax: "<length> | <percentage>"; inherits: true; initial-value: 200px;'
+                    );
                 });
             });
 
@@ -282,9 +293,9 @@ describe('Utils:', () => {
                             opacity: 1
                         }
                     });
-            
+
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
                         return {
                             [w.s]: {
                                 animation: `200ms ${size}`
@@ -297,14 +308,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     const kfCSS = serialize(animationsStylesheet());
                     expect(kfCSS).toContain('@keyframes f2-0');
@@ -315,8 +326,8 @@ describe('Utils:', () => {
 
                 test('local', () => {
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
-            
+                        const { w, card } = selectors;
+
                         const size = animation({
                             from: {
                                 width: '100px'
@@ -348,14 +359,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     expect(cardCSS).toContain('@keyframes f6-0');
                     expect(cardCSS).toContain('@keyframes f6-1');
@@ -369,9 +380,9 @@ describe('Utils:', () => {
                     const startLayer = layer();
                     const middleLayer = layer();
                     const topLayer = layer();
-            
+
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
                         return {
                             [startLayer()]: {
                                 button: {
@@ -387,7 +398,7 @@ describe('Utils:', () => {
                                 },
                                 [w.l]: {
                                     width: '26px'
-                                },
+                                }
                             },
                             [middleLayer]: {
                                 [card]: {
@@ -397,14 +408,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     const layersCSS = serialize(layersStylesheet());
                     expect(layersCSS).toContain('@layer f2-0;');
@@ -417,8 +428,8 @@ describe('Utils:', () => {
 
                 test('local', () => {
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
-            
+                        const { w, card } = selectors;
+
                         const startLayer = layer();
                         const middleLayer = layer();
                         const topLayer = layer();
@@ -437,7 +448,7 @@ describe('Utils:', () => {
                                 },
                                 [w.l]: {
                                     width: '26px'
-                                },
+                                }
                             },
                             [middleLayer]: {
                                 [card]: {
@@ -447,14 +458,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     expect(cardCSS).toContain('@layer f8-0;');
                     expect(cardCSS).toContain('@layer f8-1;');
@@ -471,7 +482,7 @@ describe('Utils:', () => {
                     const inlineSizeContainer = container('inline-size');
                     const scrollStateContainer = container('size scroll-state');
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
                         return {
                             '.container': {
                                 container: normalContainer()
@@ -497,7 +508,7 @@ describe('Utils:', () => {
                                 },
                                 [w.l]: {
                                     width: '26px'
-                                },
+                                }
                             },
                             [scrollStateContainer + ' (height > 30rem)']: {
                                 [card]: {
@@ -507,14 +518,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     expect(cardCSS).toContain('@container f2-0 not scroll-state(scrollable: none)');
                     expect(cardCSS).toContain('@container f2-1 (max-width: 768px)');
@@ -526,7 +537,7 @@ describe('Utils:', () => {
 
                 test('local', () => {
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
 
                         const normalContainer = container();
                         const inlineSizeContainer = container('inline-size');
@@ -556,7 +567,7 @@ describe('Utils:', () => {
                                 },
                                 [w.l]: {
                                     width: '26px'
-                                },
+                                }
                             },
                             [scrollStateContainer + ' (height > 30rem)']: {
                                 [card]: {
@@ -566,14 +577,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     expect(cardCSS).toContain('@container fa-0 not scroll-state(scrollable: none)');
                     expect(cardCSS).toContain('@container fa-1 (max-width: 768px)');
@@ -596,9 +607,9 @@ describe('Utils:', () => {
                         src: `url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2")`,
                         genericName: 'sans-serif'
                     });
-            
+
                     const card = classNames<Card>((selectors) => {
-                        const {card} = selectors;
+                        const { card } = selectors;
                         return {
                             body: {
                                 fontFamily: first()
@@ -619,8 +630,8 @@ describe('Utils:', () => {
 
                 test('local', () => {
                     const card = classNames<Card>((selectors) => {
-                        const {card} = selectors;
-            
+                        const { card } = selectors;
+
                         const first = font({
                             src: `url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff")`,
                             weight: 400,
@@ -660,9 +671,9 @@ describe('Utils:', () => {
                             initialValue: 'red'
                         }
                     });
-                    
+
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
                         return {
                             [w.s]: {
                                 width: vars.size()
@@ -684,7 +695,7 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
@@ -705,7 +716,7 @@ describe('Utils:', () => {
 
                 test('local', () => {
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
                         const vars = variables({
                             size: '12px',
                             color: {
@@ -735,14 +746,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     expect(cardCSS).toContain('@property --fe-0');
                     expect(cardCSS).toContain('@property --fe-1');
@@ -777,9 +788,9 @@ describe('Utils:', () => {
                             }
                         }
                     });
-            
+
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
                         return {
                             [w.s]: {
                                 animation: `200ms ${variants.size}`
@@ -792,14 +803,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     const kfCSS = serialize(animationsStylesheet());
                     expect(kfCSS).toContain('@keyframes f2-2');
@@ -810,8 +821,8 @@ describe('Utils:', () => {
 
                 test('local', () => {
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
-            
+                        const { w, card } = selectors;
+
                         const variants = animations({
                             size: {
                                 from: {
@@ -845,14 +856,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     expect(cardCSS).toContain('@keyframes fg-0');
                     expect(cardCSS).toContain('@keyframes fg-1');
@@ -864,9 +875,9 @@ describe('Utils:', () => {
             describe('layers:', () => {
                 test('global', () => {
                     const globalLayers = layers(['start', 'middle', 'top']);
-            
+
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
                         return {
                             [globalLayers.start()]: {
                                 button: {
@@ -882,7 +893,7 @@ describe('Utils:', () => {
                                 },
                                 [w.l]: {
                                     width: '26px'
-                                },
+                                }
                             },
                             [globalLayers.middle]: {
                                 [card]: {
@@ -892,14 +903,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     const layersCSS = serialize(layersStylesheet());
                     expect(layersCSS).toContain('@layer f2-3, f2-4, f2-5;');
@@ -910,8 +921,8 @@ describe('Utils:', () => {
 
                 test('local', () => {
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
-            
+                        const { w, card } = selectors;
+
                         const localLayers = layers(['start', 'middle', 'top']);
                         return {
                             [localLayers.start()]: {
@@ -928,7 +939,7 @@ describe('Utils:', () => {
                                 },
                                 [w.l]: {
                                     width: '26px'
-                                },
+                                }
                             },
                             [localLayers.middle]: {
                                 [card]: {
@@ -938,14 +949,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     expect(cardCSS).toContain('@layer fi-0, fi-1, fi-2;');
                     expect(cardCSS).toContain('@layer fi-0 {');
@@ -961,9 +972,9 @@ describe('Utils:', () => {
                         inline: 'inline-size',
                         scrollState: 'size scroll-state'
                     });
-            
+
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
                         return {
                             '.container': {
                                 container: globalContainers.normal()
@@ -989,7 +1000,7 @@ describe('Utils:', () => {
                                 },
                                 [w.l]: {
                                     width: '26px'
-                                },
+                                }
                             },
                             [globalContainers.scrollState + ' (height > 30rem)']: {
                                 [card]: {
@@ -999,14 +1010,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     expect(cardCSS).toContain('@container f2-3 not scroll-state(scrollable: none)');
                     expect(cardCSS).toContain('@container f2-4 (max-width: 768px)');
@@ -1018,7 +1029,7 @@ describe('Utils:', () => {
 
                 test('local', () => {
                     const card = classNames<Card>((selectors) => {
-                        const {w, card} = selectors;
+                        const { w, card } = selectors;
 
                         const localContainers = containers({
                             normal: '',
@@ -1049,7 +1060,7 @@ describe('Utils:', () => {
                                 },
                                 [w.l]: {
                                     width: '26px'
-                                },
+                                }
                             },
                             [localContainers.scrollState + ' (height > 30rem)']: {
                                 [card]: {
@@ -1059,14 +1070,14 @@ describe('Utils:', () => {
                             }
                         };
                     });
-            
+
                     card({
                         card: {
                             rounded: true
                         },
                         w: 's'
                     });
-            
+
                     const cardCSS = serialize(stylesheet(card));
                     expect(cardCSS).toContain('@container fk-0 not scroll-state(scrollable: none)');
                     expect(cardCSS).toContain('@container fk-1 (max-width: 768px)');
@@ -1091,9 +1102,9 @@ describe('Utils:', () => {
                             genericName: 'sans-serif'
                         }
                     });
-            
+
                     const card = classNames<Card>((selectors) => {
-                        const {card} = selectors;
+                        const { card } = selectors;
                         return {
                             body: {
                                 fontFamily: globalFonts.first()
@@ -1114,8 +1125,8 @@ describe('Utils:', () => {
 
                 test('local', () => {
                     const card = classNames<Card>((selectors) => {
-                        const {card} = selectors;
-            
+                        const { card } = selectors;
+
                         const localFonts = fonts({
                             first: {
                                 src: `url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff")`,
@@ -1166,7 +1177,9 @@ describe('Utils:', () => {
 
             let varsCSS = serialize(variablesStylesheet());
             expect(varsCSS).toContain(`@property ${size} { syntax: "*"; inherits: true; initial-value: 24px; }`);
-            expect(varsCSS).toContain(`@property ${color} { syntax: "<color>"; inherits: false; initial-value: black; }`);
+            expect(varsCSS).toContain(
+                `@property ${color} { syntax: "<color>"; inherits: false; initial-value: black; }`
+            );
             expect(varsCSS).toContain(`@property ${empty} { syntax: "*"; inherits: true; }`);
 
             expect(size.get()).toBe('24px');
@@ -1182,7 +1195,9 @@ describe('Utils:', () => {
 
             varsCSS = serialize(variablesStylesheet());
             expect(varsCSS).toContain(`@property ${size} { syntax: "*"; inherits: true; initial-value: 28px; }`);
-            expect(varsCSS).toContain(`@property ${color} { syntax: "<color>"; inherits: false; initial-value: #fefefe; }`);
+            expect(varsCSS).toContain(
+                `@property ${color} { syntax: "<color>"; inherits: false; initial-value: #fefefe; }`
+            );
             expect(varsCSS).toContain(`@property ${empty} { syntax: "*"; inherits: true; initial-value: 45deg; }`);
 
             empty.set('');
@@ -1206,21 +1221,25 @@ describe('Utils:', () => {
 
             let varsCSS = serialize(variablesStylesheet());
             expect(varsCSS).toContain(`@property ${vars.size} { syntax: "*"; inherits: true; initial-value: 24px; }`);
-            expect(varsCSS).toContain(`@property ${vars.color} { syntax: "<color>"; inherits: false; initial-value: black; }`);
+            expect(varsCSS).toContain(
+                `@property ${vars.color} { syntax: "<color>"; inherits: false; initial-value: black; }`
+            );
 
             vars.size.set('28px');
             vars.color.set('grey');
 
             varsCSS = serialize(variablesStylesheet());
             expect(varsCSS).toContain(`@property ${vars.size} { syntax: "*"; inherits: true; initial-value: 28px; }`);
-            expect(varsCSS).toContain(`@property ${vars.color} { syntax: "<color>"; inherits: false; initial-value: grey; }`);
+            expect(varsCSS).toContain(
+                `@property ${vars.color} { syntax: "<color>"; inherits: false; initial-value: grey; }`
+            );
         });
     });
 
     describe('Custom styles', () => {
         test('arbitrary', () => {
             const custom = customStyles(() => ({
-                'body': {
+                body: {
                     padding: '1rem'
                 },
                 '.class': {
@@ -1244,9 +1263,9 @@ describe('Utils:', () => {
             expect(customCSS).toBe(serialize(custom));
             expect(customCSS).toContain(
                 `body { padding: 1rem; }` +
-                `.class {\n  background: transparent; width: 100%;\n  &:focus { border-width: 0px; }\n}` +
-                `button:hover { outline: black solid 2px; }` +
-                `@media screen and (max-width: 768px) {\n  .class { width: 50%; }\n}`
+                    `.class {\n  background: transparent; width: 100%;\n  &:focus { border-width: 0px; }\n}` +
+                    `button:hover { outline: black solid 2px; }` +
+                    `@media screen and (max-width: 768px) {\n  .class { width: 50%; }\n}`
             );
         });
 
@@ -1258,7 +1277,7 @@ describe('Utils:', () => {
                     bg: 'grey'
                 });
                 return {
-                    'body': {
+                    body: {
                         padding: size('1rem')
                     },
                     '.class': {
@@ -1271,8 +1290,8 @@ describe('Utils:', () => {
             const customCSS = serialize(stylesheet(custom));
             expect(customCSS).toContain(
                 `@property --fo-0 { syntax: "*"; inherits: true; }` +
-                `@property --fo-1 { syntax: "*"; inherits: true; initial-value: black; }` +
-                `@property --fo-2 { syntax: "*"; inherits: true; initial-value: grey; }`
+                    `@property --fo-1 { syntax: "*"; inherits: true; initial-value: black; }` +
+                    `@property --fo-2 { syntax: "*"; inherits: true; initial-value: grey; }`
             );
             expect(customCSS).toContain('padding: var(--fo-0,1rem);');
             expect(customCSS).toContain('background: var(--fo-2,transparent);');
@@ -1293,12 +1312,14 @@ describe('Utils:', () => {
             });
 
             const styles = serialize(sharedStylesheet());
-            expect(cls).toBe('f2_0')
-            expect(styles).toContain(`.f2_0 {` +
-                `\n  margin: auto;` +
-                `\n  &:hover {\n  outline: black solid 2px;` +
-                `\n  & .child { background: grey; }\n}` +
-            `\n}`);
+            expect(cls).toBe('f2_0');
+            expect(styles).toContain(
+                `.f2_0 {` +
+                    `\n  margin: auto;` +
+                    `\n  &:hover {\n  outline: black solid 2px;` +
+                    `\n  & .child { background: grey; }\n}` +
+                    `\n}`
+            );
         });
 
         test('attribute', () => {
@@ -1317,53 +1338,67 @@ describe('Utils:', () => {
                 'data-f2-1': ''
             });
 
-            expect(styles).toContain(`[data-f2-1] {` +
-                `\n  margin: auto;` +
-                `\n  &:hover {\n  outline: black solid 2px;` +
-                `\n  & .child { background: grey; }\n}` +
-            `\n}`);
+            expect(styles).toContain(
+                `[data-f2-1] {` +
+                    `\n  margin: auto;` +
+                    `\n  &:hover {\n  outline: black solid 2px;` +
+                    `\n  & .child { background: grey; }\n}` +
+                    `\n}`
+            );
         });
     });
 
     describe('Serialize', () => {
         test('classNames stylesheet', () => {
             const styles = serialize();
-            expect(styles).toContain(
-                `<style data-effcss-key="f0">` +
-                `.f0_3 { width: 12px; }.f0_4 { width: 24px; }.f0_5 { width: 26px; }.f0_6 { filter: blur(5px); }` +
-                `.f0_1 { background: white; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; }` +
-                `.f0_8 {\n  width: auto; display: block; padding: 12px;\n  &:hover { cursor: pointer; }\n}.f0_9 {\n  width: auto; display: flex; flex-direction: column; padding: 16px;\n  &:hover { outline: black solid 2px; }\n}` +
-                `.f0_b { border-radius: 1rem; }` +
-                `</style>`
+            const style = styles.match(/<style data-effcss-key="f0">([\s\S]*?)<\/style>/)?.[1];
+            expect(style).toBeDefined();
+            expect(style).toContain('.f0_3 { width: 12px; }');
+            expect(style).toContain('.f0_4 { width: 24px; }');
+            expect(style).toContain('.f0_5 { width: 26px; }');
+            expect(style).toContain('.f0_6 { filter: blur(5px); }');
+            expect(style).toContain('.f0_1 { background: white;');
+            expect(style).toContain(
+                '.f0_8 {\n  width: auto; display: block; padding: 12px;\n  &:hover { cursor: pointer; }\n}'
             );
+            expect(style).toContain(
+                '.f0_9 {\n  width: auto; display: flex; flex-direction: column; padding: 16px;\n  &:hover { outline: black solid 2px; }\n}'
+            );
+            expect(style).toContain('.f0_b { border-radius: 1rem; }');
         });
 
         test('attributes stylesheet', () => {
             const styles = serialize();
-            expect(styles).toContain(
-                `<style data-effcss-key="f1">` +
-                `[data-f1~="3"] { width: 12px; }[data-f1~="4"] { width: 24px; }[data-f1~="5"] { width: 26px; }[data-f1~="6"] { filter: blur(5px); }` +
-                `[data-f1~="1"] { background: white; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; }` +
-                `[data-f1~="8"] {\n  width: auto; display: block; padding: 12px;\n  &:hover { cursor: pointer; }\n}[data-f1~="9"] {\n  width: auto; display: flex; flex-direction: column; padding: 16px;\n  &:hover { outline: black solid 2px; }\n}` +
-                `[data-f1~="b"] { border-radius: 1rem; }` +
-                `</style>`
+            const style = styles.match(/<style data-effcss-key="f1">([\s\S]*?)<\/style>/)?.[1];
+            expect(style).toBeDefined();
+            expect(style).toContain('[data-f1~="3"] { width: 12px; }');
+            expect(style).toContain('[data-f1~="4"] { width: 24px; }');
+            expect(style).toContain('[data-f1~="5"] { width: 26px; }');
+            expect(style).toContain('[data-f1~="6"] { filter: blur(5px); }');
+            expect(style).toContain('[data-f1~="1"] { background: white;');
+            expect(style).toContain(
+                '[data-f1~="8"] {\n  width: auto; display: block; padding: 12px;\n  &:hover { cursor: pointer; }\n}'
             );
+            expect(style).toContain(
+                '[data-f1~="9"] {\n  width: auto; display: flex; flex-direction: column; padding: 16px;\n  &:hover { outline: black solid 2px; }\n}'
+            );
+            expect(style).toContain('[data-f1~="b"] { border-radius: 1rem; }');
         });
 
         test('custom stylesheet', () => {
             const styles = serialize();
             expect(styles).toContain(
                 `<style data-effcss-key="fo">` +
-                `@property --fo-0 { syntax: "*"; inherits: true; }@property --fo-1 { syntax: "*"; inherits: true; initial-value: black; }` +
-                `@property --fo-2 { syntax: "*"; inherits: true; initial-value: grey; }` +
-                `body { padding: var(--fo-0,1rem); }.class { background: var(--fo-2,transparent); color: var(--fo-1); }` +
-                `</style>`
+                    `@property --fo-0 { syntax: "*"; inherits: true; }@property --fo-1 { syntax: "*"; inherits: true; initial-value: black; }` +
+                    `@property --fo-2 { syntax: "*"; inherits: true; initial-value: grey; }` +
+                    `body { padding: var(--fo-0,1rem); }.class { background: var(--fo-2,transparent); color: var(--fo-1); }` +
+                    `</style>`
             );
         });
 
         test('disabled stylesheet', () => {
             const custom = customStyles(() => ({
-                'body': {
+                body: {
                     padding: '1rem'
                 },
                 '.class': {
@@ -1385,12 +1420,12 @@ describe('Utils:', () => {
 
             expect(serialize(custom)).toBe(
                 `<style data-effcss-key="fp">body { padding: 1rem; }.class {\n  background: transparent; width: 100%;\n  &:focus { border-width: 0px; }` +
-                `\n}button:hover { outline: black solid 2px; }@media screen and (max-width: 768px) {\n  .class { width: 50%; }\n}` +
-                `</style>`
+                    `\n}button:hover { outline: black solid 2px; }@media screen and (max-width: 768px) {\n  .class { width: 50%; }\n}` +
+                    `</style>`
             );
 
             const customStylesheet = stylesheet(custom);
-            if (customStylesheet) customStylesheet.disabled = true
+            if (customStylesheet) customStylesheet.disabled = true;
             expect(serialize(custom)).toBe('');
             expect(serialize(customStylesheet)).toBe('');
         });
@@ -1403,7 +1438,9 @@ describe('Utils:', () => {
         test('arbitrary stylesheet', () => {
             const customStylesheet = new CSSStyleSheet();
             customStylesheet.replaceSync('.cls {width: 100%;} [data-vh] {height: 100vh;}');
-            expect(serialize(customStylesheet)).toBe('<style>.cls { width: 100%; }[data-vh] { height: 100vh; }</style>');
+            expect(serialize(customStylesheet)).toBe(
+                '<style>.cls { width: 100%; }[data-vh] { height: 100vh; }</style>'
+            );
         });
     });
 
@@ -1412,9 +1449,9 @@ describe('Utils:', () => {
             const meta = serializeMeta();
             expect(meta).toContain(
                 `<script type="application/json" data-effcss-key="f0">` +
-                `{"w":"f0_0","card":"f0_1","blur":"f0_2","w_s":"f0_3","w_m":"f0_4","w_l":"f0_5","blur_true":"f0_6","card_variant":"f0_7",` +
-                `"card_variant_1":"f0_8","card_variant_2":"f0_9","card_rounded":"f0_a","card_rounded_true":"f0_b"}` +
-                `</script>`
+                    `{"w":"f0_0","card":"f0_1","blur":"f0_2","w_s":"f0_3","w_m":"f0_4","w_l":"f0_5","blur_true":"f0_6","card_variant":"f0_7",` +
+                    `"card_variant_1":"f0_8","card_variant_2":"f0_9","card_rounded":"f0_a","card_rounded_true":"f0_b"}` +
+                    `</script>`
             );
         });
 
@@ -1422,22 +1459,20 @@ describe('Utils:', () => {
             const meta = serializeMeta();
             expect(meta).toContain(
                 `<script type="application/json" data-effcss-key="f1">` +
-                `{"w":"0","card":"1","blur":"2","w_s":"3","w_m":"4","w_l":"5","blur_true":"6","card_variant":"7",` +
-                `"card_variant_1":"8","card_variant_2":"9","card_rounded":"a","card_rounded_true":"b"}` +
-                `</script>`
+                    `{"w":"0","card":"1","blur":"2","w_s":"3","w_m":"4","w_l":"5","blur_true":"6","card_variant":"7",` +
+                    `"card_variant_1":"8","card_variant_2":"9","card_rounded":"a","card_rounded_true":"b"}` +
+                    `</script>`
             );
         });
 
         test('custom stylesheet', () => {
             const meta = serializeMeta();
-            expect(meta).toContain(
-                `<script type="application/json" data-effcss-key="fo"></script>`
-            );
+            expect(meta).toContain(`<script type="application/json" data-effcss-key="fo"></script>`);
         });
 
         test('disabled stylesheet', () => {
             const custom = customStyles(() => ({
-                'body': {
+                body: {
                     padding: '1rem'
                 },
                 '.class': {
@@ -1457,12 +1492,10 @@ describe('Utils:', () => {
                 }
             }));
 
-            expect(serializeMeta(custom)).toBe(
-                `<script type="application/json" data-effcss-key="fq"></script>`
-            );
+            expect(serializeMeta(custom)).toBe(`<script type="application/json" data-effcss-key="fq"></script>`);
 
             const customStylesheet = stylesheet(custom);
-            if (customStylesheet) customStylesheet.disabled = true
+            if (customStylesheet) customStylesheet.disabled = true;
             expect(serializeMeta(custom)).toBe('');
         });
 
@@ -1473,7 +1506,7 @@ describe('Utils:', () => {
 
         test('arbitrary stylesheet', () => {
             const customStylesheet = new CSSStyleSheet();
-            customStylesheet.replaceSync('.cls {width: 100%;} [data-vh] {height: 100vh;}')
+            customStylesheet.replaceSync('.cls {width: 100%;} [data-vh] {height: 100vh;}');
             expect(serializeMeta(customStylesheet)).toBe('');
         });
     });
@@ -1481,7 +1514,7 @@ describe('Utils:', () => {
     describe('Lazy stylesheets', () => {
         test('classNames:', () => {
             const card = lazyClassNames<Card>((selectors) => {
-                const {w, card, blur} = selectors;
+                const { w, card, blur } = selectors;
                 return {
                     [w.s]: {
                         width: '12px'
@@ -1519,7 +1552,7 @@ describe('Utils:', () => {
                     [card.rounded.true]: {
                         borderRadius: '1rem'
                     }
-                }
+                };
             });
             expect(stylesheet(card)).toBeUndefined();
 
@@ -1535,7 +1568,7 @@ describe('Utils:', () => {
 
         test('attributes:', () => {
             const card = lazyAttributes<Card>((selectors) => {
-                const {w, card, blur} = selectors;
+                const { w, card, blur } = selectors;
                 return {
                     [w.s]: {
                         width: '12px'
@@ -1573,7 +1606,7 @@ describe('Utils:', () => {
                     [card.rounded.true]: {
                         borderRadius: '1rem'
                     }
-                }
+                };
             });
             expect(stylesheet(card)).toBeUndefined();
 
@@ -1591,7 +1624,7 @@ describe('Utils:', () => {
 
         test('customStyles', () => {
             const custom = lazyCustomStyles(() => ({
-                'body': {
+                body: {
                     padding: '1rem'
                 },
                 '.class': {
@@ -1635,7 +1668,7 @@ describe('Utils:', () => {
 
             expect(serialize(stylesheet(custom))).toContain(
                 `@font-face { font-family: "Bitstream Vera Serif Bold"; src: url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2"); }` +
-                `@font-face { font-family: MyHelvetica; src: local("Helvetica Neue Bold"), local("HelveticaNeue-Bold"), url("MgOpenModernaBold.woff2"); font-weight: bold; }`
+                    `@font-face { font-family: MyHelvetica; src: local("Helvetica Neue Bold"), local("HelveticaNeue-Bold"), url("MgOpenModernaBold.woff2"); font-weight: bold; }`
             );
         });
 
@@ -1665,17 +1698,17 @@ describe('Utils:', () => {
 
     describe('Within  scope', () => {
         test('single variable', () => {
-            const sizeValue = '32px'
+            const sizeValue = '32px';
             let innerValue;
             const custom = customStyles(() => {
                 const size = variable(sizeValue);
                 innerValue = size.get();
-                size.set('64px')
+                size.set('64px');
                 return {
                     '.local': {
                         width: size()
                     }
-                }
+                };
             });
 
             const sheet = stylesheet(custom);
@@ -1685,7 +1718,7 @@ describe('Utils:', () => {
         });
 
         test('multiple variables', () => {
-            const sizeValue = '30px'
+            const sizeValue = '30px';
             let innerValue;
             const custom = customStyles(() => {
                 const vars = variables({
@@ -1693,12 +1726,12 @@ describe('Utils:', () => {
                     color: 'green'
                 });
                 innerValue = vars.size.get();
-                vars.size.set('60px')
+                vars.size.set('60px');
                 return {
                     '.local': {
                         inlineSize: vars.size()
                     }
-                }
+                };
             });
 
             const sheet = stylesheet(custom);
@@ -1717,12 +1750,12 @@ describe('Utils:', () => {
 
             const custom = customStyles(() => {
                 update(size, '36px');
-                update(vars, {size: '36px'});
+                update(vars, { size: '36px' });
                 return {
                     '.local': {
                         width: size()
                     }
-                }
+                };
             });
 
             expect(size.get()).toBe(sizeValue);
@@ -1747,7 +1780,7 @@ describe('Utils:', () => {
                     '.border': {
                         borderWidth
                     }
-                }
+                };
             });
 
             const sheet = stylesheet(custom);
@@ -1761,18 +1794,19 @@ describe('Utils:', () => {
     });
 
     describe('Theme:', () => {
-        const makeTheme = () => theme({
-            vars: {
-                bg: { syntax: 'color', inherits: false, initialValue: '#fff' },
-                fg: { syntax: 'color', inherits: false, initialValue: '#111' },
-                accent: { syntax: 'color', inherits: true, initialValue: '#2192a7' }
-            },
-            options: {
-                light: { bg: '#fff', fg: '#111', accent: '#2192a7' },
-                dark: { bg: '#111', fg: '#eee', accent: '#7fd0ff' }
-            },
-            initial: 'light'
-        });
+        const makeTheme = () =>
+            theme({
+                vars: {
+                    bg: { syntax: 'color', inherits: false, initialValue: '#fff' },
+                    fg: { syntax: 'color', inherits: false, initialValue: '#111' },
+                    accent: { syntax: 'color', inherits: true, initialValue: '#2192a7' }
+                },
+                options: {
+                    light: { bg: '#fff', fg: '#111', accent: '#2192a7' },
+                    dark: { bg: '#111', fg: '#eee', accent: '#7fd0ff' }
+                },
+                initial: 'light'
+            });
 
         test('using theme variables', () => {
             const t = makeTheme();

@@ -1,8 +1,4 @@
-import {
-    keySymbol,
-    indexSymbol,
-    dictSymbol
-} from './constants';
+import { keySymbol, indexSymbol, dictSymbol } from './constants';
 
 declare global {
     namespace EffCSS {
@@ -25,8 +21,8 @@ declare global {
     }
 }
 
-type GetIndex = {[key in typeof indexSymbol]: number;};
-type ToPrimitive = {[key in typeof Symbol.toPrimitive]: () => string;};
+type GetIndex = { [key in typeof indexSymbol]: number };
+type ToPrimitive = { [key in typeof Symbol.toPrimitive]: () => string };
 type StringResolver = string & (() => string) & ToPrimitive;
 type DeepPartial<T> = T extends object
     ? {
@@ -36,7 +32,7 @@ type DeepPartial<T> = T extends object
 export type GlobalKey = 'variables' | 'animations' | 'layers' | 'fonts' | 'shared';
 export type EffCSSStyleSheet = {
     disabled: boolean;
-    cssRules: Iterable<{cssText: string}> & {length: number;} & {[index: number]: {cssText: string}};
+    cssRules: Iterable<{ cssText: string }> & { length: number } & { [index: number]: { cssText: string } };
     insertRule(rule: string, index: number): number;
     deleteRule(index: number): void;
     replaceSync(rules: string): void;
@@ -47,47 +43,29 @@ export type Contract = {
     [key: string]: string | number | boolean | Contract;
 };
 
+type RuleWithPreload = 'v' | 'a' | 'l' | 'f' | 'c';
+type RuleWithCounter = RuleWithPreload | 'ld' | 's';
 export type Scope = {
     key: string;
     // counters
-    c: {
-        // variables
-        v: number;
-        // animations
-        a: number;
-        // layers
-        l: number;
-        // fonts
-        f: number;
-        // layersDeclarations
-        ld: number;
-        // containers
-        c: number;
-        // selectors
-        s: number;
-    },
+    c: Record<RuleWithCounter, number>;
     // cssText
-    t: {
-        // variables
-        v: string;
-        // animations
-        a: string;
-        // layers
-        l: string;
-        // fonts
-        f: string;
-        // containers
-        c: string;
-    }
+    t: Record<RuleWithPreload, string>;
 };
 
 export type Selectors<T> = {
-    [K in keyof T]: T[K] extends string | number ? {
-        [S in T[K]]: string;
-    } : T[K] extends boolean ? {
-        [key in `${T[K]}`]: string;
-    } : T[K] extends object ? string & Selectors<T[K]> : never;
-}
+    [K in keyof T]: T[K] extends string | number
+        ? {
+              [S in T[K]]: string;
+          }
+        : T[K] extends boolean
+          ? {
+                [key in `${T[K]}`]: string;
+            }
+          : T[K] extends object
+            ? string & Selectors<T[K]>
+            : never;
+};
 
 export type Generator<T extends Contract> = (selectors: Selectors<T>) => EffCSS.StyleSheet;
 
@@ -96,7 +74,7 @@ export type Generator<T extends Contract> = (selectors: Selectors<T>) => EffCSS.
 type RuleConfig = EffCSS.Rule | (() => EffCSS.Rule);
 
 export type LazyClassName = (rule: RuleConfig) => () => string;
-export type ClassName = ((rule: EffCSS.Rule) => string) & {lazy: LazyClassName};
+export type ClassName = ((rule: EffCSS.Rule) => string) & { lazy: LazyClassName };
 export type ClassNamesResolver<T extends Contract> = (params: DeepPartial<T>) => string;
 export type LazyClassNames = <T extends Contract>(generator: Generator<T>) => ClassNamesResolver<T>;
 export type ClassNames = (<T extends Contract>(generator: Generator<T>) => ClassNamesResolver<T>) & {
@@ -104,7 +82,7 @@ export type ClassNames = (<T extends Contract>(generator: Generator<T>) => Class
 };
 
 export type LazyAttribute = (rule: RuleConfig) => () => object;
-export type Attribute = ((rule: EffCSS.Rule) => object) & {lazy: LazyAttribute;};
+export type Attribute = ((rule: EffCSS.Rule) => object) & { lazy: LazyAttribute };
 export type AttributesResolver<T extends Contract> = (params: DeepPartial<T>) => object;
 export type LazyAttributes = <T extends Contract>(generator: Generator<T>) => AttributesResolver<T>;
 export type Attributes = (<T extends Contract>(generator: Generator<T>) => AttributesResolver<T>) & {
@@ -113,9 +91,9 @@ export type Attributes = (<T extends Contract>(generator: Generator<T>) => Attri
 
 // custom
 
-export type CustomStylesHandler = (generator: () => EffCSS.StyleSheet) => (() => null);
+export type CustomStylesHandler = (generator: () => EffCSS.StyleSheet) => () => null;
 export type LazyCustomStyles = CustomStylesHandler;
-export type CustomStyles = CustomStylesHandler & {lazy: LazyCustomStyles};
+export type CustomStyles = CustomStylesHandler & { lazy: LazyCustomStyles };
 
 // variables
 export type VariableDescription = {
@@ -125,10 +103,13 @@ export type VariableDescription = {
 };
 export type VariableConfig = string | number | boolean | VariableDescription;
 
-export type VariableResolver = string & ((fallback?: any) => string) & ToPrimitive & GetIndex & {
-    set(nextValue: any): void;
-    get(): string;
-};
+export type VariableResolver = string &
+    ((fallback?: any) => string) &
+    ToPrimitive &
+    GetIndex & {
+        set(nextValue: any): void;
+        get(): string;
+    };
 export type Variable = <T extends VariableConfig>(description?: T) => VariableResolver;
 
 export type VariablesResolvers<T extends Record<string, VariableConfig>> = {
@@ -151,17 +132,37 @@ export type LayersResolvers<T extends string> = Record<NoInfer<T>, LayerResolver
 export type Layers = <T extends string>(description: T[]) => LayersResolvers<T>;
 
 // containers
-export type ContainerType = '' | 'normal' | 'inline-size' | 'size' | 'anchored' | 'scroll-state' | 'inline-size scroll-state' | 'size scroll-state';
+export type ContainerType =
+    | ''
+    | 'normal'
+    | 'inline-size'
+    | 'size'
+    | 'anchored'
+    | 'scroll-state'
+    | 'inline-size scroll-state'
+    | 'size scroll-state';
 export type ContainerResolver = StringResolver;
 export type Container = (type?: ContainerType) => ContainerResolver;
 
 export type ContainersResolvers<T extends Record<string, ContainerType>> = {
     [key in keyof T]: ContainerResolver;
 };
-export type Containers= <T extends Record<string, ContainerType>>(description: T) => ContainersResolvers<T>;
+export type Containers = <T extends Record<string, ContainerType>>(description: T) => ContainersResolvers<T>;
 
 // fonts
-export type FontGenericName = 'serif' | 'sans-serif' | 'monospace' | 'cursive' | 'fantasy' | 'system-ui' | 'ui-serif' | 'ui-sans-serif' | 'ui-monospace' | 'ui-rounded' | 'math' | 'fangsong';
+export type FontGenericName =
+    | 'serif'
+    | 'sans-serif'
+    | 'monospace'
+    | 'cursive'
+    | 'fantasy'
+    | 'system-ui'
+    | 'ui-serif'
+    | 'ui-sans-serif'
+    | 'ui-monospace'
+    | 'ui-rounded'
+    | 'math'
+    | 'fangsong';
 export type FontConfig = {
     /**
      * References to font resources
@@ -176,7 +177,7 @@ export type FontConfig = {
      */
     display?: string;
     /**
-     * Font-stretch 
+     * Font-stretch
      */
     stretch?: string;
     /**
@@ -188,7 +189,7 @@ export type FontConfig = {
      */
     weight?: string | number;
     /**
-     * Font-variant 
+     * Font-variant
      */
     variant?: string;
     /**
@@ -215,8 +216,9 @@ export type Fonts = <T extends Record<string, FontConfig>>(description: T) => Fo
 
 export type Update = {
     <T extends string>(
-        argument: VariablesResolvers<Record<T, VariableConfig>>, value: {[key in T]?: string | number | boolean | null | undefined}
-    ): void
+        argument: VariablesResolvers<Record<T, VariableConfig>>,
+        value: { [key in T]?: string | number | boolean | null | undefined }
+    ): void;
     (argument: VariableResolver, value: string | number | boolean | null | undefined): void;
 };
 
@@ -224,22 +226,22 @@ export type StyleSheetType = 'classNames' | 'attributes' | 'customStyles';
 export type EffCSSEvent = {
     css: string;
 } & (
-      { fn: 'variable'; name: string; }
-    | { fn: 'variables'; names: string[]; }
-    | { fn: 'variable.set'; name: string; value: string; }
-    | { fn: 'animation'; name: string; }
-    | { fn: 'animations'; names: string[]; }
-    | { fn: 'layer'; name: string; }
-    | { fn: 'layers'; names: string[]; }
-    | { fn: 'font'; name: string; }
-    | { fn: 'fonts'; names: string[]; }
-    | { fn: 'container'; name: string; type: string;}
-    | { fn: 'containers'; items: {name: string; type: string;}[]}
-    | { fn: 'className'; result: string; }
-    | { fn: 'attribute'; result: object; }
-    | { fn: 'classNames'; dict: Record<string, string>; key: string; }
-    | { fn: 'attributes'; dict: Record<string, string>; key: string; }
-    | { fn: 'customStyles'; dict: Record<string, string>; key: string; }
+    | { fn: 'variable'; name: string }
+    | { fn: 'variables'; names: string[] }
+    | { fn: 'variable.set'; name: string; value: string }
+    | { fn: 'animation'; name: string }
+    | { fn: 'animations'; names: string[] }
+    | { fn: 'layer'; name: string }
+    | { fn: 'layers'; names: string[] }
+    | { fn: 'font'; name: string }
+    | { fn: 'fonts'; names: string[] }
+    | { fn: 'container'; name: string; type: string }
+    | { fn: 'containers'; items: { name: string; type: string }[] }
+    | { fn: 'className'; result: string }
+    | { fn: 'attribute'; result: object }
+    | { fn: 'classNames'; dict: Record<string, string>; key: string }
+    | { fn: 'attributes'; dict: Record<string, string>; key: string }
+    | { fn: 'customStyles'; dict: Record<string, string>; key: string }
 );
 export type Theme = <
     TVars extends Record<string, VariableConfig>,
@@ -265,4 +267,4 @@ export type Theme = <
      * Set next theme name
      */
     set(name: keyof TOptions): boolean;
-}
+};

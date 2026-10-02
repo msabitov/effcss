@@ -10,13 +10,11 @@ const banner = `/*
 * @license ${json.license}
 */`;
 
-const output =  {
+const output = {
     dir: 'dist',
     banner,
     format: 'es',
-    plugins: [
-        terser(),
-    ]
+    plugins: [terser()]
 };
 const tsPlugin = typescript({
     tsconfig: 'tsconfig.json'
@@ -25,14 +23,12 @@ const tsPlugin = typescript({
 export default [
     {
         input: {
-            index: 'src/index.ts',
+            index: 'src/index.ts'
         },
         output,
         plugins: [
             cleaner({
-                targets: [
-                  './dist/'
-                ]
+                targets: ['./dist/']
             }),
             tsPlugin
         ]

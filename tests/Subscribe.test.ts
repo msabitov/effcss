@@ -1,7 +1,11 @@
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
-    configure, serialize, stylesheet,
-    classNames, attributes, customStyles,
+    configure,
+    serialize,
+    stylesheet,
+    classNames,
+    attributes,
+    customStyles,
     variable,
     update,
     variablesStylesheet,
@@ -29,11 +33,11 @@ type Card = {
     card: {
         variant: 1 | 2;
         rounded: true;
-    }
-}
+    };
+};
 
 const generator: Generator<Card> = (selectors) => {
-    const {w, card} = selectors;
+    const { w, card } = selectors;
     return {
         [w.s]: {
             width: '12px'
@@ -109,7 +113,7 @@ describe('Subscribe:', () => {
                     w: '0',
                     w_s: '2'
                 },
-                css: '[data-f1~=\"2\"]{width:12px;}[data-f1~=\"1\"]{background:white;border:none;}[data-f1~=\"4\"]{border-radius:1rem;}',
+                css: '[data-f1~=\"2\"]{width:12px;}[data-f1~=\"1\"]{background:white;border:none;}[data-f1~=\"4\"]{border-radius:1rem;}'
             });
         });
 
@@ -129,7 +133,7 @@ describe('Subscribe:', () => {
                 fn: 'customStyles',
                 key: 'f2',
                 dict: {},
-                css: '.cls{padding:1rem;text-decoration:underline;text-decoration:underline dotted;}[data-attr]{background:grey;}',
+                css: '.cls{padding:1rem;text-decoration:underline;text-decoration:underline dotted;}[data-attr]{background:grey;}'
             });
         });
 
@@ -183,7 +187,7 @@ describe('Subscribe:', () => {
                     w: '0',
                     w_s: '2'
                 },
-                css: '[data-f4~=\"2\"]{width:12px;}[data-f4~=\"1\"]{background:white;border:none;}[data-f4~=\"4\"]{border-radius:1rem;}',
+                css: '[data-f4~=\"2\"]{width:12px;}[data-f4~=\"1\"]{background:white;border:none;}[data-f4~=\"4\"]{border-radius:1rem;}'
             });
         });
 
@@ -205,7 +209,7 @@ describe('Subscribe:', () => {
                 fn: 'customStyles',
                 key: 'f5',
                 dict: {},
-                css: '.cls{padding:1rem;text-decoration:underline;text-decoration:underline dotted;}[data-attr]{background:grey;}',
+                css: '.cls{padding:1rem;text-decoration:underline;text-decoration:underline dotted;}[data-attr]{background:grey;}'
             });
         });
     });
@@ -262,7 +266,7 @@ describe('Subscribe:', () => {
                     inherits: false,
                     initialValue: 'red'
                 });
-                
+
                 expect(events.length).toBe(length + 2);
                 expect(events[events.length - 2]).toEqual({
                     css: '@property --f6-0 {syntax:"*";inherits:true;initial-value:12px;}',
@@ -297,7 +301,7 @@ describe('Subscribe:', () => {
                         opacity: 1
                     }
                 });
-        
+
                 expect(events.length).toBe(length + 2);
                 expect(events[events.length - 2]).toEqual({
                     css: '@keyframes f6-0 {from{width:100px;}to{width:200px;}}',
@@ -314,7 +318,7 @@ describe('Subscribe:', () => {
             test('layer:', () => {
                 const length = events.length;
                 const startLayer = layer();
-        
+
                 expect(events.length).toBe(length + 1);
                 expect(events[events.length - 1]).toEqual({
                     css: '@layer f6-0;',
@@ -354,7 +358,7 @@ describe('Subscribe:', () => {
                     src: `url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2")`,
                     genericName: 'sans-serif'
                 });
-        
+
                 expect(events.length).toBe(length + 2);
                 expect(events[events.length - 2]).toEqual({
                     css: '@font-face {font-family:"f6-0";src:url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff");font-display:swap;font-style:normal;font-weight:400;}',
@@ -380,15 +384,12 @@ describe('Subscribe:', () => {
                         initialValue: 'red'
                     }
                 });
-                
+
                 expect(events.length).toBe(length + 1);
                 expect(events[events.length - 1]).toEqual({
                     css: '@property --f6-2 {syntax:"*";inherits:true;initial-value:12px;}@property --f6-3 {syntax:"*";inherits:false;initial-value:red;}',
                     fn: 'variables',
-                    names: [
-                        '--f6-2',
-                        '--f6-3',
-                    ]
+                    names: ['--f6-2', '--f6-3']
                 });
             });
 
@@ -415,30 +416,24 @@ describe('Subscribe:', () => {
                         }
                     }
                 });
-        
+
                 expect(events.length).toBe(length + 1);
                 expect(events[events.length - 1]).toEqual({
                     css: '@keyframes f6-2 {from{width:100px;}to{width:200px;}}@keyframes f6-3 {0%{opacity:0;}50%{opacity:0.6;}100%{opacity:1;}}',
                     fn: 'animations',
-                    names: [
-                        'f6-2',
-                        'f6-3'
-                    ]
+                    names: ['f6-2', 'f6-3']
                 });
             });
 
             test('layers', () => {
                 const length = events.length;
                 const globalLayers = layers(['start', 'top']);
-        
+
                 expect(events.length).toBe(length + 1);
                 expect(events[events.length - 1]).toEqual({
                     css: '@layer f6-1, f6-2;',
                     fn: 'layers',
-                    names: [
-                        'f6-1',
-                        'f6-2'
-                    ]
+                    names: ['f6-1', 'f6-2']
                 });
             });
 
@@ -446,7 +441,7 @@ describe('Subscribe:', () => {
                 const length = events.length;
                 const globalContainers = containers({
                     normal: '',
-                    inline: 'inline-size',
+                    inline: 'inline-size'
                 });
 
                 expect(events.length).toBe(length + 1);
@@ -480,15 +475,12 @@ describe('Subscribe:', () => {
                         genericName: 'sans-serif'
                     }
                 });
-        
+
                 expect(events.length).toBe(length + 1);
                 expect(events[events.length - 1]).toEqual({
                     css: '@font-face {font-family:"f6-2";src:url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff");font-display:swap;font-style:normal;font-weight:400;}@font-face {font-family:\"f6-3\";src:url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2");}',
                     fn: 'fonts',
-                    names: [
-                        'f6-2',
-                        'f6-3'
-                    ]
+                    names: ['f6-2', 'f6-3']
                 });
             });
         });
@@ -543,7 +535,7 @@ describe('Subscribe:', () => {
                     [startLayer]: {
                         '.cls-1': {
                             animationName: sizeAnimation(),
-                            animationDuration: '3s',
+                            animationDuration: '3s'
                         },
                         '.cls-2': {
                             fontFamily: first(),
@@ -563,7 +555,7 @@ describe('Subscribe:', () => {
             const length = events.length;
             unsubscribe();
 
-            customStyles(() => ({body: {background: 'white'}}));
+            customStyles(() => ({ body: { background: 'white' } }));
             expect(events.length).toBe(length);
         });
     });

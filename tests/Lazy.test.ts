@@ -3,10 +3,14 @@ import {
     serialize,
     stylesheet,
     configure,
-    variable, variables,
-    animation, animations,
-    layer, layers,
-    font, fonts,
+    variable,
+    variables,
+    animation,
+    animations,
+    layer,
+    layers,
+    font,
+    fonts,
     lazyClassName,
     lazyAttribute,
     classNames,
@@ -28,8 +32,8 @@ type Card = {
         header: {
             mini: true;
         };
-    }
-}
+    };
+};
 
 describe('Lazy mode:', () => {
     test('configure({ lazy: true })', () => {
@@ -95,7 +99,7 @@ describe('Lazy mode:', () => {
 
             expect(vars.size.get()).toBe('12px');
             expect(vars.color.get()).toBe('red');
-            expect(vars.color('grey')).toBe(`var(${(vars.color + '')},grey)`);
+            expect(vars.color('grey')).toBe(`var(${vars.color + ''},grey)`);
         });
 
         test('animation (generates CSS on first use)', () => {
@@ -176,15 +180,14 @@ describe('Lazy mode:', () => {
 
             const resultCSS = serialize();
             expect(resultCSS).not.toBe(initialCSS);
-            expect(resultCSS).toContain(
-                `@layer f0-1, f0-2, f0-3;`
-            );
+            expect(resultCSS).toContain(`@layer f0-1, f0-2, f0-3;`);
         });
 
         test('font (generates CSS on first use)', () => {
             const initialCSS = serialize();
             const first = font({
-                src: `url("/fonts/roboto-regular.woff2") format("woff2") ` +
+                src:
+                    `url("/fonts/roboto-regular.woff2") format("woff2") ` +
                     `url("/fonts/roboto-regular.woff") format("woff")`,
                 weight: 400,
                 style: 'normal',
@@ -358,7 +361,7 @@ describe('Lazy mode:', () => {
         test('classNames', () => {
             const initialCSS = serialize();
             const card = classNames<Card>((selectors) => {
-                const {w, card, blur} = selectors;
+                const { w, card, blur } = selectors;
                 return {
                     [w.s]: {
                         width: '12px'
@@ -391,7 +394,7 @@ describe('Lazy mode:', () => {
         test('attributes', () => {
             const initialCSS = serialize();
             const card = attributes<Card>((selectors) => {
-                const {w, card, blur} = selectors;
+                const { w, card, blur } = selectors;
                 return {
                     [w.s]: {
                         width: '92px'
@@ -424,7 +427,7 @@ describe('Lazy mode:', () => {
         test('customStyles', () => {
             const initialCSS = serialize();
             const custom = customStyles(() => ({
-                'body': {
+                body: {
                     padding: '1rem'
                 },
                 '.class': {
@@ -447,20 +450,22 @@ describe('Lazy mode:', () => {
             expect(resultCSS).toContain('background: transparent;');
         });
     });
-    
+
     describe('Global at-rules inside scope:', () => {
         test('scope uses global variable', () => {
             const initialCSS = serialize(variablesStylesheet());
             const size = variable('29px');
             const custom = lazyCustomStyles(() => ({
-                'body': {
+                body: {
                     padding: size()
                 }
             }));
 
             expect(serialize(variablesStylesheet())).toBe(initialCSS);
             custom();
-            expect(serialize(variablesStylesheet())).toContain(`@property --f0-4 { syntax: "*"; inherits: true; initial-value: 29px; }`);
+            expect(serialize(variablesStylesheet())).toContain(
+                `@property --f0-4 { syntax: "*"; inherits: true; initial-value: 29px; }`
+            );
         });
 
         test('scope uses global variables', () => {
@@ -469,14 +474,16 @@ describe('Lazy mode:', () => {
                 size: '31px'
             });
             const custom = lazyCustomStyles(() => ({
-                'body': {
+                body: {
                     padding: size()
                 }
             }));
 
             expect(serialize(variablesStylesheet())).toBe(initialCSS);
             custom();
-            expect(serialize(variablesStylesheet())).toContain(`@property --f0-5 { syntax: "*"; inherits: true; initial-value: 31px; }`);
+            expect(serialize(variablesStylesheet())).toContain(
+                `@property --f0-5 { syntax: "*"; inherits: true; initial-value: 31px; }`
+            );
         });
 
         test('scope uses global animation', () => {
@@ -523,7 +530,7 @@ describe('Lazy mode:', () => {
                 display: 'swap'
             });
             const custom = lazyCustomStyles(() => ({
-                'body': {
+                body: {
                     fontFamily: roboto()
                 }
             }));
@@ -543,7 +550,7 @@ describe('Lazy mode:', () => {
                 }
             });
             const custom = lazyCustomStyles(() => ({
-                'body': {
+                body: {
                     fontFamily: roboto()
                 }
             }));
@@ -558,7 +565,7 @@ describe('Lazy mode:', () => {
             const base = layer();
             const custom = lazyCustomStyles(() => ({
                 [base()]: {
-                    'body': {
+                    body: {
                         fontWeight: 'bold'
                     }
                 }
@@ -574,7 +581,7 @@ describe('Lazy mode:', () => {
             const { base } = layers(['base', 'spec']);
             const custom = lazyCustomStyles(() => ({
                 [base()]: {
-                    'body': {
+                    body: {
                         fontWeight: 'bold'
                     }
                 }

@@ -8,7 +8,7 @@
 
 <div align="center">
 
-[![license](https://badgen.net/static/license/Apache%202.0/blue)](https://sourcecraft.dev/msabitov/effcss/browse/LICENSE?rev=master)
+[![license](https://badgen.net/static/license/Apache%202.0/blue)](https://github.com/msabitov/effcss/blob/master/LICENSE)
 [![npm latest package](https://badgen.net/npm/v/effcss)](https://www.npmjs.com/package/effcss)
 [![Coverage Status](https://coveralls.io/repos/github/msabitov/effcss/badge.svg?branch=master)](https://coveralls.io/github/msabitov/effcss?branch=master)
 ![npm package minimized gzipped size](https://img.shields.io/bundlejs/size/effcss?cacheSeconds=0)
@@ -20,41 +20,39 @@
 
 EffCSS is a self-confident CSS-in-TS library based only on the browser APIs. Use the full power of JS and TS to create styles.
 
-<a href="https://www.producthunt.com/products/effcss?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-effcss" target="_blank" rel="noopener noreferrer"><img alt="EffCSS - Self-confident CSS-in-TS | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1182584&amp;theme=neutral&amp;t=1782663997840"></a>
-
 ## Some features
 
--   zero-dependency,
--   framework agnostic,
--   small bundle size,
--   lazy mode support,
--   selectors isolation and minification out of the box,
--   TypeScript contract-based autocompletion,
--   compatible with any rendering (CSR, SSR, SSG).
+- zero-dependency,
+- framework agnostic,
+- small bundle size,
+- lazy mode support,
+- selectors isolation and minification out of the box,
+- TypeScript contract-based autocompletion,
+- compatible with any rendering (CSR, SSR, SSG).
 
 ## Links
 
--   [Docs](https://effnd.tech/css/)
--   [SourceCraft](https://sourcecraft.dev/msabitov/effcss)
--   [GitHub](https://github.com/msabitov/effcss)
--   [NPM](https://www.npmjs.com/package/effcss)
--   [vite-plugin-effcss](https://www.npmjs.com/package/vite-plugin-effcss) - CSR tool injecting generated CSS into HTML. It allows to eliminate FOUC and speed up the first rendering due to style hydration just like for SSR/SSG.
+- [Docs](https://effnd.tech/css/)
+- [SourceCraft](https://sourcecraft.dev/msabitov/effcss)
+- [GitHub](https://github.com/msabitov/effcss)
+- [NPM](https://www.npmjs.com/package/effcss)
+- [vite-plugin-effcss](https://www.npmjs.com/package/vite-plugin-effcss) - CSR tool injecting generated CSS into HTML. It allows to eliminate FOUC and speed up the first rendering due to style hydration just like for SSR/SSG.
 
 ## Examples
 
--   [Vanilla TS](https://stackblitz.com/edit/effcss-ts-vitejs?file=src%2Fmain.ts)
--   [React](https://stackblitz.com/edit/effcss-react-vitejs?file=src%2FApp.tsx)
--   [Svelte](https://stackblitz.com/edit/effcss-svelte-vitejs?file=src%2FApp.svelte)
--   [Vue](https://stackblitz.com/edit/effcss-vue-vitejs?file=src%2FApp.vue)
--   [Angular](https://stackblitz.com/edit/effcss-angular-vitejs?file=src%2Fmain.ts)
--   [SolidJS](https://stackblitz.com/edit/effcss-solidjs-vitejs?file=src%2FApp.tsx)
--   [Preact](https://stackblitz.com/edit/effcss-preact-vitejs?file=src%2Fapp.tsx)
--   [Qwik](https://stackblitz.com/edit/effcss-qwik-vitejs?file=src%2Fapp.tsx)
--   [Lit](https://stackblitz.com/edit/effcss-lit-vitejs?file=src%2Fmy-element.ts)
--   [React SSR](https://stackblitz.com/edit/effcss-react-ssr-vitejs?file=src%2FApp.tsx)
--   [Svelte SSR](https://stackblitz.com/edit/effcss-svelte-ssr-vitejs?file=src%2FApp.svelte)
--   [Vue SSR](https://stackblitz.com/edit/effcss-vue-ssr-vitejs?file=src%2FApp.vue)
--   [Astro SSG](https://stackblitz.com/edit/effcss-ts-astro?file=src%2Fpages%2Findex.astro)
+- [Vanilla TS](https://stackblitz.com/edit/effcss-ts-vitejs?file=src%2Fmain.ts)
+- [React](https://stackblitz.com/edit/effcss-react-vitejs?file=src%2FApp.tsx)
+- [Svelte](https://stackblitz.com/edit/effcss-svelte-vitejs?file=src%2FApp.svelte)
+- [Vue](https://stackblitz.com/edit/effcss-vue-vitejs?file=src%2FApp.vue)
+- [Angular](https://stackblitz.com/edit/effcss-angular-vitejs?file=src%2Fmain.ts)
+- [SolidJS](https://stackblitz.com/edit/effcss-solidjs-vitejs?file=src%2FApp.tsx)
+- [Preact](https://stackblitz.com/edit/effcss-preact-vitejs?file=src%2Fapp.tsx)
+- [Qwik](https://stackblitz.com/edit/effcss-qwik-vitejs?file=src%2Fapp.tsx)
+- [Lit](https://stackblitz.com/edit/effcss-lit-vitejs?file=src%2Fmy-element.ts)
+- [React SSR](https://stackblitz.com/edit/effcss-react-ssr-vitejs?file=src%2FApp.tsx)
+- [Svelte SSR](https://stackblitz.com/edit/effcss-svelte-ssr-vitejs?file=src%2FApp.svelte)
+- [Vue SSR](https://stackblitz.com/edit/effcss-vue-ssr-vitejs?file=src%2FApp.vue)
+- [Astro SSG](https://stackblitz.com/edit/effcss-ts-astro?file=src%2Fpages%2Findex.astro)
 
 ## Installation
 
@@ -105,12 +103,7 @@ Just declare stylesheet contract, implement it and apply ready selectors:
 **App.tsx**
 
 ```tsx
-import {
-    className, classNames,
-    attribute, attributes,
-    variable, variables,
-    animation, animations
-} from 'effcss';
+import { className, classNames, attribute, attributes, variable, variables, animation, animations } from 'effcss';
 
 // you can create independent rules
 
@@ -143,64 +136,41 @@ const widthVars = variables({
 // spinAnimation = unique-animation-name
 const spinAnimation = animation({
     from: {
-        transform: 'rotate(0deg)',
+        transform: 'rotate(0deg)'
     },
     to: {
-        transform: 'rotate(360deg)',
-    },
+        transform: 'rotate(360deg)'
+    }
 });
 
 // also you can create isolated stylesheets
 
 // 1. declare
 
-/**
- * Components stylesheet
- */
+/** Components stylesheet */
 type Components = {
-    /**
-     * Is rounded
-     */
+    /** Is rounded */
     rounded: true;
-    /**
-     * Height
-     */
+    /** Height */
     h: 'full' | 'half';
-    /**
-     * Card
-     */
+    /** Card */
     card: {
-        /**
-         * Card background
-         */
+        /** Card background */
         bg: 'primary' | 'secondary';
-        /**
-         * Is card disabled
-         */
+        /** Is card disabled */
         disabled: boolean;
-        
     };
-    /**
-     * Spinner component
-     */
+    /** Spinner component */
     spinner: {};
 };
 
-/**
- * Utils stylesheet
- */
+/** Utils stylesheet */
 type Utils = {
-    /**
-     * Width
-     */
+    /** Width */
     w: 's' | 'm' | 'l';
-    /**
-     * Spacing
-     */
+    /** Spacing */
     spacing: 0 | 1 | 2;
-    /**
-     * Blink animation
-     */
+    /** Blink animation */
     blink: true;
 };
 
@@ -222,13 +192,13 @@ const styleComponents = attributes<Components>((selectors) => {
             initialValue: '#425158'
         }
     });
-   
+
     return {
         [rounded.true]: {
             borderRadius: '50%'
         },
         [spinner]: {
-            animation: `${spinAnimation} infinite 6s linear`,
+            animation: `${spinAnimation} infinite 6s linear`
         },
         [card]: {
             display: 'flex',
@@ -248,7 +218,7 @@ const styleComponents = attributes<Components>((selectors) => {
             [card + ':hover']: {
                 filter: `drop-shadow(0 0 2em #ffffff)`
             }
-        },
+        }
         // ... and so on
     };
 });
@@ -287,10 +257,7 @@ const styleUtils = classNames<Utils>((selectors) => {
         },
         [w.m]: {
             width: widthVars.m()
-        },
-        [w.l]: {
-            width: widthVars.l()
-        },
+        }
         // ... and so on
     };
 });
@@ -308,12 +275,16 @@ const cardAttrs = styleComponents({
 // returns a string as it is created using `classNames`
 const utilsCls = styleUtils({
     w: 'm'
-})
+});
 
 export const App = () => {
-    return <div {...cardAttrs} className={utilsCls}>
-        <p {...fontAttr} className={bgCls}>...</p>
-    </div>
+    return (
+        <div {...cardAttrs} className={utilsCls}>
+            <p {...fontAttr} className={bgCls}>
+                ...
+            </p>
+        </div>
+    );
 };
 ```
 
