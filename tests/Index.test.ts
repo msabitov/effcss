@@ -27,7 +27,8 @@ import {
     font,
     fontsStylesheet,
     fonts,
-    theme
+    theme,
+    id
 } from '../src/index';
 
 type Card = {
@@ -1346,6 +1347,28 @@ describe('Utils:', () => {
                     `\n}`
             );
         });
+
+        test('id', () => {
+            const identifier = id({
+                margin: 'auto',
+                '&:hover': {
+                    outline: '2px solid black',
+                    '.child': {
+                        background: 'grey'
+                    }
+                }
+            });
+
+            const styles = serialize(sharedStylesheet());
+            expect(identifier).toBe('f2_2');
+            expect(styles).toContain(
+                `#f2_2 {` +
+                    `\n  margin: auto;` +
+                    `\n  &:hover {\n  outline: black solid 2px;` +
+                    `\n  & .child { background: grey; }\n}` +
+                    `\n}`
+            );
+        });
     });
 
     describe('Serialize', () => {
@@ -1762,19 +1785,24 @@ describe('Utils:', () => {
             expect(vars.size.get()).toBe(sizeValue);
         });
 
-        test('no local className/attribute', () => {
+        test('no local className/attribute/id', () => {
             let localCls: string | undefined = undefined;
             let localAttr: object | undefined = undefined;
+            let localId: string | undefined = undefined;
 
             const borderWidth = '0.125rem';
             const clsWidth = '18px';
             const attrWidth = '22px';
+            const idWidth = '26px';
             const custom = customStyles(() => {
                 localCls = className({
                     width: clsWidth
                 });
                 localAttr = attribute({
                     width: attrWidth
+                });
+                localId = id({
+                    width: idWidth
                 });
                 return {
                     '.border': {
@@ -1787,9 +1815,11 @@ describe('Utils:', () => {
 
             expect(localCls).toBe('');
             expect(localAttr).toEqual({});
+            expect(localId).toBe('');
             expect(serialize(sheet)).toContain(borderWidth);
             expect(serialize(sheet)).not.toContain(clsWidth);
             expect(serialize(sheet)).not.toContain(attrWidth);
+            expect(serialize(sheet)).not.toContain(idWidth);
         });
     });
 

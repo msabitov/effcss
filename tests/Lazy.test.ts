@@ -11,6 +11,7 @@ import {
     layers,
     font,
     fonts,
+    lazyId,
     lazyClassName,
     lazyAttribute,
     classNames,
@@ -353,6 +354,64 @@ describe('Lazy mode:', () => {
                 expect(`${attrResolver}`).toBe(`[${key}]`);
                 // call again
                 expect(attrResolver()).toEqual(attrs);
+            });
+        });
+
+        describe('lazyId:', () => {
+            test('object arg', () => {
+                const initialCSS = serialize();
+                const idResolver = lazyId({
+                    margin: 'auto',
+                    '&:hover': {
+                        outline: '2px solid black'
+                    }
+                });
+
+                // deferred: no shared rule yet
+                expect(serialize()).toBe(initialCSS);
+
+                // call returns the identifier
+                const indentifier = idResolver();
+
+                const resultCSS = serialize();
+                expect(resultCSS).not.toBe(initialCSS);
+                expect(resultCSS).toContain(`${idResolver} {`);
+
+                expect(indentifier).toBe('f0_4');
+
+                // string coercion returns the correct selector
+                expect(`${idResolver}`).toBe(`#${indentifier}`);
+                // call again
+                expect(idResolver()).toBe(indentifier);
+            });
+
+            test('function arg', () => {
+                const initialCSS = serialize();
+                const idResolver = lazyId(() => {
+                    const margin = 'auto';
+                    return {
+                        margin,
+                        '&:hover': {
+                            outline: '2px solid black'
+                        }
+                    };
+                });
+
+                // deferred: no shared rule yet
+                expect(serialize()).toBe(initialCSS);
+
+                idResolver + '';
+
+                const resultCSS = serialize();
+                expect(resultCSS).toContain(`${idResolver} {`);
+                expect(resultCSS).not.toBe(initialCSS);
+                const identifier = idResolver();
+
+                expect(identifier).toBe('f0_5');
+                // string coercion returns the correct selector
+                expect(`${idResolver}`).toBe(`#${identifier}`);
+                // call again
+                expect(idResolver()).toBe(identifier);
             });
         });
     });

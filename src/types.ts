@@ -71,8 +71,10 @@ export type Generator<T extends Contract> = (selectors: Selectors<T>) => EffCSS.
 
 // selectors
 
-type RuleConfig = EffCSS.Rule | (() => EffCSS.Rule);
+export type RuleConfig = EffCSS.Rule | (() => EffCSS.Rule);
 
+export type LazyId = (rule: RuleConfig) => () => string;
+export type Id = ((rule: EffCSS.Rule) => string) & { lazy: LazyId };
 export type LazyClassName = (rule: RuleConfig) => () => string;
 export type ClassName = ((rule: EffCSS.Rule) => string) & { lazy: LazyClassName };
 export type ClassNamesResolver<T extends Contract> = (params: DeepPartial<T>) => string;
@@ -237,6 +239,7 @@ export type EffCSSEvent = {
     | { fn: 'fonts'; names: string[] }
     | { fn: 'container'; name: string; type: string }
     | { fn: 'containers'; items: { name: string; type: string }[] }
+    | { fn: 'id'; result: string }
     | { fn: 'className'; result: string }
     | { fn: 'attribute'; result: object }
     | { fn: 'classNames'; dict: Record<string, string>; key: string }

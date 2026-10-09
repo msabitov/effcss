@@ -5,6 +5,16 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-10-09
+
+### Added
+
+- `id` and `lazyId` utilities have been added, allowing you to create individual rules with id selector (types and tests added)
+
+### Changed
+
+- eliminated сode duplication in the anonymous rules handlers
+
 ## [5.6.1] - 2026-10-02
 
 ### Changed
@@ -998,7 +1008,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[5.6.1]: https://github.com/msabitov/effcss
+[5.7.0]: https://github.com/msabitov/effcss
+[5.6.1]: https://github.com/msabitov/effcss/commit/f35c4372238399c1028c6c5ad0147cdd1d2a2457
 [5.6.0]: https://github.com/msabitov/effcss/commit/867c531a883f8bc7c6fe6a316745d4de315039e1
 [5.5.3]: https://github.com/msabitov/effcss/commit/4e4c953aec4c903c1aeaa108a1f4225a73b22963
 [5.5.2]: https://github.com/msabitov/effcss/commit/da5d04739cd4e658e31d2bb7b38c1ed37b5fd608

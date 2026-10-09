@@ -43,7 +43,10 @@ import type {
     Update,
     StyleSheetType,
     GlobalKey,
-    Theme
+    Theme,
+    LazyId,
+    Id,
+    RuleConfig
 } from './types';
 import { keySymbol, indexSymbol, dictSymbol, LIBRARY } from './constants';
 
@@ -79,6 +82,9 @@ export type {
     LayersResolvers,
     Fonts,
     FontsResolvers,
+    Theme,
+    Id,
+    LazyId,
     EffCSSStyleSheet,
     EffCSSEvent,
     Generator
@@ -93,6 +99,7 @@ const DIVIDER = '_';
 const CSS_RULES = 'cssRules';
 const ATTRIBUTE = 'attribute';
 const ATTRIBUTES = (ATTRIBUTE + 's') as 'attributes';
+const ID = 'id';
 const CLASSNAME = 'className';
 const CLASSNAMES = (CLASSNAME + 's') as 'classNames';
 const CUSTOM_STYLES = 'customStyles';
@@ -134,6 +141,9 @@ const SHORT = {
 };
 const mockGetMethod = () => '';
 const mockSetMethod = () => undefined;
+const getId = (arg: any) => '#' + arg;
+const getCls = (arg: any) => '.' + arg;
+const getAttr = (arg: any) => '[' + Object.keys(arg)[0] + ']';
 const keyAttr = (val: string) => `${KEY_ATTR}="${val}"`;
 const isSymbol = (val: any) => typeof val === 'symbol';
 const isObject = (val: any) => val !== null && typeof val === 'object';
@@ -152,7 +162,6 @@ const propVal = (prop: string, val: any) => `${kebabCase(prop)}:${'' + val};`;
 const toRadix = (num: number) => num.toString(36);
 const eachEntry = (obj: object, cb: (key: string, val: any) => any) =>
     Object.entries(obj).forEach(([key, val]) => cb(key, val));
-const hasProperty = (obj: any, prop: PropertyKey) => Object.prototype.hasOwnProperty.call(obj, prop);
 const prepareInitialValue = (arg: any) => (arg !== null && arg !== undefined ? `initial-value:${arg};` : '');
 const parseInitialValue = (arg: string) => arg.split(/initial-value:\s?/);
 /**
@@ -713,6 +722,60 @@ class StyleProvider {
 
     // creators
 
+    static _rule = ({
+        fn,
+        result,
+        index,
+        selector,
+        rule
+    }: {
+        fn: 'id' | 'className' | 'attribute';
+        result: any;
+        index: number;
+        selector: string;
+        rule: object;
+    }) => {
+        const cssText = selector + ` {${parseStyles(rule)}}`;
+        const stylesheet = StyleProvider.ss;
+        if (StyleProvider._sc.s <= index) stylesheet.insertRule(cssText, stylesheet[CSS_RULES].length);
+        if (StyleProvider._hs) StyleProvider.emit({ fn, css: cssText, result });
+        return result;
+    }
+
+    static _lazyRule = <T>({
+        fn,
+        rule,
+        toString
+    }: {
+        fn: 'id' | 'className' | 'attribute';
+        rule: RuleConfig;
+        toString: (result: any) => string;
+    }) => {
+        let result: any;
+        const gen = () => (result = StyleProvider[fn](isFunction(rule) ? (rule as Function)() : rule));
+        const replacer = (() => {
+            if (result === undefined) return gen();
+            return result;
+        }) as T;
+        (replacer as any)[Symbol.toPrimitive] = () => toString(result ?? gen());
+        return replacer;
+    }
+
+    static id: (rule: object) => string = (rule) => {
+        if (StyleProvider.scope) return '';
+        const scope = StyleProvider.gs;
+        const index = scope.c.s++;
+        const result = scope.key + '_' + toRadix(index);
+        const selector = getId(result);
+        return StyleProvider._rule({
+            fn: ID,
+            result,
+            index,
+            selector,
+            rule
+        });
+    }
+
     /**
      * Create an anonymous rule with a class selector
      * @param rule - rule content
@@ -721,13 +784,15 @@ class StyleProvider {
         if (StyleProvider.scope) return '';
         const scope = StyleProvider.gs;
         const index = scope.c.s++;
-        const cls = scope.key + '_' + toRadix(index);
-        const selector = '.' + cls;
-        const cssText = selector + ` {${parseStyles(rule)}}`;
-        const stylesheet = StyleProvider.ss;
-        if (StyleProvider._sc.s <= index) stylesheet.insertRule(cssText, stylesheet[CSS_RULES].length);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: CLASSNAME, css: cssText, result: cls });
-        return cls;
+        const result = scope.key + '_' + toRadix(index);
+        const selector = getCls(result);
+        return StyleProvider._rule({
+            fn: CLASSNAME,
+            result,
+            index,
+            selector,
+            rule
+        });
     };
 
     /**
@@ -739,43 +804,15 @@ class StyleProvider {
         const scope = StyleProvider.gs;
         const index = scope.c.s++;
         const attr = DATA_ + scope.key + DASH + toRadix(index);
-        const val = '';
-        const cssText = `[${attr}] {${parseStyles(rule)}}`;
-        const stylesheet = StyleProvider.ss;
-        const result = { [attr]: val };
-        if (StyleProvider._sc.s <= index) stylesheet.insertRule(cssText, stylesheet[CSS_RULES].length);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: ATTRIBUTE, css: cssText, result });
-        return result;
-    };
-
-    static lazyClassName: LazyClassName = (rule) => {
-        let cls: string | undefined;
-        const gen = () => (cls = StyleProvider.className(isFunction(rule) ? (rule as Function)() : rule));
-        const replacer = (() => {
-            if (cls === undefined) return gen();
-            return cls;
-        }) as () => string;
-        (replacer as any)[Symbol.toPrimitive] = () => '.' + (cls === undefined ? gen() : cls);
-        return replacer;
-    };
-
-    static lazyAttribute: LazyAttribute = (rule) => {
-        let result: object | null = null;
-        let attr = '';
-        const gen = () => {
-            result = StyleProvider.attribute(isFunction(rule) ? (rule as Function)() : rule);
-            attr = Object.keys(result)[0] || '';
-            return result;
-        };
-        const replacer = (() => {
-            if (!result) return gen();
-            return result;
-        }) as () => object;
-        (replacer as any)[Symbol.toPrimitive] = () => {
-            if (!result) gen();
-            return '[' + attr + ']';
-        };
-        return replacer;
+        const selector = '[' + attr + ']';
+        const result = { [attr]: '' };
+        return StyleProvider._rule({
+            fn: ATTRIBUTE,
+            result,
+            index,
+            selector,
+            rule
+        });
     };
 
     /**
@@ -1469,18 +1506,44 @@ export const fonts: Fonts = (config) => StyleProvider.make[FONTS](config);
 // lazy
 
 /**
+ * Create an anonymous rule with a id selector for the first use
+ * @param rule - rule content
+ */
+export const lazyId: LazyId = (rule) => StyleProvider._lazyRule({
+    fn: ID,
+    rule,
+    toString: getId
+});
+
+
+/**
  * Create an anonymous rule with a class selector for the first use
  * @param rule - rule content
  */
-export const lazyClassName: LazyClassName = (rule) => StyleProvider.lazyClassName(rule);
+export const lazyClassName: LazyClassName = (rule) => StyleProvider._lazyRule({
+    fn: CLASSNAME,
+    rule,
+    toString: getCls
+});
 
 /**
  * Create an anonymous rule with an attribute selector for the first use
  * @param rule - rule content
  */
-export const lazyAttribute: LazyAttribute = (rule) => StyleProvider.lazyAttribute(rule);
+export const lazyAttribute: LazyAttribute = (rule) => StyleProvider._lazyRule({
+    fn: ATTRIBUTE,
+    rule,
+    toString: getAttr
+});
 
 // base
+
+/**
+ * Create an anonymous rule with a id selector
+ * @param rule - rule content
+ */
+export const id = ((rule) => StyleProvider.id(rule)) as Id;
+id.lazy = lazyId;
 
 /**
  * Create an anonymous rule with a class selector
