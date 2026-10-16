@@ -43,16 +43,6 @@ export type Contract = {
     [key: string]: string | number | boolean | Contract;
 };
 
-type RuleWithPreload = 'v' | 'a' | 'l' | 'f' | 'c';
-type RuleWithCounter = RuleWithPreload | 'ld' | 's';
-export type Scope = {
-    key: string;
-    // counters
-    c: Record<RuleWithCounter, number>;
-    // cssText
-    t: Record<RuleWithPreload, string>;
-};
-
 export type Selectors<T> = {
     [K in keyof T]: T[K] extends string | number
         ? {

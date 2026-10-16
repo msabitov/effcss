@@ -5,6 +5,14 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.1] - 2026-10-16
+
+### Changed
+
+- methods for creating single at-rules have been unified
+- simplified the code for the variable's `set()` and `get()` methods - now they use closure instead of CSS rule parsing
+- tokens creation has been moved to separate functions
+
 ## [5.7.0] - 2026-10-09
 
 ### Added
@@ -1008,7 +1016,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[5.7.0]: https://github.com/msabitov/effcss
+[5.7.1]: https://github.com/msabitov/effcss
+[5.7.0]: https://github.com/msabitov/effcss/commit/bdae949ac17600ac794af35ad7980797b96f6fe7
 [5.6.1]: https://github.com/msabitov/effcss/commit/f35c4372238399c1028c6c5ad0147cdd1d2a2457
 [5.6.0]: https://github.com/msabitov/effcss/commit/867c531a883f8bc7c6fe6a316745d4de315039e1
 [5.5.3]: https://github.com/msabitov/effcss/commit/4e4c953aec4c903c1aeaa108a1f4225a73b22963
