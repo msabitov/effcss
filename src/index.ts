@@ -106,9 +106,28 @@ type AtRuleParams<T> = {
     name: string;
     config: T;
     stylesheet?: EffCSSStyleSheet | null;
+    emit?: Function;
     index?: number;
 };
 type GetAtRule<T, F, E = object> = (params: AtRuleParams<T>) => { s: string; f: F; e: E };
+type Settings = {
+    /**
+     * Prefix for generated keys
+     */
+    prefix?: string;
+    /**
+     * Minify stylesheet selectors
+     */
+    minify?: boolean;
+    /**
+     * Emulate browser APIs
+     */
+    emulate?: boolean;
+    /**
+     * Enable lazy mode
+     */
+    lazy?: boolean;
+};
 
 // constants
 
@@ -117,6 +136,7 @@ const DASH = '-';
 const DATA_ = 'data-';
 const PREFIX = DATA_ + LIBRARY + DASH;
 const KEY_ATTR = PREFIX + 'key';
+const CTX_ATTR = PREFIX + 'ctx';
 const GLOBAL_ATTR = PREFIX + 'global';
 const DIVIDER = '_';
 const CSS_RULES = 'cssRules';
@@ -285,7 +305,7 @@ const token = (key: string, index: number) => `${key}-${toRadix(index)}`;
 const tokenUnder = (key: string, index: number) => `${key}_${toRadix(index)}`;
 const varName = (key: string, index: number) => '--' + token(key, index);
 
-const variableRule: GetAtRule<VariableConfig, VariableResolver> = ({ name, config, stylesheet, index }) => {
+const variableRule: GetAtRule<VariableConfig, VariableResolver> = ({ name, config, stylesheet, index, emit }) => {
     let descriptor: VariableDescription;
     if (config && typeof config === 'object') descriptor = config;
     else descriptor = { initialValue: config };
@@ -315,7 +335,7 @@ const variableRule: GetAtRule<VariableConfig, VariableResolver> = ({ name, confi
         initialValue = value;
         const s = build();
         replaceRule(stylesheet, index!, s);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: VARIABLE_SET, css: s, name, value });
+        if (emit) emit({ fn: VARIABLE_SET, css: s, name, value });
     };
     (resolver as VariableResolver).get = () =>
         initialValue === undefined || initialValue === null ? '' : '' + initialValue;
@@ -484,13 +504,13 @@ const createScope = (key: string): Scope => ({
     }
 });
 
-const getHash = (params: { type: StyleSheetType; scope: Scope; dict: Record<string, string> }) => {
-    const { scope, type, dict } = params;
+const getHash = (params: { type: StyleSheetType; minify: boolean; scope: Scope; dict: Record<string, string> }) => {
+    const { scope, minify, type, dict } = params;
     const scopeKey = scope.key;
     let add: (key: string) => string;
     let hash: undefined | ((key: string) => string);
     if (type === CLASSNAMES) {
-        add = StyleProvider.minify
+        add = minify
             ? (key: string) => {
                   dict[key] = tokenUnder(scopeKey, scope.c.s++);
                   return dict[key];
@@ -502,7 +522,7 @@ const getHash = (params: { type: StyleSheetType; scope: Scope; dict: Record<stri
               };
         hash = (key: string) => '.' + (dict[key] ?? add(key));
     } else {
-        add = StyleProvider.minify
+        add = minify
             ? (key: string) => {
                   dict[key] = toRadix(scope.c.s++);
                   return dict[key];
@@ -554,45 +574,45 @@ type Creators = {
 class StyleProvider {
     // settings
 
-    protected static _lazy = false;
-    static prefix = 'f';
-    static minify = true;
-    static emulate = false;
+    protected _lazy = false;
+    prefix = 'f';
+    minify = true;
+    emulate = false;
 
-    static get lazy() {
-        return StyleProvider._lazy;
+    get lazy() {
+        return this._lazy;
     }
-    static set lazy(value: boolean) {
-        if (value !== StyleProvider._lazy) {
-            StyleProvider._lazy = value;
-            StyleProvider.make = value ? StyleProvider.active : StyleProvider.every;
+    set lazy(value: boolean) {
+        if (value !== this._lazy) {
+            this._lazy = value;
+            this.make = value ? this.active : this.every;
         }
     }
 
     // scopes
 
     // global scope
-    protected static _gs: Scope;
+    protected _gs: Scope;
 
     // global scope
-    static get gs(): Scope {
-        if (!StyleProvider._gs) StyleProvider._gs = StyleProvider.cs();
-        return StyleProvider._gs;
+    get gs(): Scope {
+        if (!this._gs) this._gs = this.cs();
+        return this._gs;
     }
 
-    static scope: Scope | null = null;
-    static scopeCount = 0;
+    scope: Scope | null = null;
+    scopeCount = 0;
 
     // create scope
-    static cs(): Scope {
-        const key = StyleProvider.prefix + toRadix(StyleProvider.scopeCount++);
+    cs = (): Scope => {
+        const key = this.prefix + toRadix(this.scopeCount++);
         return createScope(key);
     }
 
     // stylesheets
 
     // server counters
-    protected static _sc: Scope['c'] = {
+    protected _sc: Scope['c'] = {
         v: 0,
         a: 0,
         l: 0,
@@ -602,21 +622,21 @@ class StyleProvider {
     };
 
     // global stylesheets
-    static _g: Partial<Record<'v' | 'a' | 'l' | 'f' | 's', EffCSSStyleSheet>> = {};
+    _g: Partial<Record<'v' | 'a' | 'l' | 'f' | 's', EffCSSStyleSheet>> = {};
 
-    protected static _serverGlobalCSS: Map<GlobalKey, CSSStyleSheet> | null = null;
-    protected static _serverCSS: Map<string, CSSStyleSheet> | null = null;
-    protected static _serverMeta: Map<string, Record<string, string>> | null = null;
+    protected _serverGlobalCSS: Map<GlobalKey, CSSStyleSheet> | null = null;
+    protected _serverCSS: Map<string, CSSStyleSheet> | null = null;
+    protected _serverMeta: Map<string, Record<string, string>> | null = null;
 
-    static map: Map<any, EffCSSStyleSheet> = new Map<any, EffCSSStyleSheet>();
+    map: Map<any, EffCSSStyleSheet> = new Map<any, EffCSSStyleSheet>();
 
     // subscribers
-    protected static _sub: Set<(data: EffCSSEvent) => void> = new Set();
+    protected _sub: Set<(data: EffCSSEvent) => void> = new Set();
     // hasSubscribers
-    static _hs: boolean = false;
+    _hs: boolean = false;
 
-    static emit(data: EffCSSEvent): void {
-        for (const fn of StyleProvider._sub) {
+    emit = (data: EffCSSEvent): void => {
+        for (const fn of this._sub) {
             try {
                 fn(data);
             } catch {
@@ -625,48 +645,67 @@ class StyleProvider {
         }
     }
 
-    static subscribe(fn: (data: EffCSSEvent) => void): () => void {
-        StyleProvider._sub.add(fn);
-        StyleProvider._hs = !!StyleProvider._sub.size;
+    subscribe = (fn: (data: EffCSSEvent) => void): () => void  => {
+        this._sub.add(fn);
+        this._hs = !!this._sub.size;
         return () => {
-            StyleProvider._sub.delete(fn);
-            StyleProvider._hs = !!StyleProvider._sub.size;
+            this._sub.delete(fn);
+            this._hs = !!this._sub.size;
         };
     }
 
-    static get serverCSS(): Map<string, CSSStyleSheet> {
-        if (!StyleProvider._serverCSS) {
-            StyleProvider._serverCSS = new Map();
+    constructor(config?: Settings) {
+        if (config) this.configure(config);
+    }
+
+    configure = (config: Settings) => {
+        if (this.scopeCount > 0) return false;
+        const {
+            prefix = this.prefix,
+            minify = this.minify,
+            emulate = this.emulate,
+            lazy = this.lazy
+        } = config;
+        this.prefix = prefix;
+        this.minify = minify;
+        this.emulate = emulate;
+        this.lazy = lazy;
+        return true;
+    };
+
+    get serverCSS(): Map<string, CSSStyleSheet> {
+        if (!this._serverCSS) {
+            this._serverCSS = new Map();
             const elements = globalThis.document?.head.querySelectorAll(
                 `style[${KEY_ATTR}]`
             ) as NodeListOf<HTMLStyleElement> | null;
             elements?.forEach((el) => {
                 const key = el.getAttribute(KEY_ATTR);
                 const sheet = el.sheet;
-                if (key && sheet) StyleProvider._serverCSS!.set(key, sheet);
+                if (key && sheet) this._serverCSS!.set(key, sheet);
             });
         }
-        return StyleProvider._serverCSS as Map<string, CSSStyleSheet>;
+        return this._serverCSS as Map<string, CSSStyleSheet>;
     }
 
-    static get serverGlobalCSS(): Map<GlobalKey, EffCSSStyleSheet> {
-        if (!StyleProvider._serverGlobalCSS) {
-            StyleProvider._serverGlobalCSS = new Map();
+    get serverGlobalCSS(): Map<GlobalKey, EffCSSStyleSheet> {
+        if (!this._serverGlobalCSS) {
+            this._serverGlobalCSS = new Map();
             const elements = globalThis.document?.head.querySelectorAll(
-                `[${GLOBAL_ATTR}]`
+                `[${GLOBAL_ATTR}][${CTX_ATTR}="${this.prefix}"]`
             ) as NodeListOf<HTMLStyleElement> | null;
             elements?.forEach((el) => {
                 const key = el.getAttribute(GLOBAL_ATTR) as GlobalKey;
                 const sheet = el.sheet;
-                if (key && sheet) StyleProvider._serverGlobalCSS!.set(key, sheet);
+                if (key && sheet) this._serverGlobalCSS!.set(key, sheet);
             });
         }
-        return StyleProvider._serverGlobalCSS;
+        return this._serverGlobalCSS;
     }
 
-    static get serverMeta(): Map<string, Record<string, string>> {
-        if (!StyleProvider._serverMeta) {
-            StyleProvider._serverMeta = new Map();
+    get serverMeta(): Map<string, Record<string, string>> {
+        if (!this._serverMeta) {
+            this._serverMeta = new Map();
             const elements = globalThis.document?.head.querySelectorAll(
                 `script[${KEY_ATTR}]`
             ) as NodeListOf<HTMLScriptElement> | null;
@@ -674,48 +713,48 @@ class StyleProvider {
                 const key = el.getAttribute(KEY_ATTR);
                 const textContent = el.textContent;
                 const dict = textContent ? JSON.parse(el.textContent) : {};
-                if (key) StyleProvider._serverMeta!.set(key, dict);
+                if (key) this._serverMeta!.set(key, dict);
             });
         }
-        return StyleProvider._serverMeta;
+        return this._serverMeta;
     }
 
     // get global stylesheet
-    static _gg(key: 'v' | 'a' | 'l' | 'f' | 's'): EffCSSStyleSheet {
-        if (!StyleProvider._g[key]) {
-            const serverStylesheet = StyleProvider.serverGlobalCSS.get(SHORT[key]);
+    _gg = (key: 'v' | 'a' | 'l' | 'f' | 's'): EffCSSStyleSheet => {
+        if (!this._g[key]) {
+            const serverStylesheet = this.serverGlobalCSS.get(SHORT[key]);
             if (serverStylesheet) {
-                StyleProvider._g[key] = serverStylesheet;
-                StyleProvider._sc[key] = serverStylesheet[CSS_RULES].length;
-            } else StyleProvider._g[key] = StyleProvider.cst();
+                this._g[key] = serverStylesheet;
+                this._sc[key] = serverStylesheet[CSS_RULES].length;
+            } else this._g[key] = this.cst();
         }
-        return StyleProvider._g[key];
+        return this._g[key];
     }
 
-    static get vs(): EffCSSStyleSheet {
-        return StyleProvider._gg('v');
+    get vs(): EffCSSStyleSheet {
+        return this._gg('v');
     }
 
-    static get as(): EffCSSStyleSheet {
-        return StyleProvider._gg('a');
+    get as(): EffCSSStyleSheet {
+        return this._gg('a');
     }
 
-    static get ls(): EffCSSStyleSheet {
-        return StyleProvider._gg('l');
+    get ls(): EffCSSStyleSheet {
+        return this._gg('l');
     }
 
-    static get fs(): EffCSSStyleSheet {
-        return StyleProvider._gg('f');
+    get fs(): EffCSSStyleSheet {
+        return this._gg('f');
     }
 
-    static get ss(): EffCSSStyleSheet {
-        return StyleProvider._gg('s');
+    get ss(): EffCSSStyleSheet {
+        return this._gg('s');
     }
 
     // createStyleSheet
-    static cst = (cssText: string = ''): EffCSSStyleSheet => {
+    cst = (cssText: string = ''): EffCSSStyleSheet => {
         let stylesheet;
-        if (!globalThis.CSSStyleSheet || StyleProvider.emulate) {
+        if (!globalThis.CSSStyleSheet || this.emulate) {
             stylesheet = {
                 ownerNode: null,
                 disabled: false,
@@ -747,20 +786,20 @@ class StyleProvider {
     };
 
     // linkStylesheet
-    static lst(resolver: any, stylesheet: EffCSSStyleSheet) {
-        StyleProvider.map.set(resolver, stylesheet);
+    lst = (resolver: any, stylesheet: EffCSSStyleSheet) => {
+        this.map.set(resolver, stylesheet);
         return resolver;
     }
 
-    static update: Update = (resolver: any, value: any) => {
-        if (StyleProvider.scope) return;
+    update: Update = (resolver: any, value: any) => {
+        if (this.scope) return;
         if (isFunction(resolver)) resolver.set(value);
         else Object.entries<any>(value).forEach(([key, val]) => resolver[key].set(val));
     };
 
     // creators
 
-    static _rule = ({
+    _rule = ({
         fn,
         result,
         index,
@@ -774,13 +813,13 @@ class StyleProvider {
         rule: object;
     }) => {
         const cssText = selector + ` {${parseStyles(rule)}}`;
-        const stylesheet = StyleProvider.ss;
-        if (StyleProvider._sc.s <= index) stylesheet.insertRule(cssText, stylesheet[CSS_RULES].length);
-        if (StyleProvider._hs) StyleProvider.emit({ fn, css: cssText, result });
+        const stylesheet = this.ss;
+        if (this._sc.s <= index) stylesheet.insertRule(cssText, stylesheet[CSS_RULES].length);
+        if (this._hs) this.emit({ fn, css: cssText, result });
         return result;
     };
 
-    static _lazyRule = <T>({
+    lazyRule = <T>({
         fn,
         rule,
         toString
@@ -790,7 +829,7 @@ class StyleProvider {
         toString: (result: any) => string;
     }) => {
         let result: any;
-        const gen = () => (result = StyleProvider[fn](isFunction(rule) ? (rule as Function)() : rule));
+        const gen = () => (result = this[fn](isFunction(rule) ? (rule as Function)() : rule));
         const replacer = (() => {
             if (result === undefined) return gen();
             return result;
@@ -799,13 +838,13 @@ class StyleProvider {
         return replacer;
     };
 
-    static id: (rule: object) => string = (rule) => {
-        if (StyleProvider.scope) return '';
-        const scope = StyleProvider.gs;
+    id: (rule: object) => string = (rule) => {
+        if (this.scope) return '';
+        const scope = this.gs;
         const index = scope.c.s++;
         const result = tokenUnder(scope.key, index);
         const selector = getId(result);
-        return StyleProvider._rule({
+        return this._rule({
             fn: ID,
             result,
             index,
@@ -818,13 +857,13 @@ class StyleProvider {
      * Create an anonymous rule with a class selector
      * @param rule - rule content
      */
-    static className: (rule: object) => string = (rule: object) => {
-        if (StyleProvider.scope) return '';
-        const scope = StyleProvider.gs;
+    className: (rule: object) => string = (rule: object) => {
+        if (this.scope) return '';
+        const scope = this.gs;
         const index = scope.c.s++;
         const result = tokenUnder(scope.key, index);
         const selector = getCls(result);
-        return StyleProvider._rule({
+        return this._rule({
             fn: CLASSNAME,
             result,
             index,
@@ -837,14 +876,14 @@ class StyleProvider {
      * Create an anonymous rule with an attribute selector
      * @param rule - rule content
      */
-    static attribute: (rule: object) => object = (rule: object) => {
-        if (StyleProvider.scope) return {};
-        const scope = StyleProvider.gs;
+    attribute: (rule: object) => object = (rule: object) => {
+        if (this.scope) return {};
+        const scope = this.gs;
         const index = scope.c.s++;
         const attr = DATA_ + token(scope.key, index);
         const selector = '[' + attr + ']';
         const result = { [attr]: '' };
-        return StyleProvider._rule({
+        return this._rule({
             fn: ATTRIBUTE,
             result,
             index,
@@ -853,7 +892,7 @@ class StyleProvider {
         });
     };
 
-    static _atRule = <T, F, E = object>({
+    _atRule = <T, F, E = object>({
         key,
         config,
         scope,
@@ -864,7 +903,7 @@ class StyleProvider {
         key: RuleWithPreload;
         config: T;
         scope: Scope | null;
-        getRule(params: { name: string; config: T; stylesheet?: EffCSSStyleSheet | null; index?: number }): {
+        getRule(params: { name: string; config: T; stylesheet?: EffCSSStyleSheet | null; index?: number; emit?: Function; }): {
             s: string;
             f: F;
             e: E;
@@ -873,7 +912,7 @@ class StyleProvider {
         sideEffects?: boolean;
     }): F => {
         // local rule
-        const ruleScope = scope || StyleProvider.gs;
+        const ruleScope = scope || this.gs;
         const index = ruleScope.c[key]++;
         const name = getName(ruleScope.key, index);
         if (scope) {
@@ -883,11 +922,11 @@ class StyleProvider {
         }
         // global rule
         const ruleIndex = ruleScope.b[key]++;
-        const stylesheet = sideEffects ? StyleProvider._gg(key as keyof typeof StyleProvider._g) : null;
-        const { s, f, e = {} } = getRule({ name, config, stylesheet, index: ruleIndex });
-        if (sideEffects && stylesheet && StyleProvider._sc[key] <= ruleIndex) stylesheet.insertRule(s, ruleIndex);
-        if (StyleProvider._hs)
-            StyleProvider.emit({ fn: SHORT_SINGLE[key], css: s, name, ...(e as object) } as unknown as EffCSSEvent);
+        const stylesheet = sideEffects ? this._gg(key as keyof typeof this._g) : null;
+        const { s, f, e = {} } = getRule({ name, config, stylesheet, index: ruleIndex, emit: this._hs ? this.emit : undefined });
+        if (sideEffects && stylesheet && this._sc[key] <= ruleIndex) stylesheet.insertRule(s, ruleIndex);
+        if (this._hs)
+            this.emit({ fn: SHORT_SINGLE[key], css: s, name, ...(e as object) } as unknown as EffCSSEvent);
         return f;
     };
 
@@ -895,8 +934,8 @@ class StyleProvider {
      * Create variable
      * @param config - variable config
      */
-    static variable = (config?: VariableConfig, scope = StyleProvider.scope): VariableResolver =>
-        StyleProvider._atRule({
+    variable = (config?: VariableConfig, scope = this.scope): VariableResolver =>
+        this._atRule({
             key: 'v',
             config,
             scope,
@@ -908,9 +947,9 @@ class StyleProvider {
      * Create variables
      * @param config - variables config
      */
-    static variables = <T extends Record<string, VariableConfig>>(
+    variables = <T extends Record<string, VariableConfig>>(
         config: T,
-        initScope = StyleProvider.scope
+        initScope = this.scope
     ): VariablesResolvers<T> => {
         // local variables
         let scope = initScope;
@@ -929,21 +968,21 @@ class StyleProvider {
             ) as VariablesResolvers<T>;
         }
         // global variables
-        scope = StyleProvider.gs;
+        scope = this.gs;
         const { key: scopeKey, c, b } = scope;
-        const stylesheet = StyleProvider.vs;
+        const stylesheet = this.vs;
         let fullCSS = '';
         const names: string[] = [];
         const prepare = (val: VariableConfig) => {
             const index = c.v++;
             const ruleIndex = b.v++;
             const name = varName(scopeKey, index);
-            const { s, f } = variableRule({ name, config: val, stylesheet, index: ruleIndex });
-            if (StyleProvider._sc.v <= ruleIndex) stylesheet.insertRule(s, ruleIndex);
+            const { s, f } = variableRule({ name, config: val, stylesheet, index: ruleIndex, emit: this._hs ? this.emit : undefined });
+            if (this._sc.v <= ruleIndex) stylesheet.insertRule(s, ruleIndex);
             return { name, s, f };
         };
         const handlers = Object.entries(config).reduce(
-            StyleProvider._hs
+            this._hs
                 ? (acc, [key, val]) => {
                       const { name, s, f } = prepare(val);
                       fullCSS += s;
@@ -957,7 +996,7 @@ class StyleProvider {
                   },
             {} as Record<string, VariableResolver>
         ) as VariablesResolvers<T>;
-        if (StyleProvider._hs) StyleProvider.emit({ fn: VARIABLES, css: fullCSS, names });
+        if (this._hs) this.emit({ fn: VARIABLES, css: fullCSS, names });
         return handlers;
     };
 
@@ -965,8 +1004,8 @@ class StyleProvider {
      * Create animation
      * @param config - animation config
      */
-    static animation = <T extends Record<string, object>>(config: T, scope = StyleProvider.scope): AnimationResolver =>
-        StyleProvider._atRule({
+    animation = <T extends Record<string, object>>(config: T, scope = this.scope): AnimationResolver =>
+        this._atRule({
             key: 'a',
             config,
             scope,
@@ -977,9 +1016,9 @@ class StyleProvider {
      * Create animations
      * @param config - animation configs
      */
-    static animations = <T extends Record<string, AnimationConfig>>(
+    animations = <T extends Record<string, AnimationConfig>>(
         config: T,
-        initScope = StyleProvider.scope
+        initScope = this.scope
     ): AnimationsResolvers<T> => {
         // local animations
         let scope = initScope;
@@ -998,8 +1037,8 @@ class StyleProvider {
             ) as AnimationsResolvers<T>;
         }
         // global animations
-        scope = StyleProvider.gs;
-        const stylesheet = StyleProvider.as;
+        scope = this.gs;
+        const stylesheet = this.as;
         let fullCSS = '';
         const names: string[] = [];
         const prepare = (val: AnimationConfig) => {
@@ -1007,11 +1046,11 @@ class StyleProvider {
             const ruleIndex = scope.b.a++;
             const name = token(scope.key, index);
             const { s, f } = animationRule({ name, config: val, stylesheet, index: ruleIndex });
-            if (StyleProvider._sc.a <= ruleIndex) stylesheet.insertRule(s, ruleIndex);
+            if (this._sc.a <= ruleIndex) stylesheet.insertRule(s, ruleIndex);
             return { name, s, f };
         };
         const handlers = Object.entries(config).reduce(
-            StyleProvider._hs
+            this._hs
                 ? (acc, [key, val]) => {
                       const { name, s, f } = prepare(val);
                       fullCSS += s;
@@ -1025,15 +1064,15 @@ class StyleProvider {
                   },
             {} as Record<string, AnimationResolver>
         ) as AnimationsResolvers<T>;
-        if (StyleProvider._hs) StyleProvider.emit({ fn: ANIMATIONS, css: fullCSS, names });
+        if (this._hs) this.emit({ fn: ANIMATIONS, css: fullCSS, names });
         return handlers;
     };
 
     /**
      * Create layer
      */
-    static layer = (scope = StyleProvider.scope): LayerResolver =>
-        StyleProvider._atRule({
+    layer = (scope = this.scope): LayerResolver =>
+        this._atRule({
             key: 'l',
             config: {},
             scope,
@@ -1044,7 +1083,7 @@ class StyleProvider {
      * Create layers
      * @param config - layers config
      */
-    static layers = <T extends string>(config: T[], initScope = StyleProvider.scope): LayersResolvers<T> => {
+    layers = <T extends string>(config: T[], initScope = this.scope): LayersResolvers<T> => {
         // local layers
         let scope = initScope;
         const order: string[] = [];
@@ -1068,8 +1107,8 @@ class StyleProvider {
             return resolvers;
         }
         // global layers
-        scope = StyleProvider.gs;
-        const stylesheet = StyleProvider.ls;
+        scope = this.gs;
+        const stylesheet = this.ls;
         const resolvers = config.reduce(
             (acc, key) => {
                 const index = scope.c.l++;
@@ -1085,8 +1124,8 @@ class StyleProvider {
         );
         const declaration = AT_LAYER_ + order.join(', ') + SEMICOLON;
         const declarationIndex = scope.b.l++;
-        if (StyleProvider._sc.l <= declarationIndex) stylesheet.insertRule(declaration, declarationIndex);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: LAYERS, css: declaration, names: order });
+        if (this._sc.l <= declarationIndex) stylesheet.insertRule(declaration, declarationIndex);
+        if (this._hs) this.emit({ fn: LAYERS, css: declaration, names: order });
         return resolvers;
     };
 
@@ -1094,11 +1133,11 @@ class StyleProvider {
      * Create container
      * @param type - container type
      */
-    static container: Container = (containerType) =>
-        StyleProvider._atRule({
+    container: Container = (containerType) =>
+        this._atRule({
             key: 'c',
             config: containerType,
-            scope: StyleProvider.scope,
+            scope: this.scope,
             sideEffects: false,
             getRule: containerRule
         });
@@ -1107,15 +1146,15 @@ class StyleProvider {
      * Create containers
      * @param config - containers config
      */
-    static containers = <T extends Record<string, ContainerType>>(config: T): ContainersResolvers<T> => {
+    containers = <T extends Record<string, ContainerType>>(config: T): ContainersResolvers<T> => {
         const items: { name: string; type: string }[] = [];
-        const scope = StyleProvider.scope || StyleProvider.gs;
+        const scope = this.scope || this.gs;
         const { key: scopeKey, c, t } = scope;
         const callback: (
             acc: Record<string, ContainerResolver>,
             [key, containerType]: [string, ContainerType]
         ) => Record<string, ContainerResolver> =
-            StyleProvider._hs && !StyleProvider.scope
+            this._hs && !this.scope
                 ? (acc, [key, type]) => {
                       const index = c.c++;
                       const name = token(scopeKey, index);
@@ -1143,7 +1182,7 @@ class StyleProvider {
             callback,
             {} as Record<string, ContainerResolver>
         ) as ContainersResolvers<T>;
-        if (StyleProvider._hs) StyleProvider.emit({ fn: CONTAINERS, items, css: '' });
+        if (this._hs) this.emit({ fn: CONTAINERS, items, css: '' });
         return handlers;
     };
 
@@ -1151,8 +1190,8 @@ class StyleProvider {
      * Create font
      * @param config - font config
      */
-    static font = (config: FontConfig, scope = StyleProvider.scope) =>
-        StyleProvider._atRule({
+    font = (config: FontConfig, scope = this.scope) =>
+        this._atRule({
             key: 'f',
             config,
             scope,
@@ -1163,9 +1202,9 @@ class StyleProvider {
      * Create fonts
      * @param config - fonts configs
      */
-    static fonts = <T extends Record<string, FontConfig>>(
+    fonts = <T extends Record<string, FontConfig>>(
         config: T,
-        initScope = StyleProvider.scope
+        initScope = this.scope
     ): FontsResolvers<T> => {
         // local fonts
         let scope = initScope;
@@ -1184,8 +1223,8 @@ class StyleProvider {
             ) as FontsResolvers<T>;
         }
         // global fonts
-        scope = StyleProvider.gs;
-        const stylesheet = StyleProvider.fs;
+        scope = this.gs;
+        const stylesheet = this.fs;
         let fullCSS = '';
         const names: string[] = [];
         const prepare = (config: FontConfig) => {
@@ -1193,11 +1232,11 @@ class StyleProvider {
             const ruleIndex = scope.b.f++;
             const name = token(scope.key, index);
             const { s, f } = fontRule({ name, config, stylesheet, index: ruleIndex });
-            if (StyleProvider._sc.f <= ruleIndex) stylesheet.insertRule(s, ruleIndex);
+            if (this._sc.f <= ruleIndex) stylesheet.insertRule(s, ruleIndex);
             return { name, s, f };
         };
         const handlers = Object.entries(config).reduce(
-            StyleProvider._hs
+            this._hs
                 ? (acc, [key, val]) => {
                       const { name, s, f } = prepare(val);
                       fullCSS += s;
@@ -1211,33 +1250,34 @@ class StyleProvider {
                   },
             {} as Record<string, FontResolver>
         ) as FontsResolvers<T>;
-        if (StyleProvider._hs) StyleProvider.emit({ fn: FONTS, css: fullCSS, names });
+        if (this._hs) this.emit({ fn: FONTS, css: fullCSS, names });
         return handlers;
     };
 
     // resolveStylesheet
-    static rst(
+    rst = (
         generator: Function,
         {
             type
         }: {
             type: StyleSheetType;
         }
-    ) {
-        const scope = StyleProvider.cs();
+    ) => {
+        const minify = this.minify;
+        const scope = this.cs();
         const scopeKey = scope.key;
-        const serverStyleSheet = StyleProvider.serverCSS.get(scopeKey);
+        const serverStyleSheet = this.serverCSS.get(scopeKey);
         let dict: Record<string, string> = {};
         let cssText: string = '';
         let stylesheet: EffCSSStyleSheet;
         if (serverStyleSheet) {
             stylesheet = serverStyleSheet;
             cssText = serverStyleSheet.ownerNode?.textContent || '';
-        } else stylesheet = StyleProvider.cst();
+        } else stylesheet = this.cst();
 
-        const serverMeta = StyleProvider.serverMeta.get(scopeKey);
+        const serverMeta = this.serverMeta.get(scopeKey);
         // in lazy mode stylesheets must be evaluated again to create all at-rules on demand
-        if (serverStyleSheet && serverMeta && !StyleProvider.lazy) dict = serverMeta;
+        if (serverStyleSheet && serverMeta && !this.lazy) dict = serverMeta;
         else {
             const hash: undefined | ((key: string) => string) =
                 type === CUSTOM_STYLES
@@ -1245,18 +1285,19 @@ class StyleProvider {
                     : getHash({
                           type,
                           dict,
-                          scope
+                          scope,
+                          minify
                       });
             const selectors = hash && getSelectorsProxy(hash);
             // save prev
-            const prevScope = StyleProvider.scope;
+            const prevScope = this.scope;
             // set next
-            StyleProvider.scope = scope;
+            this.scope = scope;
             try {
                 // calc rules inside current scope
                 let styleObject: object | undefined;
                 // if we have server css for custom styles
-                if (type === CUSTOM_STYLES && cssText && !StyleProvider.lazy) styleObject = undefined;
+                if (type === CUSTOM_STYLES && cssText && !this.lazy) styleObject = undefined;
                 else styleObject = generator(selectors);
                 // if there are no server CSS
                 if (!serverStyleSheet) {
@@ -1265,11 +1306,11 @@ class StyleProvider {
                 }
             } finally {
                 // return prev scope
-                StyleProvider.scope = prevScope;
+                this.scope = prevScope;
             }
         }
         markStylesheet(stylesheet, scopeKey, dict);
-        if (StyleProvider._hs) StyleProvider.emit({ fn: type, css: cssText, key: scopeKey, dict });
+        if (this._hs) this.emit({ fn: type, css: cssText, key: scopeKey, dict });
         const resolveNames = getFromDict(dict);
         let resolver: Function;
         if (type === CLASSNAMES) resolver = resolveNames;
@@ -1290,99 +1331,99 @@ class StyleProvider {
      * @param generator - stylesheet generator
      * @param params - stylesheet params
      */
-    static selectors(
+    selectors = (
         generator: Function,
         {
             type
         }: {
             type: StyleSheetType;
         }
-    ) {
-        const { resolver, stylesheet } = StyleProvider.rst(generator, { type });
-        return StyleProvider.lst(resolver, stylesheet);
+    ) => {
+        const { resolver, stylesheet } = this.rst(generator, { type });
+        return this.lst(resolver, stylesheet);
     }
 
-    static lazySelectors(
+    lazySelectors = (
         generator: Function,
         {
             type
         }: {
             type: StyleSheetType;
         }
-    ) {
+    ) => {
         let selectorsResolver: Function;
         const lazyResolver = (config: object) => {
             if (!selectorsResolver) {
-                const { resolver, stylesheet } = StyleProvider.rst(generator, { type });
+                const { resolver, stylesheet } = this.rst(generator, { type });
                 selectorsResolver = resolver;
-                StyleProvider.lst(lazyResolver, stylesheet);
+                this.lst(lazyResolver, stylesheet);
             }
             return selectorsResolver(config);
         };
         return lazyResolver;
     }
     // serialize layers
-    protected static _sl(): string {
-        return serializeStylesheet(StyleProvider._g.l, STYLE_ATTRS[LAYERS]);
+    protected _sl = (): string => {
+        return serializeStylesheet(this._g.l, STYLE_ATTRS[LAYERS] + ` ${CTX_ATTR}="${this.prefix}"`);
     }
     // serialize variables
-    protected static _sv(): string {
-        return serializeStylesheet(StyleProvider._g.v, STYLE_ATTRS[VARIABLES]);
+    protected _sv = (): string => {
+        return serializeStylesheet(this._g.v, STYLE_ATTRS[VARIABLES] + ` ${CTX_ATTR}="${this.prefix}"`);
     }
     // serialize animations
-    protected static _sa(): string {
-        return serializeStylesheet(StyleProvider._g.a, STYLE_ATTRS[ANIMATIONS]);
+    protected _sa = (): string => {
+        return serializeStylesheet(this._g.a, STYLE_ATTRS[ANIMATIONS] + ` ${CTX_ATTR}="${this.prefix}"`);
     }
     // serialize shared
-    protected static _ssh(): string {
-        return serializeStylesheet(StyleProvider._g.s, STYLE_ATTRS[SHARED]);
+    protected _ssh = (): string => {
+        return serializeStylesheet(this._g.s, STYLE_ATTRS[SHARED] + ` ${CTX_ATTR}="${this.prefix}"`);
     }
     // serialize fonts
-    protected static _sf(): string {
-        return serializeStylesheet(StyleProvider._g.f, STYLE_ATTRS[FONTS]);
+    protected _sf = (): string => {
+        return serializeStylesheet(this._g.f, STYLE_ATTRS[FONTS] + ` ${CTX_ATTR}="${this.prefix}"`);
     }
 
-    static serialize(arg?: EffCSSStyleSheet | Function): string {
+    serialize = (arg?: EffCSSStyleSheet | Function): string => {
         let stylesheet: EffCSSStyleSheet | undefined;
         if (isFunction(arg)) {
-            stylesheet = StyleProvider.map.get(arg);
+            stylesheet = this.map.get(arg);
             // if no stylesheet found
             if (!stylesheet) return '';
         } else stylesheet = arg as EffCSSStyleSheet | undefined;
 
         if (stylesheet) {
             switch (stylesheet) {
-                case StyleProvider._g.l:
-                    return StyleProvider._sl();
-                case StyleProvider._g.v:
-                    return StyleProvider._sv();
-                case StyleProvider._g.a:
-                    return StyleProvider._sa();
-                case StyleProvider._g.f:
-                    return StyleProvider._sf();
-                case StyleProvider._g.s:
-                    return StyleProvider._ssh();
+                case this._g.l:
+                    return this._sl();
+                case this._g.v:
+                    return this._sv();
+                case this._g.a:
+                    return this._sa();
+                case this._g.f:
+                    return this._sf();
+                case this._g.s:
+                    return this._ssh();
                 default:
                     return serializeStylesheet(stylesheet);
             }
         }
-        return [...StyleProvider.map.values()].reduce(
+        return [...this.map.values()].reduce(
             (acc, stylesheet) => {
                 return (acc += serializeStylesheet(stylesheet));
             },
-            StyleProvider._sl() + StyleProvider._sv() + StyleProvider._sf() + StyleProvider._sa() + StyleProvider._ssh()
+            this._sl() + this._sv() + this._sf() + this._sa() + this._ssh()
         );
     }
 
-    static serializeMeta(arg?: EffCSSStyleSheet | Function): string {
+    serializeMeta = (arg?: EffCSSStyleSheet | Function): string => {
         let stylesheet: EffCSSStyleSheet | undefined;
         if (isFunction(arg)) {
-            stylesheet = StyleProvider.map.get(arg);
+            stylesheet = this.map.get(arg);
             // if no stylesheet found
             if (!stylesheet) return '';
         } else stylesheet = arg as EffCSSStyleSheet | undefined;
         if (stylesheet) return serializeStylesheetMeta(stylesheet);
-        return [...StyleProvider.map.values()].reduce((acc, stylesheet) => {
+        return [...this.map.values()].reduce((acc, stylesheet) => {
             return (acc += serializeStylesheetMeta(stylesheet));
         }, '' as string);
     }
@@ -1391,334 +1432,383 @@ class StyleProvider {
 
     // creators
 
-    static every: Creators = {
-        [VARIABLE]: StyleProvider[VARIABLE],
-        [VARIABLES]: StyleProvider[VARIABLES],
-        [ANIMATION]: StyleProvider[ANIMATION],
-        [ANIMATIONS]: StyleProvider[ANIMATIONS],
-        [LAYER]: StyleProvider[LAYER],
-        [LAYERS]: StyleProvider[LAYERS],
-        [FONT]: StyleProvider[FONT],
-        [FONTS]: StyleProvider[FONTS],
-        [SELECTORS]: StyleProvider[SELECTORS]
+    every: Creators = {
+        [VARIABLE]: this[VARIABLE],
+        [VARIABLES]: this[VARIABLES],
+        [ANIMATION]: this[ANIMATION],
+        [ANIMATIONS]: this[ANIMATIONS],
+        [LAYER]: this[LAYER],
+        [LAYERS]: this[LAYERS],
+        [FONT]: this[FONT],
+        [FONTS]: this[FONTS],
+        [SELECTORS]: this[SELECTORS]
     };
 
-    static active: Creators = {
+    active: Creators = {
         [VARIABLE]: (config) => {
-            const scope = StyleProvider.scope;
-            return lazyVariableResolver(() => StyleProvider[VARIABLE](config, scope));
+            const scope = this.scope;
+            return lazyVariableResolver(() => this[VARIABLE](config, scope));
         },
         [VARIABLES]: (config) => {
-            const scope = StyleProvider.scope;
-            return lazyBatch(Object.keys(config), () => StyleProvider[VARIABLES](config, scope), lazyVariableResolver);
+            const scope = this.scope;
+            return lazyBatch(Object.keys(config), () => this[VARIABLES](config, scope), lazyVariableResolver);
         },
         [ANIMATION]: (config) => {
-            const scope = StyleProvider.scope;
-            return lazyStringResolver(() => StyleProvider[ANIMATION](config, scope));
+            const scope = this.scope;
+            return lazyStringResolver(() => this[ANIMATION](config, scope));
         },
         [ANIMATIONS]: (config) => {
-            const scope = StyleProvider.scope;
-            return lazyBatch(Object.keys(config), () => StyleProvider[ANIMATIONS](config, scope));
+            const scope = this.scope;
+            return lazyBatch(Object.keys(config), () => this[ANIMATIONS](config, scope));
         },
         [LAYER]: () => {
-            const scope = StyleProvider.scope;
-            return lazyStringResolver(() => StyleProvider[LAYER](scope));
+            const scope = this.scope;
+            return lazyStringResolver(() => this[LAYER](scope));
         },
         [LAYERS]: (config) => {
-            const scope = StyleProvider.scope;
-            return lazyBatch(config, () => StyleProvider[LAYERS](config, scope));
+            const scope = this.scope;
+            return lazyBatch(config, () => this[LAYERS](config, scope));
         },
         [FONT]: (config) => {
-            const scope = StyleProvider.scope;
-            return lazyStringResolver(() => StyleProvider[FONT](config, scope));
+            const scope = this.scope;
+            return lazyStringResolver(() => this[FONT](config, scope));
         },
         [FONTS]: (config) => {
-            const scope = StyleProvider.scope;
-            return lazyBatch(Object.keys(config), () => StyleProvider[FONTS](config, scope));
+            const scope = this.scope;
+            return lazyBatch(Object.keys(config), () => this[FONTS](config, scope));
         },
-        [SELECTORS]: StyleProvider.lazySelectors
+        [SELECTORS]: this.lazySelectors
     } as Creators;
 
-    static make = StyleProvider.every;
+    make = this.every;
 }
 
 // public utils
 
-// single
-
 /**
- * Create single variable
- * @param config - variable config
+ * Create a new style generation context
+ * @param config - context settings
  */
-export const variable: Variable = (config) => StyleProvider.make[VARIABLE](config);
-
-/**
- * Create single animation
- * @param config - animation config
- */
-export const animation: Animation = (config) => StyleProvider.make[ANIMATION](config);
-
-/**
- * Create single layer
- * @param config - layer config
- */
-export const layer: Layer = () => StyleProvider.make[LAYER]();
-
-/**
- * Create single container
- * @param config - container config
- */
-export const container: Container = (config) => StyleProvider[CONTAINER](config);
-
-/**
- * Create single font
- * @param config - font config
- */
-export const font: Font = (config) => StyleProvider.make[FONT](config);
-
-// multiple
-
-/**
- * Create multiple variables
- * @param config - variables config
- */
-export const variables: Variables = (config) => StyleProvider.make[VARIABLES](config);
-
-/**
- * Create multiple animations
- * @param config - animations config
- */
-export const animations: Animations = (config) => StyleProvider.make[ANIMATIONS](config);
-
-/**
- * Create multiple layers
- * @param config - layers config
- */
-export const layers: Layers = (config) => StyleProvider.make[LAYERS](config);
-
-/**
- * Create multiple containers
- * @param config - containers config
- */
-export const containers: Containers = (config) => StyleProvider[CONTAINERS](config);
-
-/**
- * Create multiple fonts
- * @param config - fonts config
- */
-export const fonts: Fonts = (config) => StyleProvider.make[FONTS](config);
-
-// selectors
-
-// lazy
-
-/**
- * Create an anonymous rule with a id selector for the first use
- * @param rule - rule content
- */
-export const lazyId: LazyId = (rule) =>
-    StyleProvider._lazyRule({
-        fn: ID,
-        rule,
-        toString: getId
-    });
-
-/**
- * Create an anonymous rule with a class selector for the first use
- * @param rule - rule content
- */
-export const lazyClassName: LazyClassName = (rule) =>
-    StyleProvider._lazyRule({
-        fn: CLASSNAME,
-        rule,
-        toString: getCls
-    });
-
-/**
- * Create an anonymous rule with an attribute selector for the first use
- * @param rule - rule content
- */
-export const lazyAttribute: LazyAttribute = (rule) =>
-    StyleProvider._lazyRule({
-        fn: ATTRIBUTE,
-        rule,
-        toString: getAttr
-    });
-
-// base
-
-/**
- * Create an anonymous rule with a id selector
- * @param rule - rule content
- */
-export const id = ((rule) => StyleProvider.id(rule)) as Id;
-id.lazy = lazyId;
-
-/**
- * Create an anonymous rule with a class selector
- * @param rule - rule content
- */
-export const className = ((rule) => StyleProvider.className(rule)) as ClassName;
-className.lazy = lazyClassName;
-
-/**
- * Create an anonymous rule with an attribute selector
- * @param rule - rule content
- */
-export const attribute = ((rule) => StyleProvider.attribute(rule)) as Attribute;
-attribute.lazy = lazyAttribute;
-
-// multiple
-
-// lazy
-
-/**
- * Create a lazy stylesheet with class selectors
- * @param generator - stylesheet generator
- */
-export const lazyClassNames: LazyClassNames = (generator) =>
-    StyleProvider.active.selectors(generator, TYPE_CLS) as ReturnType<ClassNames>;
-
-/**
- * Create a lazy stylesheet with attribute selectors
- * @param generator - stylesheet generator
- */
-export const lazyAttributes: LazyAttributes = (generator) =>
-    StyleProvider.active.selectors(generator, TYPE_ATTRS) as ReturnType<Attributes>;
-
-/**
- * Create a lazy custom stylesheet
- * @param generator - stylesheet generator
- */
-export const lazyCustomStyles: LazyCustomStyles = (generator) =>
-    StyleProvider.active.selectors(generator, TYPE_CUSTOM) as ReturnType<CustomStyles>;
-
-// base
-
-/**
- * Create a stylesheet with class selectors
- * @param generator - stylesheet generator
- */
-export const classNames = ((generator) => StyleProvider.make.selectors(generator, TYPE_CLS)) as ClassNames;
-classNames.lazy = lazyClassNames;
-
-/**
- * Create a stylesheet with attribute selectors
- * @param generator - stylesheet generator
- */
-export const attributes = ((generator) => StyleProvider.make.selectors(generator, TYPE_ATTRS)) as Attributes;
-attributes.lazy = lazyAttributes;
-
-/**
- * Create a custom stylesheet
- * @param generator - stylesheet generator
- */
-export const customStyles: CustomStyles = (generator) => StyleProvider.make.selectors(generator, TYPE_CUSTOM);
-customStyles.lazy = lazyCustomStyles;
-
-// stylesheets
-
-/**
- * Get a stylesheet via resolver
- * @param resolver - stylesheet resolver
- */
-export const stylesheet = (resolver: Function): EffCSSStyleSheet | undefined =>
-    resolver && StyleProvider.map.get(resolver);
-
-/**
- * Get the variables stylesheet
- */
-export const variablesStylesheet = () => StyleProvider.vs;
-
-/**
- * Get the animations stylesheet
- */
-export const animationsStylesheet = () => StyleProvider.as;
-
-/**
- * Get the layers stylesheet
- */
-export const layersStylesheet = () => StyleProvider.ls;
-
-/**
- * Get the shared stylesheet
- */
-export const sharedStylesheet = () => StyleProvider.ss;
-
-/**
- * Get the fonts stylesheet
- */
-export const fontsStylesheet = () => StyleProvider.fs;
-
-// advanced
-
-/**
- * Update variable/variables
- * @param arg - source variable/variables
- * @param value - next value
- */
-export const update: Update = (arg: any, value: any) => StyleProvider.update(arg, value);
-
-/**
- * Serialize specified or all stylesheets
- * @param arg - concrete stylesheet or selectors resolver
- */
-export const serialize = (arg?: EffCSSStyleSheet | Function) => StyleProvider.serialize(arg);
-
-/**
- * Serialize metadata of specified or all stylesheets
- * @param arg - concrete stylesheet or selectors resolver
- */
-export const serializeMeta = (arg?: EffCSSStyleSheet | Function) => StyleProvider.serializeMeta(arg);
-
-/**
- * Configure CSS generation
- * @param config - generation config
- */
-export const configure = (config: { prefix?: string; minify?: boolean; emulate?: boolean; lazy?: boolean }) => {
-    if (StyleProvider.scopeCount > 0) return false;
-    const {
-        prefix = StyleProvider.prefix,
-        minify = StyleProvider.minify,
-        emulate = StyleProvider.emulate,
-        lazy = StyleProvider.lazy
-    } = config;
-    StyleProvider.prefix = prefix;
-    StyleProvider.minify = minify;
-    StyleProvider.emulate = emulate;
-    StyleProvider.lazy = lazy;
-    return true;
-};
-
-/**
- * Subscribe to CSS generation events
- * @param fn - callback receiving EffCSSEvent
- * @returns unsubscribe function
- */
-export const subscribe = (fn: (event: EffCSSEvent) => void): (() => void) => StyleProvider.subscribe(fn);
-
-/**
- * Create theme
- * @param config - theme config
- */
-export const theme: Theme = (config) => {
-    const { vars, options, initial } = config;
-    const varsResolvers = StyleProvider.variables(vars);
-    const list = Object.keys(options) as (keyof typeof options)[];
-    let currentTheme: keyof typeof options | undefined = initial;
-    const get = () => currentTheme;
-    const set = (name: keyof typeof options) => {
-        const themeValues = options[name];
-        if (!themeValues) return false;
-        Object.entries(themeValues).forEach(([key, value]) => varsResolvers[key].set(value));
-        currentTheme = name;
-        return true;
+export const context = (config?: Settings) => {
+    const provider = new StyleProvider(config);
+    // single
+    const variable: Variable = (config) => provider.make[VARIABLE](config);
+    const animation: Animation = (config) => provider.make[ANIMATION](config);
+    const layer: Layer = () => provider.make[LAYER]();
+    const container: Container = (config) => provider[CONTAINER](config);
+    const font: Font = (config) => provider.make[FONT](config);
+    // multiple
+    const variables: Variables = (config) => provider.make[VARIABLES](config);
+    const animations: Animations = (config) => provider.make[ANIMATIONS](config);
+    const layers: Layers = (config) => provider.make[LAYERS](config);
+    const containers: Containers = (config) => provider[CONTAINERS](config);
+    const fonts: Fonts = (config) => provider.make[FONTS](config);
+    // lazy selectors
+    const lazyId: LazyId = (rule) =>
+        provider.lazyRule({
+            fn: ID,
+            rule,
+            toString: getId
+        });
+    const lazyClassName: LazyClassName = (rule) =>
+        provider.lazyRule({
+            fn: CLASSNAME,
+            rule,
+            toString: getCls
+        });
+    const lazyAttribute: LazyAttribute = (rule) =>
+        provider.lazyRule({
+            fn: ATTRIBUTE,
+            rule,
+            toString: getAttr
+        });
+    // non-lazy selectors 
+    const id = ((rule) => provider.id(rule)) as Id;
+    id.lazy = lazyId;
+    const className = ((rule) => provider.className(rule)) as ClassName;
+    className.lazy = lazyClassName;
+    const attribute = ((rule) => provider.attribute(rule)) as Attribute;
+    attribute.lazy = lazyAttribute;
+    // lazy stylesheets
+    const lazyClassNames: LazyClassNames = (generator) =>
+        provider.active.selectors(generator, TYPE_CLS) as ReturnType<ClassNames>;
+    const lazyAttributes: LazyAttributes = (generator) =>
+        provider.active.selectors(generator, TYPE_ATTRS) as ReturnType<Attributes>;
+    const lazyCustomStyles: LazyCustomStyles = (generator) =>
+        provider.active.selectors(generator, TYPE_CUSTOM) as ReturnType<CustomStyles>;
+    // non-lazy stylesheets
+    const classNames = ((generator) => provider.make.selectors(generator, TYPE_CLS)) as ClassNames;
+    classNames.lazy = lazyClassNames;
+    const attributes = ((generator) => provider.make.selectors(generator, TYPE_ATTRS)) as Attributes;
+    attributes.lazy = lazyAttributes;
+    const customStyles: CustomStyles = (generator) => provider.make.selectors(generator, TYPE_CUSTOM);
+    customStyles.lazy = lazyCustomStyles;
+    // special stylesheets
+    const stylesheet = (resolver: Function): EffCSSStyleSheet | undefined =>
+        resolver && provider.map.get(resolver);
+    // advanced handlers
+    const update: Update = provider.update;
+    const serialize = provider.serialize;
+    const serializeMeta = provider.serializeMeta;
+    const configure = provider.configure;
+    const subscribe = provider.subscribe;
+    const theme: Theme = (config) => {
+        const { vars, options, initial } = config;
+        const varsResolvers = variables(vars);
+        const list = Object.keys(options) as (keyof typeof options)[];
+        let currentTheme: keyof typeof options | undefined = initial;
+        const get = () => currentTheme;
+        const set = (name: keyof typeof options) => {
+            const themeValues = options[name];
+            if (!themeValues) return false;
+            Object.entries(themeValues).forEach(([key, value]) => varsResolvers[key].set(value));
+            currentTheme = name;
+            return true;
+        };
+        if (currentTheme) set(currentTheme);
+        return {
+            vars: varsResolvers,
+            list,
+            get,
+            set
+        };
     };
-    if (currentTheme) set(currentTheme);
+
     return {
-        vars: varsResolvers,
-        list,
-        get,
-        set
-    };
+        // single at-rules
+
+        /**
+         * Create single variable
+         * @param config - variable config
+         */
+        variable,
+        /**
+         * Create single animation
+         * @param config - animation config
+         */
+        animation,
+        /**
+         * Create single layer
+         * @param config - layer config
+         */
+        layer,
+        /**
+         * Create single container
+         * @param config - container config
+         */
+        container,
+        /**
+         * Create single font
+         * @param config - font config
+         */
+        font,
+
+        // multiple at-rules
+
+        /**
+         * Create multiple variables
+         * @param config - variables config
+         */
+        variables,
+        /**
+         * Create multiple animations
+         * @param config - animations config
+         */
+        animations,
+        /**
+         * Create multiple layers
+         * @param config - layers config
+         */
+        layers,
+        /**
+         * Create multiple containers
+         * @param config - containers config
+         */
+        containers,
+        /**
+         * Create multiple fonts
+         * @param config - fonts config
+         */
+        fonts,
+
+        // lazy selectors
+
+        /**
+         * Create an anonymous rule with a id selector for the first use
+         * @param rule - rule content
+         */
+        lazyId,
+        /**
+         * Create an anonymous rule with a class selector for the first use
+         * @param rule - rule content
+         */
+        lazyClassName,
+        /**
+         * Create an anonymous rule with an attribute selector for the first use
+         * @param rule - rule content
+         */
+        lazyAttribute,
+
+        // non-lazy selectors
+
+        /**
+         * Create an anonymous rule with a id selector
+         * @param rule - rule content
+         */
+        id,
+        /**
+         * Create an anonymous rule with a class selector
+         * @param rule - rule content
+         */
+        className,
+        /**
+         * Create an anonymous rule with an attribute selector
+         * @param rule - rule content
+         */
+        attribute,
+
+        // lazy stylesheets
+
+        /**
+         * Create a lazy stylesheet with class selectors
+         * @param generator - stylesheet generator
+         */
+        lazyClassNames,
+        /**
+         * Create a lazy stylesheet with attribute selectors
+         * @param generator - stylesheet generator
+         */
+        lazyAttributes,
+        /**
+         * Create a lazy custom stylesheet
+         * @param generator - stylesheet generator
+         */
+        lazyCustomStyles,
+
+        // non-lazy stylesheets
+
+        /**
+         * Create a stylesheet with class selectors
+         * @param generator - stylesheet generator
+         */
+        classNames,
+        /**
+         * Create a stylesheet with attribute selectors
+         * @param generator - stylesheet generator
+         */
+        attributes,
+        /**
+         * Create a custom stylesheet
+         * @param generator - stylesheet generator
+         */
+        customStyles,
+
+        // special stylesheets
+
+        /**
+         * Get a stylesheet via resolver
+         * @param resolver - stylesheet resolver
+         */
+        stylesheet,
+        /**
+         * Get the variables stylesheet
+         */
+        variablesStylesheet: () => provider.vs,
+        /**
+         * Get the animations stylesheet
+         */
+        animationsStylesheet: () => provider.as,
+        /**
+         * Get the layers stylesheet
+         */
+        layersStylesheet: () => provider.ls,
+        /**
+         * Get the shared stylesheet
+         */
+        sharedStylesheet: () => provider.ss,
+        /**
+         * Get the fonts stylesheet
+         */
+        fontsStylesheet: () => provider.fs,
+
+        // advanced handlers
+
+        /**
+         * Update variable/variables
+         * @param arg - source variable/variables
+         * @param value - next value
+         */
+        update,
+        /**
+         * Serialize specified or all stylesheets
+         * @param arg - concrete stylesheet or selectors resolver
+         */
+        serialize,
+        /**
+         * Serialize metadata of specified or all stylesheets
+         * @param arg - concrete stylesheet or selectors resolver
+         */
+        serializeMeta,
+        /**
+         * Configure CSS generation
+         * @param config - generation config
+         */
+        configure,
+        /**
+         * Subscribe to CSS generation events
+         * @param fn - callback receiving EffCSSEvent
+         * @returns unsubscribe function
+         */
+        subscribe,
+        /**
+         * Create theme
+         * @param config - theme config
+         */
+        theme
+    }
 };
+
+export const {
+    // single at-rules
+    variable,
+    animation,
+    layer,
+    container,
+    font,
+    // multiple at-rules
+    variables,
+    animations,
+    layers,
+    containers,
+    fonts,
+    // lazy selectors 
+    lazyId,
+    lazyClassName,
+    lazyAttribute,
+    // non-lazy selectors
+    id,
+    className,
+    attribute,
+    // lazy stylesheets
+    lazyClassNames,
+    lazyAttributes,
+    lazyCustomStyles,
+    // non-lazy stylesheets
+    classNames,
+    attributes,
+    customStyles,
+    // special stylesheets
+    stylesheet,
+    variablesStylesheet,
+    animationsStylesheet,
+    layersStylesheet,
+    sharedStylesheet,
+    fontsStylesheet,
+    // advanced handlers
+    update,
+    serialize,
+    serializeMeta,
+    configure,
+    subscribe,
+    theme,
+} = context();

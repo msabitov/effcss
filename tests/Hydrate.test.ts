@@ -189,20 +189,20 @@ const SERVER_CSS =
         `@property --f5-2{syntax:"*";inherits:true;initial-value:grey;}` +
         `body{padding:var(--f5-0,1rem);}.class{background:var(--f5-2,transparent);color:var(--f5-1);}` +
         `</style>`) +
-    `<style data-effcss-global="layers">@layer f6-0;@layer f6-1,f6-2;</style>` +
-    (`<style data-effcss-global="variables">@property --f6-0{syntax:"*";inherits:true;initial-value:12px;}` +
+    `<style data-effcss-global="layers" data-effcss-ctx="f">@layer f6-0;@layer f6-1,f6-2;</style>` +
+    (`<style data-effcss-global="variables" data-effcss-ctx="f">@property --f6-0{syntax:"*";inherits:true;initial-value:12px;}` +
         `@property --f6-1{syntax:"<color>";inherits:false;initial-value:red;}` +
         `@property --f6-2{syntax:"*";inherits:true;initial-value:green;}</style>`) +
-    (`<style data-effcss-global="animations">@keyframes f6-0{0%{width:100px;}100%{width:200px;}}` +
+    (`<style data-effcss-global="animations" data-effcss-ctx="f">@keyframes f6-0{0%{width:100px;}100%{width:200px;}}` +
         `@keyframes f6-1{0%{width:100px;}100%{width:200px;}}` +
         `@keyframes f6-2{0%{opacity:0;}50%{opacity:0.6;}100%{opacity:1;}}</style>`) +
-    (`<style data-effcss-global="fonts">` +
+    (`<style data-effcss-global="fonts" data-effcss-ctx="f">` +
         `@font-face {font-family:"f6-0";src:url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2");}` +
         `@font-face {font-family:"f6-1";src:url("/fonts/roboto-regular.woff2") format("woff2"), url("/fonts/roboto-regular.woff") format("woff");` +
         `font-display:swap;font-style:normal;font-weight:400;}` +
         `@font-face {font-family:"f6-2";src:url("https://mdn.github.io/shared-assets/fonts/FiraSans-Regular.woff2");}` +
         `</style>`) +
-    (`<style data-effcss-global="shared">.f6_0{margin:auto;&:hover{outline:black solid 2px;&.child{background:grey;}}}` +
+    (`<style data-effcss-global="shared" data-effcss-ctx="f">.f6_0{margin:auto;&:hover{outline:black solid 2px;&.child{background:grey;}}}` +
         `[data-f6-1]{margin:auto;&:hover{outline:black solid 2px;&.child{background:grey;}}}` +
         `</style>`);
 

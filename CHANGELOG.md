@@ -5,6 +5,17 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-10-23
+
+### Added
+
+- `context` utility have been added, allowing you to create styles in a separate namespace (tests added)
+
+### Changed
+
+- style provider class now use instance methods instead of static ones to create styles, it helps to maintain multi-context CSS generation
+- hydration and serialization utils adopted to work with several contexts
+
 ## [5.7.1] - 2026-10-16
 
 ### Changed
@@ -1016,7 +1027,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[5.7.1]: https://github.com/msabitov/effcss
+[5.8.0]: https://github.com/msabitov/effcss
+[5.7.1]: https://github.com/msabitov/effcss/commit/ad6ebe7ba6a7d82c2a314885799c0dae214d3e98
 [5.7.0]: https://github.com/msabitov/effcss/commit/bdae949ac17600ac794af35ad7980797b96f6fe7
 [5.6.1]: https://github.com/msabitov/effcss/commit/f35c4372238399c1028c6c5ad0147cdd1d2a2457
 [5.6.0]: https://github.com/msabitov/effcss/commit/867c531a883f8bc7c6fe6a316745d4de315039e1
