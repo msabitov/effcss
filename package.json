@@ -1,15 +1,17 @@
 {
     "name": "effcss",
-    "version": "5.8.0",
+    "version": "6.0.0",
     "description": "Self-confident CSS-in-TS",
     "type": "module",
+    "sideEffects": false,
     "scripts": {
         "build": "rollup -c",
         "test": "vitest",
         "coverage": "vitest run --coverage",
         "coverage:submit": "vitest run --coverage && coveralls < ./coverage/lcov.info",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "bench:size": "node bench/size.mjs"
     },
     "keywords": [
         "ui",

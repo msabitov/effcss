@@ -24,10 +24,10 @@ EffCSS is a self-confident CSS-in-TS library based only on the browser APIs. Use
 
 - zero-dependency,
 - framework agnostic,
-- small bundle size,
-- lazy mode support,
+- tree-shakeable and small bundle,
+- lazy by default,
+- native CSS nesting,
 - selectors isolation and minification out of the box,
-- TypeScript contract-based autocompletion,
 - compatible with any rendering (CSR, SSR, SSG).
 
 ## Links
@@ -37,22 +37,6 @@ EffCSS is a self-confident CSS-in-TS library based only on the browser APIs. Use
 - [GitHub](https://github.com/msabitov/effcss)
 - [NPM](https://www.npmjs.com/package/effcss)
 - [vite-plugin-effcss](https://www.npmjs.com/package/vite-plugin-effcss) - CSR tool injecting generated CSS into HTML. It allows to eliminate FOUC and speed up the first rendering due to style hydration just like for SSR/SSG.
-
-## Examples
-
-- [Vanilla TS](https://stackblitz.com/edit/effcss-ts-vitejs?file=src%2Fmain.ts)
-- [React](https://stackblitz.com/edit/effcss-react-vitejs?file=src%2FApp.tsx)
-- [Svelte](https://stackblitz.com/edit/effcss-svelte-vitejs?file=src%2FApp.svelte)
-- [Vue](https://stackblitz.com/edit/effcss-vue-vitejs?file=src%2FApp.vue)
-- [Angular](https://stackblitz.com/edit/effcss-angular-vitejs?file=src%2Fmain.ts)
-- [SolidJS](https://stackblitz.com/edit/effcss-solidjs-vitejs?file=src%2FApp.tsx)
-- [Preact](https://stackblitz.com/edit/effcss-preact-vitejs?file=src%2Fapp.tsx)
-- [Qwik](https://stackblitz.com/edit/effcss-qwik-vitejs?file=src%2Fapp.tsx)
-- [Lit](https://stackblitz.com/edit/effcss-lit-vitejs?file=src%2Fmy-element.ts)
-- [React SSR](https://stackblitz.com/edit/effcss-react-ssr-vitejs?file=src%2FApp.tsx)
-- [Svelte SSR](https://stackblitz.com/edit/effcss-svelte-ssr-vitejs?file=src%2FApp.svelte)
-- [Vue SSR](https://stackblitz.com/edit/effcss-vue-ssr-vitejs?file=src%2FApp.vue)
-- [Astro SSG](https://stackblitz.com/edit/effcss-ts-astro?file=src%2Fpages%2Findex.astro)
 
 ## Installation
 
@@ -68,6 +52,8 @@ pnpm add effcss
 # yarn
 yarn add effcss
 ```
+
+> **Note:** EffCSS is **ESM-only** — it ships a single ES module build and does not provide a CommonJS/`require` entry.
 
 ## CSS types & TS autocompletion
 
@@ -96,196 +82,214 @@ export {};
 
 Now every style rule gets full TS autocompletion for CSS properties.
 
+## Principles
+
+EffCSS is built on a few simple ideas that stay consistent across every utility:
+
+- **Lazy by default.** Styles are materialized only when a resolver is first used (`resolver()` or `resolver + ''`). If a rule references other tokens, wrap it in a function `() => ({...})` so it stays lazy.
+- **Native CSS nesting.** Style objects support nested selectors out of the box — `&` refers to the current selector, so pseudo-classes, attributes, children and combinators are just nested keys.
+- **Tree-shakeable.** Each utility is a standalone export; importing only what you need keeps the bundle small.
+
 ## Usage
 
-Just declare stylesheet contract, implement it and apply ready selectors:
+### Selectors
 
-**App.tsx**
+`id` and `className` return a **selector resolver**. Call it to materialize the unique token, or coerce it to a string — both give the same result:
 
-```tsx
-import { className, classNames, attribute, attributes, variable, variables, animation, animations } from 'effcss';
+```ts
+import { id, className } from 'effcss';
 
-// you can create independent rules
+const btn = className({ color: 'white' });
+btn(); // 'f_6-0'
+'' + btn; // 'f_6-0'
 
-// returns classname string
-const bgCls = className({
-    background: 'white',
-    '&:hover': {
-        borderRadius: '1em'
-    }
+const badge = id({ backgroundColor: 'red' });
+badge(); // 'f_5-0'
+'' + badge; // 'f_5-0'
+
+// function form when styles reference tokens (see "Lazy styles & tokens")
+const size = variable('12px');
+const padded = className(() => ({ padding: size() }));
+padded(); // 'f_6-1'
+```
+
+#### Tailwind-style modifiers
+
+Pass one or more **modifiers** to the selector resolver to create variants of the same base rule. Each variant gets its own token, cached per modifier set. Pseudo-classes are appended to the selector; at-rules (`@media`, `@container`) wrap the rule at a different nesting level:
+
+```ts
+const box = className(() => ({ color: 'red' }));
+
+box(); // 'f_6-0' -> `.f_6-0 { color: red; }`
+box(':hover'); // 'f_6-1' -> `.f_6-1:hover { color: red; }`
+box('@media (max-width: 700px)'); // 'f_6-2' -> `@media (max-width: 700px) { .f_6-2 { ... } }`
+box('@media (max-width: 700px)', ':hover'); // 'f_6-3' -> `@media (...) { .f_6-3:hover { ... } }`
+
+// a modifier may contain another token (coerced to its selector)
+const list = className(() => ({ ['& > ' + box]: { margin: 0 } }));
+```
+
+The same base rule is reused across variants — conditions are applied **where the rule is used**, not baked into its definition. This is the key difference from writing conditions via native CSS nesting, which fixes them within the rule.
+
+### Lazy styles & tokens
+
+If your styles reference other **tokens** (resolvers), wrap them in a function `() => ({...})`. Passing an already-materialized token in a plain object throws a `TypeError` because it breaks lazyness and creates module side-effects:
+
+```ts
+const size = variable('12px');
+
+// ❌ throws: rule contains a resolver result
+// so it creates module side-effect
+className({ padding: size() });
+
+// ✅ lazy: token is resolved only when the rule is used
+className(() => ({ padding: size() }));
+```
+
+The function form keeps styles lazy — nothing is generated until the resolver is first called or coerced to a string.
+
+This applies to every utility that accepts an object with tokens: `className`, `id`, `style` and `animation`.
+
+### At-rules
+
+**variable** — returns a variable resolver with `var()` and can apply fallback in functional form:
+
+```ts
+const accent = variable('#ff0');
+'' + accent; // '--f_2-0'
+accent(); // 'var(--f_2-0)'
+accent('green'); // 'var(--f_2-0, green)'
+```
+
+**animation** — returns a keyframes name resolver:
+
+```ts
+const spin = animation({ from: { transform: 'rotate(0)' }, to: { transform: 'rotate(360deg)' } });
+spin(); // 'f_3-0'
+'' + spin; // 'f_3-0'
+
+// function form when keyframes reference EffCSS tokens
+const grow = animation(() => ({ from: { height: size() }, to: { height: '100px' } }));
+grow(); // 'f_3-1'
+```
+
+**container** — returns a container resolver, string coercion gives the `@container` rule, calling gives `name / type`:
+
+```ts
+const card = container('inline-size');
+'' + card; // '@container f_4-0'
+card(); // 'f_4-0 / inline-size'
+```
+
+**font** — callable string with the bare family name and optional fallbacks:
+
+```ts
+const Inter = font({ src: "url('/inter.woff2')" });
+Inter(); // 'f_1-0'
+Inter('sans-serif'); // 'f_1-0, sans-serif'
+```
+
+**layers** — returns an object of callable strings, one per layer name:
+
+```ts
+const myLayers = layers(['reset', 'base']);
+myLayers.reset(); // '@layer f_0-0'
+'' + myLayers.reset; // '@layer f_0-0'
+```
+
+### Complex styles
+
+```ts
+import { style, theme } from 'effcss';
+```
+
+**style** — returns an empty string resolver that injects arbitrary styles on the first usage:
+
+```ts
+const custom = style({ body: { margin: 0 } });
+custom(); // ''
+'' + custom; // ''
+
+// use function when using tokens inside style
+const themed = style(() => ({ body: { color: accent(), ['& > ' + btn]: { marginTop: '1rem' } } }));
+themed(); // ''
+```
+
+**Native CSS nesting** — any style object supports nested selectors, so you can add pseudo-classes, attributes, children and combinators:
+
+```ts
+const card = className({
+    padding: '1rem',
+    '&:hover': { boxShadow: '0 0 8px' }, // `.f_6-0:hover`
+    '&[data-active]': { borderColor: 'blue' }, // `.f_6-0[data-active]`
+    '& > .title': { fontWeight: 600 } // `.f_6-0 > .title`
 });
+```
 
-// returns object with data-attribute
-const fontAttr = attribute({
-    fontWeight: 'bold'
+Nested keys are emitted as-is (native CSS nesting), so `&` refers to the current selector.
+
+Inside **functional forms** you can even pass whole selectors (tokens) as nested keys — they are resolved lazily when the rule is used:
+
+```ts
+const card = className(() => ({
+    padding: '1rem',
+    ['& > ' + btn]: { marginTop: '1rem' } // `& > .f_6-0`
+}));
+```
+
+**theme** — returns a controller object with `vars`, `list`, `get` and `set`. `options` is required; `initial` is optional (if omitted, no theme is active until `set` is called):
+
+```ts
+const myTheme = theme({
+    vars: { bg: '#eff' },
+    options: { light: { bg: '#eff' }, dark: { bg: '#111' } },
+    initial: 'light'
 });
+myTheme.get(); // 'light'
+myTheme.set('dark'); // true
+```
 
-// single global variable
-// shadowColor() => var(--unique-variable-name)
-const shadowColor = variable('#58666d');
+### Isolated contexts
 
-// multiple global variables
-// widthVars.s() => var(--unique-variable-name)
-const widthVars = variables({
-    s: '12px',
-    m: '16px',
-    l: '20px'
-});
+`context()` creates an isolated style generation context with its own key, counters and stylesheets. Tokens never collide across contexts:
 
-// single global animation
-// spinAnimation = unique-animation-name
-const spinAnimation = animation({
-    from: {
-        transform: 'rotate(0deg)'
-    },
-    to: {
-        transform: 'rotate(360deg)'
-    }
-});
+```ts
+import { context, getContexts } from 'effcss';
 
-// also you can create isolated stylesheets
+const ctx = context({ key: 'app' });
+const btn = ctx.className({ color: 'white' });
+btn(); // 'app_6-0'
 
-// 1. declare
+ctx.serialize(); // '<style data-effcss-key="app-6" data-effcss-count="1">...</style>'
+ctx.clear(); // wipes styles, keeps the context usable
+ctx.dispose(); // permanently destroys the context
+```
 
-/** Components stylesheet */
-type Components = {
-    /** Is rounded */
-    rounded: true;
-    /** Height */
-    h: 'full' | 'half';
-    /** Card */
-    card: {
-        /** Card background */
-        bg: 'primary' | 'secondary';
-        /** Is card disabled */
-        disabled: boolean;
-    };
-    /** Spinner component */
-    spinner: {};
-};
+`getContexts()` returns all active local contexts keyed by their key:
 
-/** Utils stylesheet */
-type Utils = {
-    /** Width */
-    w: 's' | 'm' | 'l';
-    /** Spacing */
-    spacing: 0 | 1 | 2;
-    /** Blink animation */
-    blink: true;
-};
+```ts
+const ctx = context({ key: 'app' });
+getContexts(); // { app: ctx }
+```
 
-// 2. implement
+### SSR
 
-// creates a stylesheet with attribute selectors
-// styleComponents({rounded: true}) => {[data-unique-key]: 'some values'}
-const styleComponents = attributes<Components>((selectors) => {
-    const { rounded, card, spinner } = selectors;
+```ts
+import { className, serialize } from 'effcss';
 
-    // multiple local variables
-    const colors = variables({
-        primary: {
-            inherits: false,
-            initialValue: '#2192a7'
-        },
-        secondary: {
-            inherits: false,
-            initialValue: '#425158'
-        }
-    });
+className({ color: 'white' })();
 
-    return {
-        [rounded.true]: {
-            borderRadius: '50%'
-        },
-        [spinner]: {
-            animation: `${spinAnimation} infinite 6s linear`
-        },
-        [card]: {
-            display: 'flex',
-            justifyContent: 'center',
-            '&:hover': {
-                filter: `drop-shadow(0 0 2em ${shadowColor()})`
-            }
-        },
-        [card.bg.primary]: {
-            background: colors.primary()
-        },
-        [card.bg.secondary]: {
-            // with fallback value
-            background: colors.secondary('cyan')
-        },
-        '@media(prefers-color-scheme: dark)': {
-            [card + ':hover']: {
-                filter: `drop-shadow(0 0 2em #ffffff)`
-            }
-        }
-        // ... and so on
-    };
-});
+// render the generated `<style>` tags into HTML string
+const html = serialize();
+```
 
-// creates a stylesheet with class selectors
-// styleUtils({w: 's'}) => 'string with classnames'
-const styleUtils = classNames<Utils>((selectors) => {
-    const { w, spacing, blink } = selectors;
+### Global config
 
-    // local animations
-    const blinkAnimations = animations({
-        simple: {
-            '50%': {
-                visibility: 'hidden'
-            }
-        },
-        smooth: {
-            '0%': {
-                opacity: 1
-            },
-            '50%': {
-                opacity: 0
-            },
-            '100%': {
-                opacity: 1
-            }
-        }
-    });
+```ts
+import { setConfig, getConfig } from 'effcss';
 
-    return {
-        [blink.true]: {
-            animation: `${blinkAnimations.smooth} 2s infinite`
-        },
-        [w.s]: {
-            width: widthVars.s()
-        },
-        [w.m]: {
-            width: widthVars.m()
-        }
-        // ... and so on
-    };
-});
-
-// 3. apply
-
-// returns an object as it is created using `attributes`
-const cardAttrs = styleComponents({
-    card: {
-        bg: 'primary',
-        disabled: true
-    }
-});
-
-// returns a string as it is created using `classNames`
-const utilsCls = styleUtils({
-    w: 'm'
-});
-
-export const App = () => {
-    return (
-        <div {...cardAttrs} className={utilsCls}>
-            <p {...fontAttr} className={bgCls}>
-                ...
-            </p>
-        </div>
-    );
-};
+setConfig({ key: 'app' }); // must be called before the first usage
+getConfig(); // { key: 'app' }
 ```
 
 That's all. Enjoy simplicity.
