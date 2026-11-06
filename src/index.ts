@@ -104,7 +104,14 @@ type VariableConfig = string | number | boolean | VariableDescription;
 type VariableResolver<T = any> = string &
     ((fallback?: any) => string) &
     ToPrimitive & {
+        /**
+         * Set next variable value
+         * @param nextValue - value or value update function
+         */
         set(nextValue: T | ((prev: T) => T)): void;
+        /**
+         * Get current variable value
+         */
         get(): T;
     };
 // theme
@@ -549,37 +556,28 @@ class StyleProvider {
             ) as null | HTMLStyleElement;
             stylesheet = element?.sheet as unknown as EffCSSStyleSheet;
             if (stylesheet) this.ssr[type] = Number(element?.getAttribute(COUNT_ATTR));
-            else stylesheet = this.createStyleSheet();
+            else if (!globalThis.CSSStyleSheet) {
+                stylesheet = {
+                    ownerNode: null,
+                    disabled: false,
+                    [CSS_RULES]: [{ cssText: '' }],
+                    insertRule(cssText: string, index: number) {
+                        (this[CSS_RULES] as object[]).splice(index, 0, {
+                            cssText
+                        });
+                        return index;
+                    },
+                    deleteRule(index: number) {
+                        (this[CSS_RULES] as object[]).splice(index, 1);
+                    }
+                };
+            } else {
+                stylesheet = new globalThis.CSSStyleSheet();
+                globalThis.document.adoptedStyleSheets.push(stylesheet as CSSStyleSheet);
+            }
             this.stylesheets[type] = stylesheet;
         }
         return stylesheet;
-    };
-
-    /**
-     * Create stylesheet
-     */
-    createStyleSheet = (): EffCSSStyleSheet => {
-        let stylesheet;
-        if (!globalThis.CSSStyleSheet) {
-            stylesheet = {
-                ownerNode: null,
-                disabled: false,
-                [CSS_RULES]: [{ cssText: '' }],
-                insertRule(cssText: string, index: number) {
-                    this[CSS_RULES].splice(index, 0, {
-                        cssText
-                    });
-                    return index;
-                },
-                deleteRule(index: number) {
-                    this[CSS_RULES].splice(index, 1);
-                }
-            };
-        } else {
-            stylesheet = new globalThis.CSSStyleSheet();
-            globalThis.document.adoptedStyleSheets.push(stylesheet);
-        }
-        return stylesheet as unknown as EffCSSStyleSheet;
     };
 }
 
@@ -637,9 +635,7 @@ const atRule = <F>(
     let state: ReturnType<typeof create> | null = null;
     const getState = () => state ?? (state = create());
     const wrapper = ((...args: any[]) => getState().call(...args)) as F &
-        ((...args: any[]) => string) & {
-            [Symbol.toPrimitive]: () => string;
-        };
+        ((...args: any[]) => string) & ToPrimitive;
     wrapper[Symbol.toPrimitive] = () => (state ? (state.str ?? state.call()) : (getState().str ?? getState().call()));
     if (opts.set)
         (wrapper as any).set = (value: any) => {

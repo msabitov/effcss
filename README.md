@@ -24,7 +24,7 @@ EffCSS is a self-confident CSS-in-TS library based only on the browser APIs. Use
 
 - zero-dependency,
 - framework agnostic,
-- tree-shakeable and small bundle,
+- small and tree-shakeable,
 - lazy by default,
 - native CSS nesting,
 - selectors isolation and minification out of the box,
@@ -36,7 +36,7 @@ EffCSS is a self-confident CSS-in-TS library based only on the browser APIs. Use
 - [SourceCraft](https://sourcecraft.dev/msabitov/effcss)
 - [GitHub](https://github.com/msabitov/effcss)
 - [NPM](https://www.npmjs.com/package/effcss)
-- [vite-plugin-effcss](https://www.npmjs.com/package/vite-plugin-effcss) - CSR tool injecting generated CSS into HTML. It allows to eliminate FOUC and speed up the first rendering due to style hydration just like for SSR/SSG.
+- [vite-plugin-effcss (v2)](https://www.npmjs.com/package/vite-plugin-effcss) - CSR tool injecting generated CSS into HTML. It allows to eliminate FOUC and speed up the first rendering due to style hydration just like for SSR/SSG.
 
 ## Installation
 
@@ -265,7 +265,7 @@ ctx.clear(); // wipes styles, keeps the context usable
 ctx.dispose(); // permanently destroys the context
 ```
 
-`getContexts()` returns all active local contexts keyed by their key:
+`getContexts()` returns object with all active contexts excluding global one:
 
 ```ts
 const ctx = context({ key: 'app' });

@@ -273,7 +273,7 @@ describe('Server-side (SSR):', () => {
     });
 
     describe('getContexts', () => {
-        test('returns created contexts keyed by their key', () => {
+        test('returns created contexts', () => {
             const key = getKey();
             const ctx = context({ key });
             const all = getContexts();

@@ -5,11 +5,26 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.1] - 2026-11-06
+
+### Added
+
+- Vitest benchmarks measuring time for classnames generation
+
+### Changed
+
+- minor code and types improvements
+- minor README edits
+- dev dependencies updated: `vitest` and `@vitest/*` bumped to v5
+- test scripts now run browser and node projects explicitly (`--project browser --project node`)
+- new `bench` project added to the Vitest config for time benchmarks
+- `bench:time` script added to run time benchmarks
+
 ## [6.0.0] - 2026-10-30
 
 ### Added
 
-- `getContexts()` has been added, returning all active isolated contexts keyed by their key
+- `getContexts()` has been added, returning object with all active contexts excluding global one
 - each `context` now have lifecycle controls, and `Symbol.dispose` is wired to `dispose` on every context for `using` support
 - selector modifiers (postfixes) on `className`/`id`: pseudo-classes, at-rules, arbitrary attributes
 - `id` and `className` now accept a plain object (without `EffCSS` tokens inside) or a function (lazy, may reference tokens)
@@ -1057,7 +1072,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[6.0.0]: https://github.com/msabitov/effcss
+[6.0.1]: https://github.com/msabitov/effcss
+[6.0.0]: https://github.com/msabitov/effcss/commit/59b972b75cf0ba9932ebf87eec0f983ab93784e4
 [5.8.0]: https://github.com/msabitov/effcss/commit/7124c683adfef16dd7a48a90e46b5273b9a782d9
 [5.7.1]: https://github.com/msabitov/effcss/commit/ad6ebe7ba6a7d82c2a314885799c0dae214d3e98
 [5.7.0]: https://github.com/msabitov/effcss/commit/bdae949ac17600ac794af35ad7980797b96f6fe7

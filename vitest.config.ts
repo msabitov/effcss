@@ -26,6 +26,21 @@ export default defineConfig({
                     environment: 'node',
                     include: ['tests/ssr/**/*.{test,spec}.{ts,tsx}']
                 }
+            },
+            {
+                extends: true,
+                test: {
+                    name: 'bench',
+                    include: ['bench/**/*.{test,spec}.{ts,tsx}'],
+                    browser: {
+                        enabled: true,
+                        provider: playwright(),
+                        instances: [{ browser: 'chromium' }]
+                    },
+                    benchmark: {
+                        include: ['bench/**/*.{test,spec}.{ts,tsx}']
+                    }
+                }
             }
         ],
         coverage: {
