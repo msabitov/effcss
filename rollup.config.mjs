@@ -14,7 +14,7 @@ const output = {
     dir: 'dist',
     banner,
     format: 'es',
-    plugins: [terser()]
+    plugins: [terser({ format: { preserve_annotations: true } })]
 };
 const tsPlugin = typescript({
     tsconfig: 'tsconfig.json'

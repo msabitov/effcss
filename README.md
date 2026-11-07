@@ -133,20 +133,32 @@ The same base rule is reused across variants — conditions are applied **where 
 
 ### Lazy styles & tokens
 
-If your styles reference other **tokens** (resolvers), wrap them in a function `() => ({...})`. Passing an already-materialized token in a plain object throws a `TypeError` because it breaks lazyness and creates module side-effects:
+If your styles reference other **tokens** (resolvers), wrap them in a function `() => ({...})`. A plain object is parsed eagerly, so an already-materialized token inside it is a module-level side effect — the resolver throws a `TypeError` on first use:
 
 ```ts
 const size = variable('12px');
 
-// ❌ throws: rule contains a resolver result
-// so it creates module side-effect
-className({ padding: size() });
+// ❌ throws on usage: the rule contains a resolver result
+const broken = className({ padding: size() }); // size() -> side-effect
+broken(); // TypeError
 
-// ✅ lazy: token is resolved only when the rule is used
+// ✅ lazy: the token is resolved only when the rule is used
 className(() => ({ padding: size() }));
 ```
 
-The function form keeps styles lazy — nothing is generated until the resolver is first called or coerced to a string.
+The definition itself stays pure — the error is raised when the resolver is first called or coerced to a string. This keeps `/*#__PURE__*/` honest, so unused style definitions are tree-shaken away instead of crashing the module.
+
+The guard is key-agnostic: it matches the token shape, not a particular context key, so a token from another context (or from the global one) is reported as well.
+
+The check is based on the token shape (`<key>_<type>-<counter>`), so a value that merely looks like a token is a false positive. Use the function form for such values:
+
+```ts
+// ❌ false positive: `_1-x` looks like a token
+className({ backgroundImage: 'url(icon_1-x.svg)' })();
+
+// ✅ the function form is not guarded
+className(() => ({ backgroundImage: 'url(icon_1-x.svg)' }))();
+```
 
 This applies to every utility that accepts an object with tokens: `className`, `id`, `style` and `animation`.
 

@@ -90,13 +90,7 @@ const cleanHead = (key: string) => {
 };
 
 // Build a single bench registration for a (category, variant) pair.
-const makeBench = (
-    bench: any,
-    mode: 'csr' | 'ssr',
-    category: string,
-    variant: Variant,
-    count: number
-) => {
+const makeBench = (bench: any, mode: 'csr' | 'ssr', category: string, variant: Variant, count: number) => {
     const slug = variant.name.replace(/[^a-z0-9]/gi, '');
     const key = `${mode}-${category}-${slug}-${count}`;
     const ssrHtml = mode === 'ssr' ? buildServerHtml(key, variant, count) : null;

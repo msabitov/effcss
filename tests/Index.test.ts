@@ -174,9 +174,15 @@ describe('Client-side', () => {
                 expect(serialize()).toContain(`@keyframes ${token}`);
             });
 
-            test('uses object arg with tokens to throw TypeError', () => {
+            test('uses object arg with tokens to throw TypeError on usage', () => {
                 const size = variable('100px');
-                expect(() => animation({ from: { width: size() }, to: { width: '200px' } })).toThrow(TypeError);
+                const myAnimation = animation({ from: { width: size() }, to: { width: '200px' } });
+                expect(() => myAnimation()).toThrow(TypeError);
+            });
+
+            test('object form with tokens does not throw on creation', () => {
+                const size = variable('100px');
+                expect(() => animation({ from: { width: size() }, to: { width: '200px' } })).not.toThrow();
             });
         });
 
@@ -263,9 +269,24 @@ describe('Client-side', () => {
                 expect(serialize()).toContain(`.${token} { padding: var(--${defGlobalKey}_2-0); }`);
             });
 
-            test('uses object arg with tokens to throw TypeError', () => {
+            test('uses object arg with tokens to throw TypeError on usage', () => {
                 const size = variable('100px');
-                expect(() => className({ padding: size() })).toThrow(TypeError);
+                // the definition stays pure, the error is thrown on realization
+                const myCls = className({ padding: size() });
+                expect(() => myCls()).toThrow(TypeError);
+            });
+
+            test('object form with tokens does not throw on creation', () => {
+                const size = variable('100px');
+                expect(() => className({ padding: size() })).not.toThrow();
+            });
+
+            test('object arg with a token from another context throws TypeError', () => {
+                const ctx = createCtx({ key: getKey() });
+                const foreign = ctx.variable('100px');
+                // the guard is key-agnostic
+                const myCls = className({ padding: foreign() });
+                expect(() => myCls()).toThrow(TypeError);
             });
 
             test('postfix variants create distinct tokens', () => {
@@ -340,9 +361,10 @@ describe('Client-side', () => {
                 expect(serialize()).toContain(`#${token} { padding: var(--${defGlobalKey}_2-0); }`);
             });
 
-            test('uses object arg with tokens to throw TypeError', () => {
+            test('uses object arg with tokens to throw TypeError on usage', () => {
                 const size = variable('100px');
-                expect(() => id({ padding: size() })).toThrow(TypeError);
+                const myId = id({ padding: size() });
+                expect(() => myId()).toThrow(TypeError);
             });
 
             test('id supports postfix modifiers like className', () => {
@@ -396,9 +418,10 @@ describe('Client-side', () => {
                 expect(serialize()).toContain('body { padding: 1rem; }');
             });
 
-            test('uses object arg with tokens to throw TypeError', () => {
+            test('uses object arg with tokens to throw TypeError on usage', () => {
                 const size = variable('100px');
-                expect(() => style({ body: { padding: size() } })).toThrow(TypeError);
+                const myStyle = style({ body: { padding: size() } });
+                expect(() => myStyle()).toThrow(TypeError);
             });
 
             test('null and undefined values are skipped', () => {
@@ -756,11 +779,12 @@ describe('Client-side', () => {
                 expect(ctx.serialize()).toContain(`@keyframes ${token}`);
             });
 
-            test('uses object arg with tokens to throw TypeError', () => {
+            test('uses object arg with tokens to throw TypeError on usage', () => {
                 const key = getKey();
                 const ctx = createCtx({ key });
                 const size = ctx.variable('100px');
-                expect(() => ctx.animation({ from: { width: size() }, to: { width: '200px' } })).toThrow(TypeError);
+                const myAnimation = ctx.animation({ from: { width: size() }, to: { width: '200px' } });
+                expect(() => myAnimation()).toThrow(TypeError);
             });
         });
 
@@ -870,11 +894,29 @@ describe('Client-side', () => {
                 expect(ctx.serialize()).toContain(`.${token} { padding: var(--${key}_2-0); }`);
             });
 
-            test('uses object arg with tokens to throw TypeError', () => {
+            test('uses object arg with tokens to throw TypeError on usage', () => {
                 const key = getKey();
                 const ctx = createCtx({ key });
                 const size = ctx.variable('100px');
-                expect(() => ctx.className({ padding: size() })).toThrow(TypeError);
+                const myCls = ctx.className({ padding: size() });
+                expect(() => myCls()).toThrow(TypeError);
+            });
+
+            test('object arg with a token from another context throws TypeError', () => {
+                const firstCtx = createCtx({ key: getKey() });
+                const secondCtx = createCtx({ key: getKey() });
+                const foreign = firstCtx.variable('100px');
+                // the guard is key-agnostic
+                const myCls = secondCtx.className({ padding: foreign() });
+                expect(() => myCls()).toThrow(TypeError);
+            });
+
+            test('object arg with a global token throws TypeError', () => {
+                const ctx = createCtx({ key: getKey() });
+                const globalSize = variable('100px');
+                // a global token is caught by the key-agnostic guard as well
+                const myCls = ctx.className({ padding: globalSize() });
+                expect(() => myCls()).toThrow(TypeError);
             });
 
             test('postfix variants create distinct tokens', () => {
@@ -989,11 +1031,12 @@ describe('Client-side', () => {
                 expect(ctx.serialize()).toContain(`#${token} { padding: var(--${key}_2-0); }`);
             });
 
-            test('uses object arg with tokens to throw TypeError', () => {
+            test('uses object arg with tokens to throw TypeError on usage', () => {
                 const key = getKey();
                 const ctx = createCtx({ key });
                 const size = ctx.variable('100px');
-                expect(() => ctx.id({ padding: size() })).toThrow(TypeError);
+                const myId = ctx.id({ padding: size() });
+                expect(() => myId()).toThrow(TypeError);
             });
 
             test('id supports postfix modifiers like className', () => {
@@ -1059,11 +1102,12 @@ describe('Client-side', () => {
                 expect(ctx.serialize()).toContain('body { padding: 1rem; }');
             });
 
-            test('uses object arg with tokens to throw TypeError', () => {
+            test('uses object arg with tokens to throw TypeError on usage', () => {
                 const key = getKey();
                 const ctx = createCtx({ key });
                 const size = ctx.variable('100px');
-                expect(() => ctx.style({ body: { padding: size() } })).toThrow(TypeError);
+                const myStyle = ctx.style({ body: { padding: size() } });
+                expect(() => myStyle()).toThrow(TypeError);
             });
 
             test('null and undefined values are skipped', () => {

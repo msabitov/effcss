@@ -5,6 +5,20 @@ All notable changes to [EffCSS](https://github.com/msabitov/effcss) are document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.2] - 2026-11-07
+
+### Fixed
+
+- the token guard is now a single key-agnostic module-level regexp and can detect tokens from any context (tests added)
+- `className`/`id`/`style`/`animation` no longer throw on definition, so dead style definitions no longer crash the module in development while being tree-shaken away in production (tests added)
+- `bench` is excluded from `tsconfig.json`, so `tsc --noEmit` no longer fails with `TS6059`
+
+### Changed
+
+- `/*#__PURE__*/` annotations added for tree-shaking
+- `animation` parses its object config once instead of twice
+- duplicated selector replacers construction is extracted into a special function
+
 ## [6.0.1] - 2026-11-06
 
 ### Added
@@ -1072,7 +1086,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[6.0.1]: https://github.com/msabitov/effcss
+[6.0.2]: https://github.com/msabitov/effcss
+[6.0.1]: https://github.com/msabitov/effcss/commit/6cf769d5ec01e0c166caaeeb7caa54290552b58a
 [6.0.0]: https://github.com/msabitov/effcss/commit/59b972b75cf0ba9932ebf87eec0f983ab93784e4
 [5.8.0]: https://github.com/msabitov/effcss/commit/7124c683adfef16dd7a48a90e46b5273b9a782d9
 [5.7.1]: https://github.com/msabitov/effcss/commit/ad6ebe7ba6a7d82c2a314885799c0dae214d3e98

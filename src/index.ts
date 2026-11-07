@@ -28,6 +28,7 @@ type EffCSSStyleSheet = {
     deleteRule(index: number): void;
     ownerNode: CSSStyleSheet['ownerNode'];
 };
+type GetProvider = () => StyleProvider;
 type Settings = {
     /**
      * Unique context key
@@ -304,8 +305,7 @@ const T_ID = 5;
 const T_CLASS = 6;
 const T_CUSTOM = 7;
 const T_ORDER = [T_LAYER, T_FONT, T_VARIABLE, T_ANIMATION, T_CONTAINER, T_ID, T_CLASS, T_CUSTOM];
-const T_MIN = T_ORDER[0];
-const T_MAX = T_ORDER[T_ORDER.length - 1];
+const TOKEN_GUARD = /_[0-7]-[0-9a-z]+/;
 const SELECTOR_PREFIX = {
     [T_ID]: '#',
     [T_CLASS]: '.'
@@ -357,6 +357,17 @@ const SHORT_SYNTAX = [
 // derived value and utils
 const isObject = (val: any) => val !== null && typeof val === 'object';
 const tokenPrefix = (key: string, type: number) => `${key}_${type}-`;
+const makeReplacers = (key: string) => {
+    const id = tokenPrefix(key, T_ID);
+    const cls = tokenPrefix(key, T_CLASS);
+    return {
+        in: { id, cls },
+        out: {
+            id: SELECTOR_PREFIX[T_ID] + id,
+            cls: SELECTOR_PREFIX[T_CLASS] + cls
+        }
+    };
+};
 const kebabCache = new Map<string, string>();
 const kebabCase = (str: string): string => {
     let k = kebabCache.get(str);
@@ -427,21 +438,20 @@ const replaceRule = (stylesheet: EffCSSStyleSheet, index: number, rule: string):
     stylesheet.insertRule(rule, index);
     return rule;
 };
-const getTokenRegex = (key: string) => new RegExp(key + '_' + `[${T_MIN}-${T_MAX}]-[0-9a-z]+`, 'g');
 /**
  * Check CSS for side effects at the module level
- * @param provider - style provider
  * @param cssContent - serialized css content to inspect
  * @param kind - kind of the inspected content
  */
-const checkForSideEffects = (provider: StyleProvider, cssContent: string, kind: string): void => {
-    const checkResult = cssContent.match(provider.keyGuard);
-    if (checkResult)
-        throw new TypeError(
-            `${LIBRARY}: The ${kind} contains a token (${checkResult[0]}) ` +
-                `and, consequently, triggers side effects at the module level. ` +
-                `Use the function form to keep styles lazy.`
-        );
+const checkForSideEffects = (cssContent: string, kind: string): TypeError | null => {
+    const checkResult = cssContent.match(TOKEN_GUARD);
+    return checkResult
+        ? new TypeError(
+              `${LIBRARY}: The ${kind} contains a token (${checkResult[0]}) ` +
+                  `and, consequently, triggers side effects at the module level. ` +
+                  `Use the function form to keep styles lazy.`
+          )
+        : null;
 };
 
 // Style provider
@@ -451,19 +461,8 @@ class StyleProvider {
     static ctxRegistry: Record<string, WeakRef<Context>> = {};
     // context key
     key = DEFAULT_KEY;
-    // guard regexp for key
-    keyGuard: RegExp = getTokenRegex(DEFAULT_KEY);
     // selector tokens replacers
-    replacers = {
-        in: {
-            id: tokenPrefix(DEFAULT_KEY, T_ID),
-            cls: tokenPrefix(DEFAULT_KEY, T_CLASS)
-        },
-        out: {
-            id: SELECTOR_PREFIX[T_ID] + tokenPrefix(DEFAULT_KEY, T_ID),
-            cls: SELECTOR_PREFIX[T_CLASS] + tokenPrefix(DEFAULT_KEY, T_CLASS)
-        }
-    };
+    replacers = makeReplacers(DEFAULT_KEY);
     // if context disposed
     disposed = false;
     // server rules counters
@@ -594,7 +593,7 @@ const validateKey = (key: string): void => {
         );
 };
 
-const configureProvider = (provider: StyleProvider, config: Settings) => {
+const configureProvider = (provider: StyleProvider, config: Settings): void => {
     const { key = provider.key } = config;
     validateKey(key);
     // key may be claimed by the global provider or by an existing context
@@ -603,21 +602,8 @@ const configureProvider = (provider: StyleProvider, config: Settings) => {
         key in StyleProvider.ctxRegistry
     )
         throw new Error(`${LIBRARY}: key "${key}" is already in use by another context.`);
-    const prefixForId = tokenPrefix(key, T_ID);
-    const prefixForClass = tokenPrefix(key, T_CLASS);
     provider.key = key;
-    provider.replacers = {
-        in: {
-            id: prefixForId,
-            cls: prefixForClass
-        },
-        out: {
-            id: SELECTOR_PREFIX[T_ID] + prefixForId,
-            cls: SELECTOR_PREFIX[T_CLASS] + prefixForClass
-        }
-    };
-    provider.keyGuard = getTokenRegex(provider.key);
-    return true;
+    provider.replacers = makeReplacers(key);
 };
 
 /**
@@ -634,8 +620,7 @@ const atRule = <F>(
 ): F => {
     let state: ReturnType<typeof create> | null = null;
     const getState = () => state ?? (state = create());
-    const wrapper = ((...args: any[]) => getState().call(...args)) as F &
-        ((...args: any[]) => string) & ToPrimitive;
+    const wrapper = ((...args: any[]) => getState().call(...args)) as F & ((...args: any[]) => string) & ToPrimitive;
     wrapper[Symbol.toPrimitive] = () => (state ? (state.str ?? state.call()) : (getState().str ?? getState().call()));
     if (opts.set)
         (wrapper as any).set = (value: any) => {
@@ -649,14 +634,14 @@ const atRule = <F>(
  * Lazy selector rule creator
  */
 const createSelector = (
-    provider: StyleProvider,
+    getProvider: GetProvider,
     { rule, type }: { type: typeof T_ID | typeof T_CLASS; rule: object }
 ) => {
     let cssResolver: Function;
+    let sideEffectError: TypeError | null = null;
     if (typeof rule !== 'function') {
         const cssContent = parseStyles(rule);
-        // guard: rule must not contain effcss tokens (module side-effects)
-        checkForSideEffects(provider, cssContent, 'rule');
+        sideEffectError = checkForSideEffects(cssContent, 'rule');
         cssResolver = () => cssContent;
     } else {
         cssResolver = () => parseStyles(rule());
@@ -664,9 +649,11 @@ const createSelector = (
     // cache tokens per modifier
     const modCache = {} as Record<string, string>;
     const realize = (...modifiers: string[]) => {
+        if (sideEffectError) throw sideEffectError;
         const key = modifiers.join('');
         const cached = modCache[key];
         if (cached) return cached;
+        const provider = getProvider();
         const token = provider.token(type);
         // at-rule modifiers wrap the rule at a different nesting level;
         // the rest are appended to the selector
@@ -687,10 +674,11 @@ const createSelector = (
 };
 
 const createVariable =
-    (provider: StyleProvider): Variable =>
+    (getProvider: () => StyleProvider): Variable =>
     (config?: VariableConfig) =>
         atRule<VariableResolver>(
             () => {
+                const provider = getProvider();
                 const name = provider.token(T_VARIABLE);
                 const cssName = '--' + name;
                 const stylesheet = provider.getStyleSheet(T_VARIABLE);
@@ -720,36 +708,43 @@ const createVariable =
         );
 
 const createAnimation =
-    (provider: StyleProvider): Animation =>
+    (getProvider: GetProvider): Animation =>
     <T extends Record<string, object>>(config: T | (() => T)): StringResolver => {
         // guard: object form must not contain effcss tokens (module side-effects).
-        // The check runs at creation time so broken code is never assembled.
+        // Parsing is pure, so the check runs eagerly without creating a provider.
+        let cssText: string | null = null;
+        let sideEffectError: TypeError | null = null;
         if (typeof config !== 'function') {
-            checkForSideEffects(provider, parseStyles(config), 'keyframes config');
+            cssText = parseStyles(config);
+            sideEffectError = checkForSideEffects(cssText, 'keyframes config');
         }
+        const getCssText = () => cssText ?? (cssText = parseStyles((config as () => T)()));
         return atRule<StringResolver>(() => {
+            if (sideEffectError) throw sideEffectError;
+            const provider = getProvider();
             const name = provider.token(T_ANIMATION);
-            const cssText = typeof config === 'function' ? parseStyles(config()) : parseStyles(config);
-            provider.insert(T_ANIMATION, `@keyframes ${name} {${cssText}}`);
+            provider.insert(T_ANIMATION, `@keyframes ${name} {${getCssText()}}`);
             const call = () => name;
             return { call };
         });
     };
 
 const createLayers =
-    (provider: StyleProvider): Layers =>
+    (getProvider: () => StyleProvider): Layers =>
     <T extends string>(config: T[]): LayersResolvers<T> => {
-        const names = config.map(() => provider.token(T_LAYER));
-        const declaration = AT_LAYER_ + names.join(', ') + SEMICOLON;
+        // allocate layer tokens lazily so that creating layers has no side effects
+        let names: string[] | null = null;
+        const getNames = () => names ?? (names = config.map(() => getProvider().token(T_LAYER)));
         let realized = false;
         const resolvers = config.reduce(
             (acc, key, i) => {
                 const resolver = atRule<StringResolver>(() => {
+                    const provider = getProvider();
                     if (!realized) {
                         realized = true;
-                        provider.insert(T_LAYER, declaration);
+                        provider.insert(T_LAYER, AT_LAYER_ + getNames().join(', ') + SEMICOLON);
                     }
-                    const name = names[i];
+                    const name = getNames()[i];
                     const call = () => AT_LAYER_ + name;
                     return { call };
                 });
@@ -762,9 +757,10 @@ const createLayers =
     };
 
 const createContainer =
-    (provider: StyleProvider): Container =>
+    (getProvider: () => StyleProvider): Container =>
     (containerType) =>
         atRule<StringResolver>(() => {
+            const provider = getProvider();
             const name = provider.token(T_CONTAINER);
             const type = containerType || 'normal';
             const call = () => name + ` / ${type}`;
@@ -773,9 +769,10 @@ const createContainer =
         });
 
 const createFont =
-    (provider: StyleProvider): Font =>
+    (getProvider: () => StyleProvider): Font =>
     (config) =>
         atRule<FontResolver>(() => {
+            const provider = getProvider();
             const name = provider.token(T_FONT);
             const {
                 src,
@@ -809,21 +806,24 @@ const createFont =
         });
 
 const createStyle =
-    (provider: StyleProvider): Style =>
+    (getProvider: GetProvider): Style =>
     (rule) => {
         let realized = false;
-        let cssRules: string[];
-        if (typeof rule === 'function') cssRules = parseTopStyle(rule());
-        else {
+        let cssRules: string[] | null = null;
+        let sideEffectError: TypeError | null = null;
+        if (typeof rule !== 'function') {
             cssRules = parseTopStyle(rule);
-            // guard: object form must not contain effcss tokens (module side-effects)
-            checkForSideEffects(provider, cssRules.join(''), 'style config');
+            sideEffectError = checkForSideEffects(cssRules.join(''), 'style config');
         }
+        // the function form stays lazy: the user resolver runs only on usage
+        const getRules = () => cssRules ?? (cssRules = parseTopStyle((rule as () => EffCSS.Styles)()));
         const realize = () => {
+            if (sideEffectError) throw sideEffectError;
             if (realized) return;
             realized = true;
+            const provider = getProvider();
             provider.inc(T_CUSTOM);
-            cssRules.forEach((rule) => provider.insert(T_CUSTOM, rule));
+            getRules().forEach((rule) => provider.insert(T_CUSTOM, rule));
         };
         const resolver = (() => {
             realize();
@@ -836,16 +836,17 @@ const createStyle =
         return resolver;
     };
 
-const createId = (provider: StyleProvider): Id =>
-    ((rule: Rule) => createSelector(provider, { type: T_ID, rule })) as unknown as Id;
+const createId = (getProvider: GetProvider): Id =>
+    ((rule: Rule) => createSelector(getProvider, { type: T_ID, rule })) as unknown as Id;
 
-const createClassName = (provider: StyleProvider): ClassName =>
-    ((rule: Rule) => createSelector(provider, { type: T_CLASS, rule })) as unknown as ClassName;
+const createClassName = (getProvider: GetProvider): ClassName =>
+    ((rule: Rule) => createSelector(getProvider, { type: T_CLASS, rule })) as unknown as ClassName;
 
 const createSerialize =
-    (provider: StyleProvider): (() => string) =>
-    (): string =>
-        (Object.entries(provider.stylesheets) as unknown as [number, EffCSSStyleSheet | undefined][]).reduce(
+    (getProvider: () => StyleProvider): (() => string) =>
+    (): string => {
+        const provider = getProvider();
+        return (Object.entries(provider.stylesheets) as unknown as [number, EffCSSStyleSheet | undefined][]).reduce(
             (acc, [type, stylesheet]) => {
                 if (stylesheet && !stylesheet.disabled) {
                     const key = provider.key + DASH + type;
@@ -860,11 +861,12 @@ const createSerialize =
             },
             ''
         );
+    };
 
 const createTheme =
-    (provider: StyleProvider): Theme =>
+    (getProvider: () => StyleProvider): Theme =>
     (config) => {
-        const variable = createVariable(provider);
+        const variable = createVariable(getProvider);
         const { vars, options, initial } = config;
         let currentTheme: keyof typeof options | undefined = initial;
         // shared closure state per variable: { resolver } is null until materialized
@@ -940,7 +942,7 @@ const getGlobalProvider = () => {
  * '' + badge; // f_5-0
  * badge(':hover) // f_5-1 - new token with modifier state
  */
-export const id: Id = (config) => createId(getGlobalProvider())(config);
+export const id: Id = (config) => /*#__PURE__*/ createId(getGlobalProvider)(config);
 /**
  * Create classname
  * @param rule - rule content
@@ -951,7 +953,7 @@ export const id: Id = (config) => createId(getGlobalProvider())(config);
  * '' + btn; // f_6-0
  * btn(':hover) // f_6-1 - new token with modifier state
  */
-export const className: ClassName = (config) => createClassName(getGlobalProvider())(config);
+export const className: ClassName = (config) => /*#__PURE__*/ createClassName(getGlobalProvider)(config);
 
 // at-rules
 
@@ -965,7 +967,7 @@ export const className: ClassName = (config) => createClassName(getGlobalProvide
  * accent(); // var(--f_2-0)
  * accent('green'); // var(--f_2-0, green)
  */
-export const variable: Variable = (config) => createVariable(getGlobalProvider())(config);
+export const variable: Variable = (config) => /*#__PURE__*/ createVariable(getGlobalProvider)(config);
 /**
  * Create animation (@keyframes)
  * @param config - keyframes config
@@ -975,7 +977,7 @@ export const variable: Variable = (config) => createVariable(getGlobalProvider()
  * spin(); // f_3-0
  * '' + spin; // f_3-0
  */
-export const animation: Animation = (config) => createAnimation(getGlobalProvider())(config);
+export const animation: Animation = (config) => /*#__PURE__*/ createAnimation(getGlobalProvider)(config);
 /**
  * Create container (@container)
  * @param type - container type
@@ -985,7 +987,7 @@ export const animation: Animation = (config) => createAnimation(getGlobalProvide
  * '' + card; // '@container f_4-0'
  * card(); // f_4-0 / inline-size
  */
-export const container: Container = (config) => createContainer(getGlobalProvider())(config);
+export const container: Container = (config) => /*#__PURE__*/ createContainer(getGlobalProvider)(config);
 /**
  * Create font (@font-face)
  * @param config - font config
@@ -995,7 +997,7 @@ export const container: Container = (config) => createContainer(getGlobalProvide
  * Inter(); // f_1-0
  * '' + Inter; // f_1-0
  */
-export const font: Font = (config) => createFont(getGlobalProvider())(config);
+export const font: Font = (config) => /*#__PURE__*/ createFont(getGlobalProvider)(config);
 /**
  * Create layers (@layer)
  * @param config - layer names in order of priority
@@ -1005,7 +1007,7 @@ export const font: Font = (config) => createFont(getGlobalProvider())(config);
  * myLayers.reset(); // '@layer f_0-0'
  * '' + myLayers.reset; // '@layer f_0-0'
  */
-export const layers: Layers = (config) => createLayers(getGlobalProvider())(config);
+export const layers: Layers = (config) => /*#__PURE__*/ createLayers(getGlobalProvider)(config);
 
 // complex styles
 
@@ -1017,7 +1019,7 @@ export const layers: Layers = (config) => createLayers(getGlobalProvider())(conf
  * const custom = style({ body: { margin: 0 } });
  * custom(); // '' (styles are injected)
  */
-export const style: Style = (config) => createStyle(getGlobalProvider())(config);
+export const style: Style = (config) => /*#__PURE__*/ createStyle(getGlobalProvider)(config);
 /**
  * Create theme
  * @param config - theme variables and presets
@@ -1027,7 +1029,7 @@ export const style: Style = (config) => createStyle(getGlobalProvider())(config)
  * t.get(); // light
  * t.set('dark'); // true
  */
-export const theme: Theme = (config) => createTheme(getGlobalProvider())(config);
+export const theme: Theme = (config) => /*#__PURE__*/ createTheme(getGlobalProvider)(config);
 
 // advanced utils
 
@@ -1037,7 +1039,7 @@ export const theme: Theme = (config) => createTheme(getGlobalProvider())(config)
  * @example
  * serialize(); // <style data-effcss-key="f-6" data-effcss-count="1">...</style>
  */
-export const serialize = () => (globalProvider ? createSerialize(globalProvider)() : '');
+export const serialize = () => (globalProvider ? createSerialize(() => globalProvider!)() : '');
 /**
  * Remove all generated styles and reset counters
  * @example
@@ -1081,21 +1083,22 @@ export const context = (config: Settings): Context => {
         delete StyleProvider.ctxRegistry[provider.key];
         provider.dispose();
     };
+    const getProvider = () => provider;
     const ctx: Context = {
         // at-rules
-        variable: createVariable(provider),
-        animation: createAnimation(provider),
-        container: createContainer(provider),
-        font: createFont(provider),
-        layers: createLayers(provider),
+        variable: createVariable(getProvider),
+        animation: createAnimation(getProvider),
+        container: createContainer(getProvider),
+        font: createFont(getProvider),
+        layers: createLayers(getProvider),
         // selectors
-        id: createId(provider),
-        className: createClassName(provider),
+        id: createId(getProvider),
+        className: createClassName(getProvider),
         // complex styles
-        style: createStyle(provider),
-        theme: createTheme(provider),
+        style: createStyle(getProvider),
+        theme: createTheme(getProvider),
         // advanced utils
-        serialize: createSerialize(provider),
+        serialize: createSerialize(getProvider),
         getConfig: () => ({ key: provider.key }),
         clear: provider.clear,
         dispose,
